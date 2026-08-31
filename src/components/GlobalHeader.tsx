@@ -57,6 +57,7 @@ export default function GlobalHeader() {
     <>
       <button
         type="button"
+        data-global-nav
         onClick={() => setIsOpen(!isOpen)}
         className={`${useFixed ? 'fixed' : 'absolute'} top-0 left-0 z-[9999] bg-transparent p-4 transition-colors duration-300`}
         aria-label={isOpen ? "Close menu" : "Open menu"}
@@ -81,6 +82,7 @@ export default function GlobalHeader() {
       </button>
 
       <nav
+        data-global-nav
         className={`!fixed !inset-0 !w-screen !h-screen !z-[999] overflow-hidden transition-transform duration-700 ease-in-out ${
           isOpen
             ? "translate-y-0 md:translate-y-0 translate-x-0"

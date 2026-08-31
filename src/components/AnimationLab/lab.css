@@ -557,10 +557,10 @@ html.lab-menu-open body {
 }
 
 /* ---------- menu hamburger reveal ----------
-   Hidden until LabMenu marks data-revealed once frame reaches
-   LOGO_EXIT_FRAMES[1] (70) — the instant the logo finishes fading out
-   with the rest of the hero, so the hamburger visibly arrives right
-   after, never during the entry or racing the logo's own transition. */
+   Dead since the lab's own menu was removed in favour of the single
+   app-wide GlobalHeader; IntroNavGate now does the reveal, keyed to
+   the same LOGO_EXIT_FRAMES[1] (70). Kept only so the selectors below
+   still document what the frame gate used to drive. */
 .lab-menu__hamburger {
   opacity: 0;
   transform: scale(0.7);
@@ -5020,4 +5020,30 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   .lab-intro { transition: none; }
   .lab-intro__spinner { animation: none; }
   .lab-intro__bar-fill { transition: none; }
+}
+
+/* =========================================================
+   Hide the app-wide GlobalHeader during the intro's opening.
+   This file only loads on `/` (via AnimationLab's component import),
+   and `lab-nav-hidden` is only ever set by IntroNavGate on `/`, so
+   this cannot affect the feature pages.
+   ========================================================= */
+html.lab-nav-hidden [data-global-nav] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+html.lab-nav-hidden [data-global-nav]:first-of-type {
+  transition: opacity 0.4s ease;
+}
+
+/* GlobalHeader positions the hamburger `absolute` on every page that is
+   not in its own fixedPages list, which is right for the normal scrolling
+   feature pages. This page is not one: the lab paints into a fixed
+   viewport and gets its scroll length from .lab-spacer, so an absolute
+   button sits at document top and is 20,000px above the viewport by the
+   time you are a few sections in. Pin it so that once IntroNavGate
+   reveals it, it stays put for the rest of the page. Scoped to this file,
+   which only loads on `/`. */
+button[data-global-nav] {
+  position: fixed !important;
 }

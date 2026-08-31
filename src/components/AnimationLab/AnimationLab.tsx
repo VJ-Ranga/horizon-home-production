@@ -35,7 +35,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Lenis from "lenis";
 import HeroLogo from "./HeroLogo";
-import LabMenu from "./LabMenu";
+import IntroNavGate from "./IntroNavGate";
 import ScrollProgress from "./ScrollProgress";
 import HeroLayer from "./HeroLayer";
 import MainStartLayer from "./MainStartLayer";
@@ -676,7 +676,7 @@ export default function AnimationLab({
         data-loop-transition={loopTransition ? "active" : "idle"}
       >
         {SHOW_HERO_LOGO && <HeroLogo />}
-        <LabMenu />
+        <IntroNavGate />
         <ScrollProgress />
 
         {/* Poster = whatever frame the page opens on, so the first
