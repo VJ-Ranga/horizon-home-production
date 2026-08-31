@@ -4,11 +4,11 @@
  * Horizon (misfarsiddeek95/horizon) deploys as its own Next app on its own
  * host, so every cross-link from this site is absolute. Point
  * NEXT_PUBLIC_HORIZON_ORIGIN at the deployed Horizon at build time — it is the
- * single place the domain is configured. The fallback is the Vercel preview,
- * so local dev keeps working with no env file.
+ * single place the domain is configured. The fallback is the live report
+ * domain, so a build with no env file still points at production.
  */
 export const HORIZON_ORIGIN =
-  process.env.NEXT_PUBLIC_HORIZON_ORIGIN ?? "https://horizon-ten-pi.vercel.app";
+  process.env.NEXT_PUBLIC_HORIZON_ORIGIN ?? "https://annualreport.haycarb.com";
 
 /** Horizon's real route names, as of misfarsiddeek95/horizon@main. */
 export const HORIZON_ROUTES = {
