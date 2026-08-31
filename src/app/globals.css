@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@import "../styles/tokens/colors.css";
+@import "../styles/tokens/typography.css";
+@import "../styles/tokens/radii.css";
+
+@font-face {
+  font-family: "Avenir";
+  src: url("./fonts/Avenir.ttc") format("truetype-collection");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Minion Pro";
+  src: url("./fonts/MinionPro-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface-muted);
+    color: var(--color-content-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  *:focus {
+    outline: none;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-brand-main);
+    outline-offset: 2px;
+    border-radius: var(--radius-ui-element);
+  }
+}
+
+@utility heading-gradient {
+  background: linear-gradient(40deg, var(--color-heading-start), var(--color-heading-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

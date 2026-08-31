@@ -1,0 +1,88 @@
+@theme {
+  /* --- SURFACE COLORS --- */
+  --color-surface-default: oklch(0.99 0.01 250);
+  --color-surface-muted: oklch(0.96 0.01 250);
+  --color-surface-glass: oklch(1 0 0 / 0.1);
+
+  /* --- CONTENT COLORS --- */
+  --color-content-primary: oklch(0.15 0.02 250);
+  --color-content-inverse: oklch(0.99 0.01 250);
+
+  /* --- BRAND COLORS --- */
+  --color-brand-main: #147385;
+  --color-brand-hover: #0f5c6b;
+
+  /* --- HEADING COLOR --- */
+  --color-heading: #036984;
+
+  /* --- SECTION TITLE COLOR --- */
+  --color-section-title: oklch(0.484 0.0899 223.74);
+
+  /* --- ACCENT COLORS --- */
+  --color-accent-main: oklch(0.7 0.18 45);
+
+  /* --- CHART SERIES COLORS --- */
+  --color-chart-blue: oklch(0.55 0.15 255);
+  --color-chart-green: oklch(0.65 0.18 130);
+  --color-chart-gold: oklch(0.85 0.17 85);
+  --color-chart-gray: oklch(0.72 0.02 260);
+  --color-chart-orange: oklch(0.68 0.17 50);
+  --color-chart-teal: oklch(0.62 0.12 230);
+
+  /* --- PERSONA TAB THEME COLORS --- */
+  --color-forest: #036984;
+  --color-teal: #1683a0;
+  --color-lime: #b8d65c;
+  --color-teal-2: #5bb2c8;
+  --color-gold: #e0b44b;
+  --color-mint: #e9f5f8;
+  --color-ink: #15332f;
+
+  /* --- GLASS SURFACES --- */
+  --color-glass: rgba(20, 115, 133, 0.72);
+  --color-glass-strong: rgba(20, 115, 133, 0.8);
+  --color-glass-soft: rgba(20, 115, 133, 0.62);
+  --color-glass-border: rgba(220, 242, 248, 0.22);
+
+  /* --- TAB STATE COLORS --- */
+  --color-tab-default: rgba(2, 44, 59, 0.64);
+  --color-tab-hover: rgba(3, 105, 132, 0.44);
+  --color-tab-hover-border: rgba(199, 237, 246, 0.52);
+  --color-tab-active: rgba(3, 105, 132, 0.76);
+  --color-tab-active-border: rgba(199, 237, 246, 0.68);
+
+  /* --- EFFECT COLORS --- */
+  --color-spotlight-center: rgba(183, 235, 248, 0.13);
+  --color-spotlight-mid: rgba(183, 235, 248, 0.035);
+  --color-aura-center: rgba(122, 214, 238, 0.12);
+  --color-aura-mid: rgba(3, 105, 132, 0.055);
+
+  /* --- CONTENT COLORS (V2) --- */
+  --color-content-muted: #d5e7ee;
+
+  /* --- GLASS SURFACES (V2) --- */
+  --color-glass-faint: rgba(20, 115, 133, 0.34);
+  --color-glass-header: rgba(20, 115, 133, 0.76);
+  --color-glass-card-hover: rgba(3, 71, 92, 0.78);
+
+  /* --- BORDER COLORS (V2) --- */
+  --color-border-subtle: rgba(255, 255, 255, 0.16);
+  --color-border-faint: rgba(199, 237, 246, 0.24);
+  --color-border-card-hover: rgba(199, 237, 246, 0.66);
+
+  /* --- HEADING GRADIENT --- */
+  --color-heading-start: #fce8b2;
+  --color-heading-end: #83deed;
+
+  /* --- OVERLAY COLORS --- */
+  --color-overlay: #1c5e70;
+
+  /* --- SHADOW TOKENS (V2) --- */
+  --shadow-glass-card: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --shadow-glass-panel: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+  --shadow-glass-hover: 0 0 30px rgba(255, 255, 255, 0.08);
+  --shadow-metric-hover: 0 26px 60px rgba(0, 21, 31, 0.34);
+  --shadow-elevated: 0 24px 60px rgba(0, 0, 0, 0.4);
+  --shadow-icon-glow: 0 0 8px rgba(91, 178, 200, 0.5);
+  --shadow-scene-active: 0 0 12px rgba(255, 255, 255, 0.6);
+}

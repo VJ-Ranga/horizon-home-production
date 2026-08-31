@@ -1,0 +1,63 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Generated scroll-scrubber frames — re-cut from the source footage, kept out of git.
+# frames/, frames-hq/, and frames-4k/ ship; the old backup sets are
+# extraction scratch and stay local.
+/public/frames-hq-old-*/
+/public/frames-old-*/
+
+# Source design files and built video — large binaries kept out of git
+*.psd
+*.psb
+*.mp4
+
+# Dense (2x / 4x) frame sets — generated from the source video, not shipped.
+# Regenerate with ffmpeg: -ss 22.700, fps = N x 5.1922, scale=1942:1080,
+# then MEASURE the trim offset (never calculate it — every calculated
+# trim so far was wrong by 2-3 frames) and renumber from 1.
+/public/frames-2x/
+/public/frames-2x-hq/
+/public/frames-4x/
+
+# Timestamped scratch backups made while editing — local only
+/.backups/
