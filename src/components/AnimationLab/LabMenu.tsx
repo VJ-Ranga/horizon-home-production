@@ -30,18 +30,18 @@
 import { useEffect, useState } from "react";
 import { LOGO_EXIT_FRAMES } from "./timeline";
 import { useFrameEffect } from "./useFrameTimeline";
+import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
 const MENU_REVEAL_FRAME = LOGO_EXIT_FRAMES[1];
 
-const HORIZON_ORIGIN = "https://horizon-ten-pi.vercel.app";
-
-/* horizon/src/components/GlobalHeader.tsx's own menuLinks, unchanged. */
+/* Mirrors GlobalHeader's menuLinks. "Home" is this site, so it stays relative. */
 const menuLinks = [
-  { name: "Home", href: `${HORIZON_ORIGIN}/` },
-  { name: "AI Assistant", href: `${HORIZON_ORIGIN}/chat` },
-  { name: "Crossword Puzzle", href: `${HORIZON_ORIGIN}/puzzle` },
-  { name: "Tailor made for you", href: `${HORIZON_ORIGIN}/tailor-made-for-you` },
-  { name: "User Profiles", href: `${HORIZON_ORIGIN}/user-profile` },
+  { name: "Home", href: "/" },
+  { name: "AI Guided Exploration", href: horizonUrl(HORIZON_ROUTES.aiAssistant) },
+  { name: "User Profiles", href: horizonUrl(HORIZON_ROUTES.userProfiles) },
+  { name: "Gamified Exploration", href: horizonUrl(HORIZON_ROUTES.crosswordPuzzle) },
+  { name: "Sustainability Dashboard", href: horizonUrl(HORIZON_ROUTES.dashboard) },
+  { name: "Interactive Charts & Reports", href: horizonUrl(HORIZON_ROUTES.tailorMade) },
 ];
 
 export default function LabMenu() {

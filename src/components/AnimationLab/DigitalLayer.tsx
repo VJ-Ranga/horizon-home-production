@@ -56,6 +56,7 @@ import {
 } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 import LottieIcon from "./LottieIcon";
+import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
 const DIGITAL = SECTIONS[3];
 const TITLE_TEXT = "The Next Horizon of Intelligent Reporting";
@@ -165,12 +166,12 @@ const PROFILES = [
   {
     label: "AI Guided Exploration",
     file: "AI Guided Exploration.json",
-    href: "https://horizon-ten-pi.vercel.app/chat",
+    href: horizonUrl(HORIZON_ROUTES.aiAssistant),
   },
   {
     label: "User Profiles",
     file: "User Profiles.json",
-    href: "https://horizon-ten-pi.vercel.app/user-profile",
+    href: horizonUrl(HORIZON_ROUTES.userProfiles),
   },
   {
     label: "Gamified Exploration",
@@ -328,7 +329,7 @@ export default function DigitalLayer() {
 
         <a
           className="s-digital2__profile s-digital2__profile--cta"
-          href="https://horizon-ten-pi.vercel.app/tailor-made-for-you"
+          href={horizonUrl(HORIZON_ROUTES.tailorMade)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Interactive Charts &amp; Reports"

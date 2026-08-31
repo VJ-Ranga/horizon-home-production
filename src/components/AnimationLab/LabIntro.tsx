@@ -184,9 +184,6 @@ export default function LabIntro({
             <span className="lab-intro__spinner" aria-hidden="true" />
           ) : (
             <div className="lab-intro__loader">
-              <p className="lab-intro__count" aria-live="polite">
-                {pct}
-              </p>
               <p className="lab-intro__label">Loading</p>
             </div>
           )}

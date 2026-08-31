@@ -37,6 +37,7 @@ import {
   useRevealPart,
   useSectionLayer,
 } from "./useFrameTimeline";
+import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
 const HERO = SECTIONS[0];
 const POPUP_CLOSE_AFTER_FRAMES = 5;
@@ -304,7 +305,7 @@ export default function HeroLayer() {
         </a>
         <a
           className="btn btn--ghost s-hero__cta s-hero__cta--ai"
-          href="https://horizon-ten-pi.vercel.app/chat"
+          href={horizonUrl(HORIZON_ROUTES.aiAssistant)}
           target="_blank"
           rel="noopener noreferrer"
         >

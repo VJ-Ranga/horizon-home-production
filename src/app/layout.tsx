@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import GlobalHeader from "@/components/GlobalHeader";
 
 export const metadata: Metadata = {
   title: "Horizon | Haycarb PLC",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body suppressHydrationWarning className="min-h-full flex flex-col font-sans">
+        <GlobalHeader />
         {children}
       </body>
     </html>
