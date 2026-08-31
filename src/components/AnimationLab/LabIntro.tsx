@@ -8,21 +8,28 @@
    fully-mounted <AnimationLab> that is holding on the handoff frame
    (HANDOFF_FRAME) with scroll locked. Sequence:
 
-     1. "loading"  project-colour screen: a real 0 -> 100 counter
-                   driven by decoded intro frames, plus a thin
-                   progress bar pinned to the top edge. The "minimal"
-                   variant shows a small spinner instead.
-     2. "playing"  the 240 intro frames scrubbed on this component's
-                   own <canvas> at INTRO_FPS. Skippable — click, key,
-                   wheel, or the Skip button.
-     3. "leaving"  the overlay fades out; onDone() releases the lab's
+     1. "playing"  the 240 intro frames scrubbed on this component's
+                   own <canvas> at INTRO_FPS. There is no load screen:
+                   playback starts on mount and the frames stream in
+                   underneath it. Skippable — click, key, wheel, or
+                   the Skip button.
+     2. "leaving"  the overlay fades out; onDone() releases the lab's
                    entry autoplay (which was gated on this, reusing
                    the same hold the slow-decode path already uses),
                    then the node removes itself.
 
-   loaderOnly: stop at step 1 with the bar full — for tuning the
-   screen in isolation on /animation-lab-loading. onDone is never
-   called, so the lab underneath stays parked on the handoff frame.
+   The frames are 66MB, so waiting for all of them before the first
+   paint meant a long dead screen. They are all still requested up
+   front, but playback no longer waits for them: the clock is clamped
+   to the highest contiguously-decoded frame, so the intro starts on
+   frame 1 and HOLDS whenever it catches up with the download,
+   resuming where it left off. It never skips ahead and never shows
+   an undrawn frame.
+
+   loaderOnly keeps the old "loading" screen, reached only from
+   /animation-lab-loading for tuning that screen in isolation: it
+   waits for the full decode, parks with the bar full, and never
+   calls onDone, so the lab underneath stays on the handoff frame.
 
    Nothing here touches timeline.ts's scroll math or the page height.
    With none of the -full / -intro / -loading routes active this file
@@ -33,6 +40,9 @@ import { INTRO_FRAME_COUNT, INTRO_FPS, introFrameSrc } from "./timeline";
 
 type Stage = "loading" | "playing" | "leaving";
 
+/* How long a decode may hold a loaded frame before it is used anyway. */
+const DECODE_GRACE_MS = 300;
+
 export default function LabIntro({
   loaderOnly = false,
   minimal = false,
@@ -42,11 +52,16 @@ export default function LabIntro({
   minimal?: boolean;
   onDone: () => void;
 }) {
-  const [stage, setStage] = useState<Stage>("loading");
+  // No load screen: the intro is already playing on mount. loaderOnly is the
+  // one path that still shows the old screen.
+  const [stage, setStage] = useState<Stage>(loaderOnly ? "loading" : "playing");
   const [pct, setPct] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
+  /* Highest frame number (1-based) decoded with no gap before it. The clock
+     never advances past this, so playback holds instead of skipping. */
+  const readyRef = useRef(0);
   const doneRef = useRef(false);
 
   const finish = useCallback(() => {
@@ -59,41 +74,63 @@ export default function LabIntro({
     }, 650);
   }, [onDone]);
 
-  /* ---- preload + decode the intro frames, tracking real progress ---- */
+  /* ---- preload the intro frames, tracking contiguous readiness ---- */
   useEffect(() => {
     let disposed = false;
     let loaded = 0;
-    const images: HTMLImageElement[] = [];
+    const images: HTMLImageElement[] = new Array(INTRO_FRAME_COUNT);
+    const decoded: boolean[] = new Array(INTRO_FRAME_COUNT).fill(false);
 
-    const bump = () => {
+    imagesRef.current = images;
+    readyRef.current = 0;
+
+    /* Mark frame i usable and extend the contiguous-ready run. Idempotent:
+       decode-settle and the grace timer race to call it. */
+    const settle = (i: number) => {
+      if (disposed || decoded[i]) return;
+      decoded[i] = true;
+      while (readyRef.current < INTRO_FRAME_COUNT && decoded[readyRef.current]) {
+        readyRef.current += 1;
+      }
       loaded += 1;
-      if (!disposed) setPct(Math.round((loaded / INTRO_FRAME_COUNT) * 100));
+      setPct(Math.round((loaded / INTRO_FRAME_COUNT) * 100));
     };
 
-    const jobs = Array.from({ length: INTRO_FRAME_COUNT }, (_, i) => {
-      const n = i + 1;
+    /* Every frame is requested up front, exactly as before. Nothing here may
+       depend on another frame having finished: an earlier windowed version
+       pumped the next request from each settle, and when a request hung with
+       no load and no error event the whole queue deadlocked behind it. */
+    for (let i = 0; i < INTRO_FRAME_COUNT; i += 1) {
       const img = new Image();
       img.decoding = "async";
-      img.src = introFrameSrc(n);
-      images[n - 1] = img;
-      // A frame that fails to decode must not stall the screen.
-      return img.decode().catch(() => {}).finally(bump);
-    });
+      images[i] = img;
 
-    void Promise.all(jobs).then(() => {
-      if (disposed) return;
-      imagesRef.current = images;
-      if (loaderOnly) {
-        setPct(100);
-        return;
-      }
-      setStage("playing");
-    });
+      img.onload = () => {
+        /* Prefer decoding before the frame is painted, but never wait on it
+           indefinitely — decode() can fail to settle under this many parallel
+           decodes, and a frame stuck undecoded would block the ready run and
+           freeze playback. The image is loaded either way, so the worst case
+           is one synchronous decode inside drawImage. */
+        const guard = window.setTimeout(() => settle(i), DECODE_GRACE_MS);
+        void img
+          .decode()
+          .catch(() => {})
+          .finally(() => {
+            window.clearTimeout(guard);
+            settle(i);
+          });
+      };
+      // A frame that 404s or fails must not block the run; paint() skips any
+      // image that never got pixels, so the previous frame simply holds.
+      img.onerror = () => settle(i);
+
+      img.src = introFrameSrc(i + 1);
+    }
 
     return () => {
       disposed = true;
     };
-  }, [loaderOnly]);
+  }, []);
 
   /* ---- play the intro on a clock ---- */
   useEffect(() => {
@@ -124,14 +161,22 @@ export default function LabIntro({
     };
 
     let rafId = 0;
-    let start = 0;
-    const totalMs = (INTRO_FRAME_COUNT / INTRO_FPS) * 1000;
+    let last = 0;
+    let played = 1; // current position, in frames, fractional
 
+    /* Advance by real elapsed time, but never past the frames we actually
+       have. When the loader falls behind, `played` stops moving and the last
+       good frame stays up; when it catches up, playback resumes from there
+       rather than jumping to where the wall clock would have been. */
     const tick = (now: number) => {
-      if (start === 0) start = now;
-      const t = Math.min((now - start) / totalMs, 1);
-      paint(Math.max(1, Math.round(t * INTRO_FRAME_COUNT)));
-      if (t >= 1) {
+      if (last === 0) last = now;
+      const dt = (now - last) / 1000;
+      last = now;
+
+      played = Math.min(played + dt * INTRO_FPS, Math.max(1, readyRef.current));
+      paint(Math.round(played));
+
+      if (played >= INTRO_FRAME_COUNT) {
         finish();
         return;
       }
