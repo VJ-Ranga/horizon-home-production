@@ -81,9 +81,9 @@ const STATS = [
 ];
 
 const PILLS = [
-  { label: "Haycarb in Focus", icon: "Web Icons-09.svg", href: "/pdf/home/06-key-data-points/Haycarb%20in%20Focus%20-%20Final%2017.pdf" },
-  { label: "Products", icon: "Web Icons-10.svg", href: "/pdf/home/06-key-data-points/Products%20-%20Final%2020.pdf" },
-  { label: "Awards", icon: "Web Icons-11.svg", href: "/pdf/home/06-key-data-points/Awards%20-%20Final%2021.pdf" },
+  { label: "Haycarb in Focus", icon: "Web Icons-09.svg", href: "/pdf/home/06-key-data-points/Haycarb%20in%20Focus.pdf" },
+  { label: "Products", icon: "Web Icons-10.svg", href: "/pdf/home/06-key-data-points/Products.pdf" },
+  { label: "Awards", icon: "Web Icons-11.svg", href: "/pdf/home/06-key-data-points/Awards.pdf" },
   { label: "Milestones", icon: "Web Icons-12.svg", href: "/pdf/home/06-key-data-points/Milestones%20-%2053%20Years%20of%20Resilience%2C%20Growth%20and%20Value%20Creation.pdf" },
 ];
 

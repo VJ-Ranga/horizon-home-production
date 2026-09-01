@@ -66,11 +66,23 @@ const GROUP_COUNT = 8;
 const EXIT_WINDOW = APPROACH.exit!.frames;
 const VIRTUAL_EXIT_WINDOW: [number, number] = [0, APPROACH.virtualExitFrames ?? 0];
 
+// Popup follows the same dialogRef/showModal pattern as HeroLayer.tsx
+// and GlanceLayer.tsx's own video dialogs. "Watch the Highlights"
+// video from VJ, 2026-09-01. Loaded into the iframe only while the
+// dialog is open, cleared on close so it stops playing.
+const POPUP_CLOSE_AFTER_FRAMES = 5;
+const HIGHLIGHTS_VIDEO_SRC =
+  "https://www.youtube.com/embed/m4GztUvo9J0?autoplay=1&rel=0";
+
 export default function ApproachLayer() {
   const ref = useSectionLayer(APPROACH);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const groupRefs = useRef<Array<HTMLElement | null>>([]);
   const reducedMotionRef = useRef(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const videoFrameRef = useRef<HTMLIFrameElement>(null);
+  const currentFrameRef = useRef(APPROACH.settledFrame);
+  const dialogOpenedAtFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     reducedMotionRef.current = window.matchMedia(
@@ -79,6 +91,17 @@ export default function ApproachLayer() {
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
+    currentFrameRef.current = frame;
+    const openedAt = dialogOpenedAtFrameRef.current;
+    if (
+      dialogRef.current?.open &&
+      openedAt !== null &&
+      Math.abs(frame - openedAt) >= POPUP_CLOSE_AFTER_FRAMES
+    ) {
+      dialogRef.current.close();
+      dialogOpenedAtFrameRef.current = null;
+    }
+
     if (reducedMotionRef.current) return;
 
     const virtualExit = virtualExitProgressAtScrollPx(
@@ -342,24 +365,63 @@ export default function ApproachLayer() {
                 — not the hero's "Download Annual Report". */}
             <a
               className="btn s-approach2__cta"
-              href="/pdf/home/03-approach/Our%20Approach%20to%20Reporting%20-%20Final%208.pdf"
+              href="/pdf/home/03-approach/Our%20Approach%20to%20Reporting.pdf"
               target="_blank"
               rel="noopener noreferrer"
             >
               <span>Explore More</span>
             </a>
-            {/* Highlights video not shared yet — href="#" placeholder. */}
-            <a
+            <button
+              type="button"
               className="btn btn--watch s-approach2__cta"
-              href="#"
+              aria-haspopup="dialog"
+              aria-controls="approach-highlights-dialog"
               aria-label="Watch the Highlights"
+              onClick={() => {
+                dialogOpenedAtFrameRef.current = currentFrameRef.current;
+                if (videoFrameRef.current) videoFrameRef.current.src = HIGHLIGHTS_VIDEO_SRC;
+                dialogRef.current?.showModal();
+              }}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="m8 5 11 7-11 7V5Z" />
               </svg>
               <span>Watch the Highlights</span>
-            </a>
+            </button>
           </div>
+
+          {/* Popup, same dialogRef/showModal pattern as HeroLayer.tsx
+              and GlanceLayer.tsx's own video dialogs. */}
+          <dialog
+            ref={dialogRef}
+            className="s-approach2__video-dialog"
+            id="approach-highlights-dialog"
+            aria-label="Watch the Highlights video"
+            onClick={(event) => {
+              if (event.target === dialogRef.current) dialogRef.current?.close();
+            }}
+            onClose={() => {
+              dialogOpenedAtFrameRef.current = null;
+              if (videoFrameRef.current) videoFrameRef.current.src = "";
+            }}
+          >
+            <iframe
+              ref={videoFrameRef}
+              className="s-approach2__video-embed"
+              title="Watch the Highlights video"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
+            <form method="dialog">
+              <button
+                className="s-approach2__video-dialog-close"
+                type="submit"
+                aria-label="Close video"
+              >
+                ×
+              </button>
+            </form>
+          </dialog>
         </div>
       </div>
 

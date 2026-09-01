@@ -40,12 +40,12 @@ const PILLARS = [
   {
     title: "Innovation Led Growth",
     copy: "Haycarb advanced its innovation efforts by enhancing R&D capabilities, fostering a learning culture and applying data driven insights to support future growth.",
-    metrics: [["14", "New Products Introduced"], ["Rs. 261 Mn", "Investment in R&D"]],
+    metrics: [["14", "New Products Introduced"], ["LKR 261 Mn", "Investment in R&D"]],
   },
   {
     title: "Global Supply Chain",
     copy: "Haycarb strengthened supply chain resilience through regional diversification, sustainable sourcing and strategic partnerships across key raw material markets.",
-    metrics: [["Rs. 19 Mn", "Investment in Supplier Development"], ["> 500", "Number of Suppliers"]],
+    metrics: [["LKR 19 Mn", "Investment in Supplier Development"], ["> 500", "Number of Suppliers"]],
   },
   {
     title: "Purpose Driven Committed Teams",
@@ -80,8 +80,8 @@ const RISKS = [
   },
 ];
 
-const ESG_EXPLORE_URL = "/pdf/home/17-strategy/Strategy%20-%20Final%20152.pdf";
-const RISKS_EXPLORE_URL = "/pdf/home/17-strategy/Risks%20and%20Opportunities%20-%20Final%2056.pdf";
+const ESG_EXPLORE_URL = "/pdf/home/17-strategy/Strategy.pdf";
+const RISKS_EXPLORE_URL = "/pdf/home/17-strategy/Risks%20and%20Opportunities.pdf";
 const PILLAR_ICON_FILES = [
   "Web Icons-19.svg",
   "Web Icons-20.svg",

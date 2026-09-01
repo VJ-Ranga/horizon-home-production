@@ -130,13 +130,13 @@ type Stat = { money?: boolean; value: string; unit?: string; label: string };
 type Card = { title: string; body: string; link: string; image: string; stats: Stat[] };
 
 // "Explore More" targets: one local report-extract PDF per capital in
-// public/pdf/home/14-financial-capital/ (sourced from doc/new pdf crsl).
+// public/pdf/home/capitals/ (sourced from doc/new pdf crsl).
 // All open in a new tab. An empty link would render as plain text (no anchor).
 const CARDS: Card[] = [
   {
     title: "Financial Capital",
     body: "Financial resources generated and deployed to sustain operations, drive growth and deliver long term value to stakeholders.",
-    link: "/pdf/home/14-financial-capital/financial-capital.pdf",
+    link: "/pdf/home/capitals/financial-capital.pdf",
     image: "/fincap/capitals/financial-capital.png",
     stats: [
       { money: true, value: "67.1", unit: "Bn", label: "Revenue" },
@@ -147,7 +147,7 @@ const CARDS: Card[] = [
   {
     title: "Natural Capital",
     body: "Natural resources and ecosystems that support our operations, with a focus on responsible use and environmental stewardship.",
-    link: "/pdf/home/14-financial-capital/natural-capital.pdf",
+    link: "/pdf/home/capitals/natural-capital.pdf",
     image: "/fincap/capitals/natural-capital.png",
     stats: [
       { value: "77", unit: "%", label: "Renewable Energy usage" },
@@ -158,7 +158,7 @@ const CARDS: Card[] = [
   {
     title: "Social and Relationship Capital",
     body: "Connections, trust and partnerships built with customers, suppliers, communities and other stakeholders.",
-    link: "/pdf/home/14-financial-capital/social-and-relationship-capital.pdf",
+    link: "/pdf/home/capitals/social-and-relationship-capital.pdf",
     image: "/fincap/capitals/social-and-relationship-capital.png",
     stats: [
       { value: ">600", label: "Customers" },
@@ -169,7 +169,7 @@ const CARDS: Card[] = [
   {
     title: "Intellectual Capital",
     body: "Knowledge, expertise, innovation and processes that enhance efficiency and drive competitive advantage.",
-    link: "/pdf/home/14-financial-capital/intellectual-capital.pdf",
+    link: "/pdf/home/capitals/intellectual-capital.pdf",
     image: "/fincap/capitals/intellectual-capital.png",
     stats: [
       { money: true, value: "261", unit: "Mn", label: "Investment in R&D" },
@@ -180,7 +180,7 @@ const CARDS: Card[] = [
   {
     title: "Human Capital",
     body: "Skills, experience and wellbeing of our people, enabling performance, innovation and organisational resilience.",
-    link: "/pdf/home/14-financial-capital/human-capital.pdf",
+    link: "/pdf/home/capitals/human-capital.pdf",
     image: "/fincap/capitals/human-capital.png",
     stats: [
       { value: "2,084", label: "No of Employees" },
@@ -191,7 +191,7 @@ const CARDS: Card[] = [
   {
     title: "Manufactured Capital",
     body: "Our production facilities, infrastructure and equipment that underpin efficient and high quality operations.",
-    link: "/pdf/home/14-financial-capital/manufactured-capital.pdf",
+    link: "/pdf/home/capitals/manufactured-capital.pdf",
     image: "/fincap/capitals/manufactured-capital.png",
     stats: [
       { money: true, value: "16.17", unit: "Bn", label: "Total Property Plant & Equipment" },
@@ -202,7 +202,7 @@ const CARDS: Card[] = [
   {
     title: "Digital Capital",
     body: "Technology, systems and data capabilities that enable digital transformation, innovation and smarter decision making.",
-    link: "/pdf/home/14-financial-capital/digital-capital.pdf",
+    link: "/pdf/home/capitals/digital-capital.pdf",
     image: "/fincap/capitals/digital-capital.png",
     stats: [
       { money: true, value: "70.5", unit: "Mn", label: "Investment in Digital Platforms" },

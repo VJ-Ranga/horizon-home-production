@@ -36,6 +36,7 @@ import {
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 import { createHoverAudioPlayer } from "./hoverAudio";
 import { FinancialActionButton } from "./FinancialActionButton";
+import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
 const FINANCIAL = SECTIONS[7];
 const SWAP_DELAY_MS = 160;
@@ -53,7 +54,7 @@ const PERFORMANCE: readonly Metric[] = [
 
 const RATIOS: readonly Metric[] = [
   ["Return on Equity", "12.3%", "Return on equity — 5-year trend", "/charts/return-on-equity.webp", "/audio/08-financial/return-on-equity.mp3"],
-  ["Earnings Per Share", "Rs. 12.18", "Earnings per share — 5-year trend", "/charts/earnings-per-share.webp", "/audio/08-financial/earnings-per-share.mp3"],
+  ["Earnings Per Share", "LKR 12.18", "Earnings per share — 5-year trend", "/charts/earnings-per-share.webp", "/audio/08-financial/earnings-per-share.mp3"],
   ["PBT Margin", "8.8%", "PBT margin — 5-year trend", "/charts/pbt-margin.webp", "/audio/08-financial/pbt-margin.mp3"],
   ["Current Ratio", "1.74 times", "Current ratio — 5-year trend", "/charts/current-ratio.webp", "/audio/08-financial/current-ratio.mp3"],
   ["Gearing Ratio", "37.5%", "Gearing ratio — 5-year trend", "/charts/gearing.webp", "/audio/08-financial/gearing-ratio.mp3"],
@@ -347,7 +348,7 @@ export default function FinancialLayer() {
 
         <nav className="s-financial2__actions" aria-label="Financial report actions" data-reveal="0.58">
           <FinancialActionButton
-            href="/pdf/home/08-financial/Financial%20Capital%20-%20Final%20162.pdf"
+            href="/pdf/home/08-financial/Financial%20Capital.pdf"
             target="_blank"
             icon="/financial/web-icons/Web%20Icons-13.svg"
             variant="light"
@@ -355,7 +356,8 @@ export default function FinancialLayer() {
             Explore More
           </FinancialActionButton>
           <FinancialActionButton
-            href="#"
+            href={horizonUrl(HORIZON_ROUTES.tailorMade)}
+            target="_blank"
             icon="/financial/web-icons/Web%20Icons-14.svg"
             variant="watch"
           >

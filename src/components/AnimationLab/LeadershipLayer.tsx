@@ -17,7 +17,7 @@ const LANGUAGE_PDFS: { label: string; file: string }[] = [
   { label: "Chinese", file: "Leadership Message - Chinese.pdf" },
   { label: "Thai", file: "Leadership Message - Thai.pdf" },
   { label: "German", file: "Leadership Message - German.pdf" },
-  { label: "Indonesia", file: "Leadership Message - Bahasa.pdf" },
+  { label: "Bahasa Indonesia", file: "Leadership Message - Bahasa.pdf" },
 ];
 
 function AssetIcon({ file }: { file: string }) {
@@ -149,8 +149,8 @@ export default function LeadershipLayer() {
           <span>Joint Message Video</span>
         </button>
         <LanguageDropdown />
-        <a className="s-leadership5__pill lab-shine" href="/pdf/home/12-leadership/Board%20of%20Directors%20-%20Final%2028.pdf" target="_blank" rel="noopener noreferrer"><AssetIcon file="Web Icons-17.svg" /><span>Board of Directors</span></a>
-        <a className="s-leadership5__pill lab-shine" href="/pdf/home/12-leadership/Management%20Team%20-%20Final%2033.pdf" target="_blank" rel="noopener noreferrer"><AssetIcon file="Web Icons-18.svg" /><span>Management Team</span></a>
+        <a className="s-leadership5__pill lab-shine" href="/pdf/home/12-leadership/Board%20of%20Directors.pdf" target="_blank" rel="noopener noreferrer"><AssetIcon file="Web Icons-17.svg" /><span>Board of Directors</span></a>
+        <a className="s-leadership5__pill lab-shine" href="/pdf/home/12-leadership/Management%20Team.pdf" target="_blank" rel="noopener noreferrer"><AssetIcon file="Web Icons-18.svg" /><span>Management Team</span></a>
       </nav>
 
       <dialog

@@ -1388,6 +1388,67 @@ html.lab-menu-open body {
   outline-offset: 4px;
 }
 
+/* "Watch the Highlights" popup — same pattern/geometry as
+   .s-hero__video-dialog, scoped to this section's own class prefix. */
+.s-approach2__video-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(92vw, 1440px);
+  max-height: 96%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  transform: translate(-50%, -50%);
+}
+
+.s-approach2__video-dialog[open] {
+  animation: approach-highlights-open 0.45s var(--ease-out) both;
+}
+
+@keyframes approach-highlights-open {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.s-approach2__video-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+
+.s-approach2__video-embed {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 90svh;
+  border: 2px solid #4caf78;
+  border-radius: 14px;
+  background: transparent;
+}
+
+.s-approach2__video-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #4caf78;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font: 400 28px/1 Arial, sans-serif;
+}
+
 /* Hidden in the template as of 2026-08-23 (display: none added to its
    own rule there) — kept in the markup, just not shown, same as the
    source. */

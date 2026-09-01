@@ -160,8 +160,9 @@ const FEATURES = [
 ];
 
 // The "Explore the Digital Experience" quicklinks (PDF p.3). The
-// fifth link is the --cta anchor rendered after this list. hrefs are
-// "#" until the real digital-experience routes exist.
+// fifth link is the --cta anchor rendered after this list. Same 5
+// routes GlobalHeader.tsx's own menu points at, via the same
+// HORIZON_ROUTES map.
 const PROFILES = [
   {
     label: "AI Guided Exploration",
@@ -176,10 +177,12 @@ const PROFILES = [
   {
     label: "Gamified Exploration",
     file: "Gamified Exploration.json",
+    href: horizonUrl(HORIZON_ROUTES.crosswordPuzzle),
   },
   {
     label: "Sustainability Dashboard",
     file: "Sustainability Dashboard.json",
+    href: horizonUrl(HORIZON_ROUTES.dashboard),
   },
 ];
 
