@@ -139,6 +139,21 @@ export default function GlobalHeader() {
               </Link>
             ))}
           </div>
+
+          {/* Credit line, pinned to the bottom of the panel and sharing the
+              links' left inset so the two align. pointer-events-auto because
+              the nav itself only enables them while open. */}
+          <p className="!absolute !bottom-0 !left-0 !w-full !px-6 !pb-6 md:!pr-12 md:!pl-[96px] md:!pb-8 !z-[60] !pointer-events-auto !font-sans !text-xs md:!text-sm !leading-relaxed text-white/70">
+            © 2026. Haycarb PLC, All Rights Reserved. Concept &amp; Design by{" "}
+            <a
+              href="https://luxeeye.au/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-white transition-colors duration-300"
+            >
+              Luxe Eye.
+            </a>
+          </p>
         </div>
       </nav>
     </>
