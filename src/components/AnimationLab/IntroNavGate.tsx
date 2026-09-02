@@ -14,10 +14,18 @@
 
 import { useEffect } from "react";
 import { useFrameEffect } from "./useFrameTimeline";
-import { SECTIONS } from "./timeline";
+import { LOGO_EXIT_FRAMES, SECTIONS } from "./timeline";
 
 /* The frame the hamburger appears on, and stays visible from. */
 const REVEAL_FRAME = 60;
+
+/* The music toggle appears with the settled hero, one beat before the
+   hamburger. It controls audio that keeps playing for the whole page, so
+   unlike the hero it never leaves — it only moves: while the hero is up
+   the top-right corner belongs to the video card, so the toggle sits
+   under it, and once the hero has exited it takes the corner. */
+const MUSIC_REVEAL_FRAME = 50;
+const MUSIC_DOCK_FRAME = LOGO_EXIT_FRAMES[1];
 const TEAL_NAV_IDS = new Set(["05-intro-statement", "06-key-data-points"]);
 const [tealStart, tealEnd] = SECTIONS
   .filter((s) => TEAL_NAV_IDS.has(s.id))
@@ -44,9 +52,24 @@ export default function IntroNavGate() {
     );
   });
 
+  useFrameEffect((frame) => {
+    const root = document.documentElement;
+    root.classList.toggle("lab-music-hidden", frame < MUSIC_REVEAL_FRAME);
+    // Parked under the hero's video card until the hero is gone.
+    root.classList.toggle(
+      "lab-music-hero",
+      frame >= MUSIC_REVEAL_FRAME && frame < MUSIC_DOCK_FRAME,
+    );
+  });
+
   useEffect(
     () => () => {
-      document.documentElement.classList.remove("lab-nav-hidden", "lab-nav-teal");
+      document.documentElement.classList.remove(
+        "lab-nav-hidden",
+        "lab-nav-teal",
+        "lab-music-hidden",
+        "lab-music-hero",
+      );
     },
     [],
   );
