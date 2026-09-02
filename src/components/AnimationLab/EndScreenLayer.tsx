@@ -72,15 +72,6 @@ export default function EndScreenLayer() {
       }
       wordIndex += 1;
     }
-
-    // Dark gradient overlay tracks the whole copy reveal: it fills as the
-    // last word lands, holds through the settled/hold frames, then drains
-    // across the virtual-exit frames. The last element to move — entering
-    // or leaving — is stagger position WORD_COUNT - 1, so the scrim only
-    // reaches its endpoints when every word has.
-    if (ref.current) {
-      ref.current.style.setProperty("--end-scrim", String(reveal(WORD_COUNT - 1)));
-    }
   });
 
   return (

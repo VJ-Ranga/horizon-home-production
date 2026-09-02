@@ -50,7 +50,11 @@ import {
    enter/hold/exit, including the easing. */
 const GLANCE_SECTION = SECTIONS[5];
 const FINANCIAL_SECTION = SECTIONS[7];
-const OVERLAY_END_SECTION = SECTIONS[15];
+// 19-end-screen. The veil used to contract after 16-nonfinancial
+// (SECTIONS[15]); it now runs unbroken to the end of the last section,
+// so 17/18/19 share one continuous overlay and the end screen no longer
+// needs a scrim of its own.
+const OVERLAY_END_SECTION = SECTIONS[18];
 const OVERLAY_FADE_FRAMES = 20;
 import { useFrameEffect } from "./useFrameTimeline";
 import { useMouseParallax } from "./useMouseParallax";

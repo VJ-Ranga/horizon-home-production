@@ -366,40 +366,31 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   text-align: center;
 }
 
-/* Dark gradient overlay that fades in together with the word-by-word
-   copy reveal. --end-scrim is written per frame by EndScreenLayer
-   (0 -> 1 across the enter window, reversed on exit); it tops out at
-   0.4 so the frame behind stays readable. */
-.s-end-screen::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(2, 20, 28, 0) 0%,
-    rgba(2, 20, 28, 0.4) 100%
-  );
-  opacity: var(--end-scrim, 0);
-  pointer-events: none;
-}
-
 .s-end-screen__copy {
   position: relative;
   z-index: 1;
   width: min(100%, 1000px);
   margin: 0;
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
-  /* 48px is the target on a normal desktop (5.33svh hits it at a 900px
-     viewport) and the clamp caps it there on taller screens; short
-     laptops and phones scale down from it rather than overflowing.
-     Minion Pro ships one weight only, so this stays 400 — anything else
-     renders as faux bold. */
-  font-size: clamp(19px, 5.33svh, 48px);
+  /* Flat 48px on desktop, as specified. This was briefly a
+     clamp(19px, 5.33svh, 48px), which only actually reached 48px on
+     viewports 900px+ tall — a 1440x800 window rendered 42.6px, so the
+     spec was not being met on ordinary desktops. Tab/mobile scale down
+     from it in the media query below. Minion Pro ships one weight only,
+     so this stays 400 — anything else renders as faux bold. */
+  font-size: 48px;
   font-weight: 400;
   letter-spacing: 0.005em;
   line-height: 1.35;
   text-shadow: 0 2px 16px rgba(2, 25, 34, 0.35);
+}
+
+/* Tab + mobile keep the original viewport-scaled size — 48px would swamp
+   a phone, and this section's copy is long. */
+@media (max-width: 1100px) {
+  .s-end-screen__copy {
+    font-size: clamp(19px, 2.55svh, 31px);
+  }
 }
 
 /* ---------- section-layer first-paint state ----------
