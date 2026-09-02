@@ -1358,22 +1358,35 @@ export const SECTIONS: SectionTimeline[] = [
     // layer out, same as every other section — no scroll-jack, no
     // snapping.
     //
-    // Pin-after-30 design (VJ 2026-08-31): §17 settles at 875,
-    // advances through 43 real frames to 918, then keeps the background
-    // on frame 918 while the panel completes over 60 virtual frames and
-    // fades away over another 30 virtual frames. There is no hold phase.
-    // The section exit runs while that background remains pinned, and
-    // section 18 enters at 1015.
-    settledFrame: 875,
-    enter: { frames: [860, 875], from: { y: 4 } },
-    exit: { frames: [918, 948], to: { y: -4 } },
+    // Pin-after-30 design (VJ 2026-08-31): §17 settles, advances through
+    // 43 real frames to pinFrame, then keeps the background on that frame
+    // while the panel completes over 60 virtual frames and fades away over
+    // another 30 virtual frames. There is no hold phase. The section exit
+    // runs while that background remains pinned, and section 18 enters at
+    // 1015.
+    //
+    // Moved 2026-09-02: enter 870, settles 890 (was 860/875). Everything
+    // after settledFrame shifted with it so the scroll-through is
+    // untouched — these four numbers are locked together:
+    //   pinFrame - settledFrame must stay 43. StrategyLayer derives the
+    //     panel glide as scrollPx - (pinFrame - settledFrame)*px -
+    //     virtualExitFrames*px, so changing the gap silently rescales the
+    //     glide (28 would have made it 75 virtual frames, not 60).
+    //   exit[0] must equal pinFrame. The real frame is pinned there for
+    //     the whole glide, so an earlier exit would fade the panel out
+    //     while it is still moving.
+    //   exit width must stay virtualExitFrames (30).
+    // Only the enter window changed shape: 15 frames -> 20, as asked.
+    settledFrame: 890,
+    enter: { frames: [870, 890], from: { y: 4 } },
+    exit: { frames: [933, 963], to: { y: -4 } },
     scrollThrough: {
       scrollPx: 43 * PX_PER_FRAME_DEFAULT + 60 * PX_PER_FRAME_DEFAULT + 30 * PX_PER_FRAME_DEFAULT,
       slowdown: 2,
       rampFrames: 0,
       leadPx: 0,
       tailPx: 0,
-      pinFrame: 918,
+      pinFrame: 933,
       virtualExitFrames: 30,
     },
   },
