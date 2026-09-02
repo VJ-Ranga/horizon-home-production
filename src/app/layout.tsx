@@ -7,6 +7,13 @@ import BackgroundMusic from "@/components/BackgroundMusic";
 export const metadata: Metadata = {
   title: "Horizon | Haycarb PLC",
   description: "Annual Report 2025/26.",
+  // Same favicon as the Horizon app, declared the same way, so the two
+  // sites share one icon in the tab bar.
+  icons: {
+    icon: "/images/fav.png",
+    shortcut: "/images/fav.png",
+    apple: "/images/fav.png",
+  },
 };
 
 /* Runs before hydration: if this browsing session has already watched the
