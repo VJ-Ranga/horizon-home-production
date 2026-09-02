@@ -5,8 +5,10 @@ import GlobalHeader from "@/components/GlobalHeader";
 import BackgroundMusic from "@/components/BackgroundMusic";
 
 export const metadata: Metadata = {
-  title: "Horizon | Haycarb PLC",
-  description: "Annual Report 2025/26.",
+  title: "Haycarb Annual Report 2025/26 | Beyond the Beyond",
+  description:
+    "Explore Haycarb\u2019s Annual Report 2025/26 through an interactive digital " +
+    "experience covering performance, strategy, sustainability and value creation.",
   // Same favicon as the Horizon app, declared the same way, so the two
   // sites share one icon in the tab bar.
   icons: {
