@@ -93,3 +93,11 @@
     height: 23px;
   }
 }
+
+/* Set by the blocking script in layout.tsx when this browsing session has
+   already seen the intro. The overlay is still rendered (so hydration
+   matches the server) and dropped on mount; this keeps it invisible in
+   between, so returning from a feature page shows no flash of load screen. */
+html.intro-seen .lab-intro {
+  display: none !important;
+}

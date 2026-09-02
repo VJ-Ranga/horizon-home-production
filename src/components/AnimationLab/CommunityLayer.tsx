@@ -43,7 +43,7 @@ const STORIES = [
     title: "Puritas Sath Diyawara – Going Beyond",
     body: "School supplies and livelihood support for CKD-affected communities",
     stat: ">2,500 beneficiaries",
-    video: "https://youtu.be/gqjIoXtXyJg",
+    video: "https://youtu.be/gqjloXtXyJg",
     alt: "Community members receiving school supplies",
   },
   {

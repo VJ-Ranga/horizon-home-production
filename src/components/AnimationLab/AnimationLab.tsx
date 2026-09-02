@@ -32,7 +32,13 @@
    This is a lab. It does not touch Home/HomePage.tsx.
    ========================================================= */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Lenis from "lenis";
 import HeroLogo from "./HeroLogo";
 import IntroNavGate from "./IntroNavGate";
@@ -116,6 +122,31 @@ function resolveFrameDir(
     the rest of the hero over LOGO_EXIT_FRAMES, same as every other
     hero element, so it's back on by default. */
 const SHOW_HERO_LOGO = true;
+
+/* sessionStorage key marking that this browsing session has already seen
+   the intro, so returning to `/` from a feature page does not replay it. */
+const INTRO_SEEN_KEY = "horizon:intro-seen";
+
+/* The flag never changes within a render pass, so there is nothing to
+   subscribe to — useSyncExternalStore is used for its SSR contract, not for
+   change notification. */
+const subscribeToNothing = () => () => {};
+
+/* Storage throws in private mode / with site data blocked. Failing to read
+   must not cost the visitor the intro, so treat it as unseen. Returns a
+   boolean, so repeated calls stay Object.is-stable for React. */
+function readIntroSeen(): boolean {
+  try {
+    return window.sessionStorage.getItem(INTRO_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/* The server has no session, so it always renders the intro; React swaps in
+   the real value right after hydration. globals.css has already hidden the
+   overlay by then, via the blocking script in layout.tsx. */
+const readIntroSeenOnServer = () => false;
 
 type LoopTransition = {
   fromFrame: number;
@@ -313,7 +344,32 @@ export default function AnimationLab({
      same entry gate as entryReady, so this reuses the existing hold
      rather than adding a new phase. */
   const runIntro = intro && !skipEntry;
+
+  /* The intro is a once-per-visit welcome, not a gate on every page view:
+     leaving for /ai-assistant or any other feature page and coming back to
+     `/` is a full page load, so without this it replays every single time.
+     sessionStorage scopes it to the browsing session — a genuinely new
+     visit still gets the intro, moving around the site does not.
+
+     This CANNOT be read while rendering. The server has no sessionStorage,
+     so a render-time read makes the server emit the overlay and the client
+     skip it, which is a hydration mismatch (it threw exactly that before
+     being moved here). Instead the overlay is rendered on both sides and
+     dropped on mount, and the blocking script in layout.tsx has already
+     put `intro-seen` on <html> so globals.css hides it before the first
+     paint — no flash of a load screen that is about to disappear. */
+  const introSeen = useSyncExternalStore(
+    subscribeToNothing,
+    readIntroSeen,
+    readIntroSeenOnServer,
+  );
+
   const [introDone, setIntroDone] = useState(!runIntro);
+  const showIntro = runIntro && !introSeen;
+  /* A suppressed intro never mounts, so onDone never fires — the entry gate
+     below has to be released here instead, or the lab would hold on the
+     handoff frame forever on every return visit. */
+  const introComplete = introDone || introSeen;
 
   useEffect(() => {
     if (skipEntry) return;
@@ -352,7 +408,7 @@ export default function AnimationLab({
   const [pxPerFrame] = useState(readPxPerFrame);
   const scrollPx = totalScrollPx(pxPerFrame);
 
-  const driver = useFrameDriver(skipEntry, entryReady && introDone);
+  const driver = useFrameDriver(skipEntry, entryReady && introComplete);
   const [phase, setPhase] = useState<Phase>(skipEntry ? "scroll" : "entry");
   const phaseRef = useRef<Phase>(phase);
   const lenisRef = useRef<Lenis | null>(null);
@@ -724,11 +780,18 @@ export default function AnimationLab({
 
         {/* Load screen + intro shot. Only mounted on the -full /
             -intro / -loading routes; onDone releases the entry gate. */}
-        {runIntro && (
+        {showIntro && (
           <LabIntro
             loaderOnly={loaderOnly}
             minimal={minimalLoader}
-            onDone={() => setIntroDone(true)}
+            onDone={() => {
+              setIntroDone(true);
+              try {
+                window.sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+              } catch {
+                /* Nothing to do: the intro just replays next time. */
+              }
+            }}
           />
         )}
 
