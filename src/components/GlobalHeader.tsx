@@ -140,11 +140,12 @@ export default function GlobalHeader() {
             ))}
           </div>
 
-          {/* Credit, pinned to the bottom of the panel and sharing the links'
-              left inset so the two align. Watermark weight: a flat 12px at
-              30% white, two lines, no size step at md. pointer-events-auto
-              because the nav itself only enables them while open. */}
-          <p className="!absolute !bottom-0 !left-0 !w-full !px-6 !pb-6 md:!pr-12 md:!pl-[96px] md:!pb-8 !z-[60] !pointer-events-auto !font-sans !text-[12px] !leading-relaxed text-white/30">
+          {/* Credit, pinned to the bottom-right of the panel, on the logo's
+              right inset so it sits under the logo rather than the links.
+              Watermark weight: a flat 12px at 30% white, two lines, no size
+              step at md. pointer-events-auto because the nav itself only
+              enables them while open. */}
+          <p className="!absolute !bottom-0 !right-0 !w-full !px-6 !pb-6 md:!pr-12 md:!pl-12 md:!pb-8 !z-[60] !pointer-events-auto !text-right !font-sans !text-[12px] !leading-relaxed text-white/30">
             <span className="block">© 2026. Haycarb PLC, All Rights Reserved.</span>
             <span className="block">
               Concept &amp; Design by{" "}
