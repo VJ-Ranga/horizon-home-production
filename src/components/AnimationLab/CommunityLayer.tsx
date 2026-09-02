@@ -8,20 +8,19 @@
    their play button is a real <a target="_blank">; "Supporting University
    Students" has no video ("No link" in the spec) so it has no play button. */
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
-import { useSectionLayer } from "./useFrameTimeline";
+import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
 const COMMUNITY = SECTIONS[17];
 const CARD_COUNT = COMMUNITY.carousel!.count;
 const LEAD_PX = COMMUNITY.carousel!.leadPx;
 const TAIL_PX = COMMUNITY.carousel!.tailPx;
 const SWEEP_PX = COMMUNITY.carousel!.scrollPx - LEAD_PX - TAIL_PX;
-const EASE = 0.09;
 
 const STORIES = [
   {
-    image: "puritas-sath-diyawara.png",
+    image: "puritas-sath-diyawara.jpg",
     eyebrow: "Health & Wellbeing",
     title: "Puritas Sath Diyawara",
     body: "Purified drinking water for communities in CKD-affected areas",
@@ -30,7 +29,7 @@ const STORIES = [
     alt: "Child collecting clean water from a purification tap",
   },
   {
-    image: "sisu-diwi-pahana.png",
+    image: "sisu-diwi-pahana.jpg",
     eyebrow: "Education & Wellbeing",
     title: "Sisu Divi Pahana",
     body: "Nutritious mid day meals supporting student wellbeing, concentration and learning",
@@ -39,7 +38,7 @@ const STORIES = [
     alt: "Schoolchildren receiving a mid-day meal",
   },
   {
-    image: "puritas-sath-diyawara-going-beyond.png",
+    image: "puritas-sath-diyawara-going-beyond.jpg",
     eyebrow: "Education & Livelihood Development",
     title: "Puritas Sath Diyawara – Going Beyond",
     body: "School supplies and livelihood support for CKD-affected communities",
@@ -48,7 +47,7 @@ const STORIES = [
     alt: "Community members receiving school supplies",
   },
   {
-    image: "behold-the-turtle.png",
+    image: "behold-the-turtle.jpg",
     eyebrow: "Environmental Stewardship",
     title: "Behold the Turtle",
     body: "Protecting sea turtle nests, eggs and hatchlings along Sri Lanka’s coast",
@@ -57,7 +56,7 @@ const STORIES = [
     alt: "Volunteer supporting a sea turtle conservation project",
   },
   {
-    image: "supporting-university-students.png",
+    image: "supporting-university-students.jpg",
     eyebrow: "Education & Digital Inclusion",
     title: "Supporting University Students",
     body: "Laptops and scholarships supporting access to tertiary education",
@@ -66,7 +65,7 @@ const STORIES = [
     alt: "University students with laptops",
   },
   {
-    image: "healthcare-support-negombo-general-hospital-renovation.png",
+    image: "healthcare-support-negombo-general-hospital-renovation.jpg",
     eyebrow: "Health & Wellbeing",
     title: "Healthcare Support",
     body: "Critical hospital upgrades and related health initiatives supporting community wellbeing",
@@ -75,7 +74,7 @@ const STORIES = [
     alt: "Healthcare support at Negombo General Hospital",
   },
   {
-    image: "eastern-province-coconut-seedling-distribution-programme.png",
+    image: "eastern-province-coconut-seedling-distribution-programme.jpg",
     eyebrow: "Environmental Stewardship",
     title: "Eastern Province Coconut Seedling Distribution Programme",
     body: "Providing free coconut seedlings to farmers, in partnership with the Coconut Cultivation Board, to support rural livelihoods and long term cultivation",
@@ -102,39 +101,39 @@ export default function CommunityLayer() {
     dialogRef.current?.showModal();
   };
 
-  useEffect(() => {
-    let rafId = 0;
-    let current: number | null = null;
+  useFrameEffect((_frame, _phase, scrollPx) => {
     const startPx = scrollPxForFrame(COMMUNITY.settledFrame, readPxPerFrame());
-    const ease = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : EASE;
+    const rail = railRef.current;
+    const viewport = viewportRef.current;
+    const firstCard = rail?.querySelector<HTMLElement>(".s-community__card");
+    if (!rail || !viewport || !firstCard) return;
 
-    const tick = () => {
-      rafId = requestAnimationFrame(tick);
-      const rail = railRef.current;
-      const viewport = viewportRef.current;
-      const firstCard = rail?.querySelector<HTMLElement>(".s-community__card");
-      if (!rail || !viewport || !firstCard) return;
+    const sweepPx = Math.min(Math.max(scrollPx - startPx - LEAD_PX, 0), SWEEP_PX);
+    const progress = (sweepPx / SWEEP_PX) * (CARD_COUNT - 1);
+    const styles = window.getComputedStyle(rail);
+    const mobileRail = window.matchMedia("(max-width: 700px)").matches;
 
-      const sweepPx = Math.min(Math.max(window.scrollY - startPx - LEAD_PX, 0), SWEEP_PX);
-      const target = (sweepPx / SWEEP_PX) * (CARD_COUNT - 1);
-      if (current === null) current = target;
-      current += (target - current) * ease;
-      if (Math.abs(target - current) < 0.0004) current = target;
+    if (mobileRail) {
+      const padStart = parseFloat(styles.paddingTop) || 0;
+      const padEnd = parseFloat(styles.paddingBottom) || 0;
+      const cardHeight = firstCard.offsetHeight;
+      const start = viewport.clientHeight / 2 - cardHeight / 2 - padStart;
+      const lastCardTop = rail.scrollHeight - padEnd - cardHeight;
+      const end = viewport.clientHeight / 2 - cardHeight / 2 - lastCardTop;
+      const y = start - (progress / (CARD_COUNT - 1)) * (start - end);
+      rail.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`;
+      return;
+    }
 
-      const styles = window.getComputedStyle(rail);
-      const padStart = parseFloat(styles.paddingLeft) || 0;
-      const padEnd = parseFloat(styles.paddingRight) || 0;
-      const cardWidth = firstCard.offsetWidth;
-      const start = viewport.clientWidth / 2 - cardWidth / 2 - padStart;
-      const lastCardLeft = rail.scrollWidth - padEnd - cardWidth;
-      const end = viewport.clientWidth / 2 - cardWidth / 2 - lastCardLeft;
-      const x = start - (current / (CARD_COUNT - 1)) * (start - end);
-      rail.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, []);
+    const padStart = parseFloat(styles.paddingLeft) || 0;
+    const padEnd = parseFloat(styles.paddingRight) || 0;
+    const cardWidth = firstCard.offsetWidth;
+    const start = viewport.clientWidth / 2 - cardWidth / 2 - padStart;
+    const lastCardLeft = rail.scrollWidth - padEnd - cardWidth;
+    const end = viewport.clientWidth / 2 - cardWidth / 2 - lastCardLeft;
+    const x = start - (progress / (CARD_COUNT - 1)) * (start - end);
+    rail.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
+  });
 
   return (
     <div className="lab-layer s-community" ref={ref} data-section={COMMUNITY.id} data-initial-hidden="true" aria-labelledby="community-title">

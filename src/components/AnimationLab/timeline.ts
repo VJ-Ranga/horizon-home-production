@@ -1616,8 +1616,8 @@ export const WORDMARK_EXIT_FRAMES: [number, number] = [50, 70];
 /** The logo's own fade-out window, matching WORDMARK_EXIT_FRAMES and
     the hero section's own exit (also [50, 70]) — the logo now leaves
     with the rest of the hero instead of shrinking to a sticky dock.
-    HeroLogo.tsx and IntroNavGate.tsx (which unhides the app-wide
-    GlobalHeader the instant this finishes) both read this. */
+    HeroLogo.tsx and LabMenu.tsx (which reveals the instant this
+    finishes) both read this. */
 export const LOGO_EXIT_FRAMES: [number, number] = [50, 70];
 
 export function wordmarkExitStateAt(frame: number): {
@@ -1711,6 +1711,30 @@ export function partStateAt(part: PartTimeline, frame: number): ElementState {
 /** The PSD's own mask geometry. The settled hero state, measured. */
 export const CARVE_SETTLED = { height: 85.19, radiusX: 15.63, radiusY: 18.8 };
 
+/** Phone settled carve. The PSD percentages are read against a wide
+    canvas; on a tall narrow viewport the same numbers become a big
+    stretched sweep with a fat teal band under the buttons. Phones get
+    a shorter band (88% height) and a small gentle curve instead. */
+export const CARVE_SETTLED_MOBILE = { height: 88, radiusX: 7, radiusY: 5 };
+
+/** Phone settled carve. On a phone the hero CTAs are a stacked column
+    that reaches higher up the screen, and the teal band should sit
+    behind BOTH pills, not just clip the lower one — so phones get a
+    taller band (lower height %) than tablets. */
+export const CARVE_SETTLED_PHONE = { height: 78, radiusX: 7, radiusY: 5 };
+
+/** Viewport at/below which carveAt() uses CARVE_SETTLED_MOBILE.
+    Covers phones AND tablets: on any portrait-ish viewport the wide
+    PSD carve leaves a fat static teal slab under the buttons, so the
+    whole mobile+tablet range gets the shorter band + gentle curve.
+    Desktop (> 1100px) keeps the measured PSD carve. */
+export const CARVE_MOBILE_MAX_WIDTH = 1100;
+
+/** Viewport at/below which carveAt() uses CARVE_SETTLED_PHONE instead
+    of CARVE_SETTLED_MOBILE. Matches the hero's `@media (max-width: 780px)`
+    stacked-CTA layout. */
+export const CARVE_PHONE_MAX_WIDTH = 780;
+
 /** Full-bleed: no band, no corners. Both the entry's start and the
     exit's end — the carve returns to where it came from. */
 export const CARVE_OPEN = { height: 100, radiusX: 0, radiusY: 0 };
@@ -1753,14 +1777,20 @@ function carveBetween(from: Carve, to: Carve, t: number): Carve {
  *   50 -> 70   opening, PSD carve back to full-bleed
  *   70 +       full-bleed
  */
-export function carveAt(frame: number): Carve {
+export function carveAt(frame: number, mobile = false, phone = false): Carve {
+  const settled = phone
+    ? CARVE_SETTLED_PHONE
+    : mobile
+      ? CARVE_SETTLED_MOBILE
+      : CARVE_SETTLED;
+
   if (frame < CARVE_FRAMES[0]) {
     const t = easeOut(
       progressBetween(frame, ENTRY_CARVE_FRAMES[0], ENTRY_CARVE_FRAMES[1])
     );
-    return carveBetween(CARVE_OPEN, CARVE_SETTLED, t);
+    return carveBetween(CARVE_OPEN, settled, t);
   }
 
   const t = easeOut(progressBetween(frame, CARVE_FRAMES[0], CARVE_FRAMES[1]));
-  return carveBetween(CARVE_SETTLED, CARVE_OPEN, t);
+  return carveBetween(settled, CARVE_OPEN, t);
 }

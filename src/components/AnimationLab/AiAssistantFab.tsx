@@ -47,9 +47,13 @@ export default function AiAssistantFab() {
       target="_blank"
       rel="noopener noreferrer"
       className="lab-ai-fab"
-      aria-label="Chat with our AI Assistant"
     >
-      <div className="relative h-14 w-14" style={{ perspective: "800px" }}>
+      {/* Left of the orb, DOM order first so it reads before the icon —
+          collapsed to zero width until hover/focus, so it never affects
+          layout at rest. The orb stays visually anchored to the fixed
+          right edge; this is what grows leftward on hover, not it. */}
+      <span className="lab-ai-fab__label">AI Guided Exploration</span>
+      <div className="lab-ai-fab__orb" style={{ perspective: "800px" }}>
         <div className="animate-orb-pulse absolute -inset-1 rounded-full bg-brand-main/40 blur-md" />
         <div className="animate-orb-spin absolute inset-0 rounded-full border-2 border-teal-2/90 border-t-transparent">
           <span className="absolute left-1/2 top-0 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-teal-2 shadow-[0_0_6px_2px_rgba(91,178,200,0.85)]" />

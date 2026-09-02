@@ -25,7 +25,7 @@
    as every other section (VJ, 2026-08-24: "u fogot to drop backgrnd
    and overlay color"). */
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
@@ -66,23 +66,25 @@ function MetricColumn({
   items,
   active,
   onSelect,
-  onHoverAudio,
-  onStopAudio,
   muted,
   onToggleMute,
   revealStart,
+  chartPhase,
+  showInlineCharts,
 }: {
   title: string;
   label: string;
   items: readonly Metric[];
-  active: string;
+  active: Metric;
   onSelect: (item: Metric) => void;
-  onHoverAudio: (src: string) => void;
-  onStopAudio: () => void;
   muted: boolean;
   onToggleMute: () => void;
   revealStart: number;
+  chartPhase: "idle" | "swapping" | "entering";
+  showInlineCharts: boolean;
 }) {
+  const chartClass = chartPhase === "idle" ? "" : ` is-${chartPhase}`;
+
   return (
     <section className="s-financial2__col" aria-labelledby={label} data-reveal={revealStart}>
       <div className="s-financial2__colhead">
@@ -118,22 +120,35 @@ function MetricColumn({
         {items.map((item) => {
           const [name, value, chartLabel, chart, audio] = item;
           return (
-            <li key={name}>
-              <button
-                className={`s-financial2__metric${active === name ? " is-active" : ""}`}
-                type="button"
-                data-chart={chart}
-                data-chart-label={chartLabel}
-                data-audio={audio}
-                aria-pressed={active === name}
-                onClick={() => onSelect(item)}
-                onMouseEnter={() => onHoverAudio(audio)}
-                onMouseLeave={onStopAudio}
-              >
-                <span className="s-financial2__metric-label">{name}</span>
-                <span className="s-financial2__metric-value">{value}</span>
-              </button>
-            </li>
+            <Fragment key={name}>
+              <li>
+                <button
+                  className={`s-financial2__metric${active[0] === name ? " is-active" : ""}`}
+                  type="button"
+                  data-chart={chart}
+                  data-chart-label={chartLabel}
+                  data-audio={audio}
+                  aria-pressed={active[0] === name}
+                  onClick={() => onSelect(item)}
+                >
+                  <span className="s-financial2__metric-label">{name}</span>
+                  <span className="s-financial2__metric-value">{value}</span>
+                </button>
+              </li>
+              {showInlineCharts && active[0] === name && (
+                <li className={`s-financial2__inline-chart${chartClass}`}>
+                  <figure>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      className={`s-financial2__chart-img${chartClass}`}
+                      src={active[3]}
+                      alt={active[2]}
+                      decoding="sync"
+                    />
+                  </figure>
+                </li>
+              )}
+            </Fragment>
           );
         })}
       </ul>
@@ -143,9 +158,10 @@ function MetricColumn({
 
 export default function FinancialLayer() {
   const ref = useSectionLayer(FINANCIAL);
-  const [active, setActive] = useState<Metric>(PERFORMANCE[1]);
+  const [active, setActive] = useState<Metric>(PERFORMANCE[0]);
   const [audioMuted, setAudioMuted] = useState(false);
   const [chartPhase, setChartPhase] = useState<"idle" | "swapping" | "entering">("idle");
+  const [showInlineCharts, setShowInlineCharts] = useState(false);
   const [hoverAudio] = useState(() =>
     createHoverAudioPlayer((src) => new Audio(src))
   );
@@ -155,6 +171,14 @@ export default function FinancialLayer() {
   const leadRef = useRef<HTMLParagraphElement>(null);
 
   const [revealStartFrame, revealEndFrame] = FINANCIAL.enter!.frames;
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1100px)");
+    const update = () => setShowInlineCharts(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
     const element = ref.current;
@@ -235,7 +259,11 @@ export default function FinancialLayer() {
   // preload probe itself (see file header for why that half isn't
   // needed yet). Timers cleared on unmount and on rapid re-clicks so
   // a fast double-click can't leave two overlapping animations.
+  // The click also plays that metric's narration (click-to-play, was
+  // hover-to-play) — including a re-click on the already-active metric,
+  // which just replays the audio without re-running the chart swap.
   function selectMetric(item: Metric) {
+    hoverAudio.play(item[4]);
     if (item[0] === active[0]) return;
     if (swapTimerRef.current) window.clearTimeout(swapTimerRef.current);
     if (enterTimerRef.current) window.clearTimeout(enterTimerRef.current);
@@ -290,7 +318,7 @@ export default function FinancialLayer() {
       data-initial-hidden="true"
       aria-labelledby="financial2-title"
     >
-      <div className="s-financial2__stage">
+      <div className="s-financial2__stage" data-lenis-prevent>
         <header className="s-financial2__head" data-reveal="0">
           <h1 className="s-financial2__title" id="financial2-title" ref={titleRef}>
             Financial Highlights
@@ -307,13 +335,13 @@ export default function FinancialLayer() {
             title="Financial Performance"
             label="financial2-perf-title"
             items={PERFORMANCE}
-            active={active[0]}
+            active={active}
             onSelect={selectMetric}
-            onHoverAudio={hoverAudio.schedule}
-            onStopAudio={hoverAudio.stop}
             muted={audioMuted}
             onToggleMute={toggleAudioMuted}
             revealStart={0.08}
+            chartPhase={chartPhase}
+            showInlineCharts={showInlineCharts}
           />
 
           <section
@@ -336,13 +364,13 @@ export default function FinancialLayer() {
             title="Financial Ratios"
             label="financial2-ratios-title"
             items={RATIOS}
-            active={active[0]}
+            active={active}
             onSelect={selectMetric}
-            onHoverAudio={hoverAudio.schedule}
-            onStopAudio={hoverAudio.stop}
             muted={audioMuted}
             onToggleMute={toggleAudioMuted}
             revealStart={0.24}
+            chartPhase={chartPhase}
+            showInlineCharts={showInlineCharts}
           />
         </div>
 

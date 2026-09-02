@@ -6,8 +6,9 @@
    Copy is from the spec (PDF p.15, "Non-Financial Highlights"): the intro
    paragraph verbatim and one static reporting card per bullet. */
 
+import { useEffect } from "react";
 import { SECTIONS } from "./timeline";
-import { useSectionLayer } from "./useFrameTimeline";
+import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
 const NONFINANCIAL = SECTIONS[15];
 
@@ -37,12 +38,27 @@ const CARDS = [
 export default function NonFinancialLayer() {
   const ref = useSectionLayer(NONFINANCIAL);
 
+  useFrameEffect((frame) => {
+    const element = ref.current;
+    if (!element) return;
+
+    const scrollUnlocked = frame >= NONFINANCIAL.settledFrame &&
+      frame <= (NONFINANCIAL.exit?.frames[0] ?? NONFINANCIAL.settledFrame);
+    element.classList.toggle("is-scrollable", scrollUnlocked);
+    if (!scrollUnlocked) element.scrollTop = 0;
+  });
+
+  useEffect(() => () => {
+    ref.current?.classList.remove("is-scrollable");
+  }, [ref]);
+
   return (
     <div
       className="lab-layer s-nonfinancial9"
       ref={ref}
       data-section={NONFINANCIAL.id}
       data-initial-hidden="true"
+      data-lenis-prevent
       aria-labelledby="nonfinancial9-title"
     >
       <header className="s-nonfinancial9__intro">

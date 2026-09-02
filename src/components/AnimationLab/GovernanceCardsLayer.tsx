@@ -37,7 +37,7 @@
    badges (ApproachLayer.tsx, DigitalLayer.tsx). Exit mirrors the
    entrance in reverse (standing rule). */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
@@ -162,6 +162,20 @@ export default function GovernanceCardsLayer() {
     }
   });
 
+  useFrameEffect((frame) => {
+    const element = ref.current;
+    if (!element) return;
+
+    const scrollUnlocked = frame >= GOVERNANCE_CARDS.settledFrame &&
+      frame <= (GOVERNANCE_CARDS.exit?.frames[0] ?? GOVERNANCE_CARDS.settledFrame);
+    element.classList.toggle("is-scrollable", scrollUnlocked);
+    if (!scrollUnlocked) element.scrollTop = 0;
+  });
+
+  useEffect(() => () => {
+    ref.current?.classList.remove("is-scrollable");
+  }, [ref]);
+
   let titleWordIndex = -1;
 
   return (
@@ -170,6 +184,7 @@ export default function GovernanceCardsLayer() {
       ref={ref}
       data-section={GOVERNANCE_CARDS.id}
       data-initial-hidden="true"
+      data-lenis-prevent
       aria-hidden="true"
     >
       <div className="s-govcards__content">

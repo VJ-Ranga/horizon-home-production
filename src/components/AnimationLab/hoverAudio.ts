@@ -3,11 +3,23 @@ type AudioClip = Pick<HTMLAudioElement, "play" | "pause"> & {
   muted?: boolean;
   preload?: string;
   load?: () => void;
+  addEventListener?: HTMLAudioElement["addEventListener"];
+  removeEventListener?: HTMLAudioElement["removeEventListener"];
 };
 
 type Timers = Pick<Window, "setTimeout" | "clearTimeout">;
 
 export const HOVER_AUDIO_DELAY_MS = 1000;
+
+/** Fired on window when the financial narration starts / stops, so the
+    site-wide background music (BackgroundMusic.tsx) can duck under it. */
+export const BGM_DUCK_EVENT = "hz:bgm-duck";
+export const BGM_UNDUCK_EVENT = "hz:bgm-unduck";
+
+function emitBgm(name: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(name));
+}
 
 /** Owns the one financial narration that may be pending or playing. */
 export function createHoverAudioPlayer(
@@ -92,6 +104,23 @@ export function createHoverAudioPlayer(
     }, HOVER_AUDIO_DELAY_MS);
   }
 
+  /** Play a clip immediately, no hover-intent delay — for click-to-play.
+      Still respects the mute toggle; a real click is user-initiated so it
+      is not gated on reduced-motion the way hover scheduling is. */
+  function play(src: string) {
+    if (muted) {
+      stop();
+      return;
+    }
+    stop();
+    const preloadedClip = preloaded.get(src);
+    const clip = preloadedClip ?? createAudio(src);
+    if (!preloadedClip) preloaded.set(src, clip);
+    active = clip;
+    if (clip.currentTime !== undefined) clip.currentTime = 0;
+    Promise.resolve(clip.play()).catch(() => {});
+  }
+
   function preload(src: string) {
     if (preloaded.has(src)) return;
     const clip = createAudio(src);
@@ -112,5 +141,5 @@ export function createHoverAudioPlayer(
     if (muted) stop();
   }
 
-  return { preload, schedule, setMuted, stop, unlock };
+  return { preload, schedule, play, setMuted, stop, unlock };
 }

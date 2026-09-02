@@ -92,12 +92,26 @@ const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const ease = (t: number) => 1 - Math.pow(1 - clamp01(t), 3);
 
-function stateForRel(rel: number): { c: number; s: number; o: number } {
+// Delta kept constant so the queued card always sits the same distance
+// below the parked preview card, whatever previewC we run at.
+const QUEUE_OVER_PREVIEW = QUEUE_C - PREVIEW_C;
+
+/* `previewC` is where the *next* card parks (fraction of viewport
+   height); `activeC` is where the current card centres. Both default to
+   the desktop constants — on tablet/mobile the tick passes tighter
+   values so the gap below the active card isn't a third of the screen
+   and (mobile) the active card sits closer to the intro copy above it. */
+function stateForRel(
+  rel: number,
+  previewC: number = PREVIEW_C,
+  activeC: number = ACTIVE_C
+): { c: number; s: number; o: number } {
+  const queueC = previewC + QUEUE_OVER_PREVIEW;
   if (rel <= 0 && rel >= -1) {
     // active -> sink & vanish (eased fade-out over the first ~42%)
     const te = ease(-rel);
     return {
-      c: lerp(ACTIVE_C, EXIT_C, te),
+      c: lerp(activeC, EXIT_C, te),
       s: lerp(ACTIVE_S, EXIT_S, te),
       o: ACTIVE_O * (1 - ease(clamp01(-rel / 0.42))),
     };
@@ -105,17 +119,17 @@ function stateForRel(rel: number): { c: number; s: number; o: number } {
   if (rel > 0 && rel <= 1) {
     // preview -> active (full while parked, eases to ACTIVE_O as it lands)
     const ta = ease(1 - rel);
-    return { c: lerp(PREVIEW_C, ACTIVE_C, ta), s: lerp(PREVIEW_S, ACTIVE_S, ta), o: lerp(1, ACTIVE_O, ta) };
+    return { c: lerp(previewC, activeC, ta), s: lerp(PREVIEW_S, ACTIVE_S, ta), o: lerp(1, ACTIVE_O, ta) };
   }
   if (rel > 1 && rel <= 2) {
     // queue -> preview (creeps in during the same move)
     const tq = ease(2 - rel);
-    return { c: lerp(QUEUE_C, PREVIEW_C, tq), s: lerp(QUEUE_S, PREVIEW_S, tq), o: 1 };
+    return { c: lerp(queueC, previewC, tq), s: lerp(QUEUE_S, PREVIEW_S, tq), o: 1 };
   }
   if (rel > 2) {
     // waiting below the fold; ramp opacity in over rel 2.0..2.4 rather
     // than snapping 0->1 (that snap flashed the card's top sliver).
-    return { c: QUEUE_C + (rel - 2) * 0.28, s: QUEUE_S, o: clamp01(1 - (rel - 2) / 0.4) };
+    return { c: queueC + (rel - 2) * 0.28, s: QUEUE_S, o: clamp01(1 - (rel - 2) / 0.4) };
   }
   // already gone, fully covered
   return { c: EXIT_C, s: EXIT_S, o: 0 };
@@ -249,11 +263,31 @@ export default function FinancialCapitalLayer() {
       const V = window.innerHeight || 1;
       const activeIndex = Math.min(Math.max(Math.round(current), 0), CARD_COUNT - 1);
 
+      const refH =
+        cardRefs.current[activeIndex]?.offsetHeight ??
+        cardRefs.current[0]?.offsetHeight ??
+        400;
+      const w = window.innerWidth;
+      // Mobile: lift the active card up toward the intro copy above it
+      // (removes the big dead band between the two).
+      const activeC = w <= 700 ? 0.44 : ACTIVE_C;
+      // Desktop keeps the original spacing (0.489V - cardHeight, which
+      // reduces to PREVIEW_C exactly). Below 1100px the natural gap is a
+      // third of the screen, so cap it: ~52px on phones (VJ wants a
+      // little breathing room), a tight ~20px on tablets. Math.max(…, 0)
+      // keeps it from ever letting the parked card overlap the active one.
+      const naturalGap = V * (PREVIEW_C - ACTIVE_C) - refH;
+      const gapCap = w <= 700 ? 52 : 20;
+      const previewC =
+        w <= 1100
+          ? activeC + (refH + Math.max(Math.min(gapCap, naturalGap), 0)) / V
+          : PREVIEW_C;
+
       for (let index = 0; index < CARD_COUNT; index += 1) {
         const card = cardRefs.current[index];
         if (!card) continue;
         const rel = index - current;
-        const st = stateForRel(rel);
+        const st = stateForRel(rel, previewC, activeC);
         // put the card's own centre at st.c of the viewport height; the
         // card is anchored top:0, so subtract half its height.
         const ty = st.c * V - card.offsetHeight / 2;

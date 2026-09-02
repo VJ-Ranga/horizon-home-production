@@ -242,6 +242,25 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   --carve-ry: 18.80%;
 }
 
+/* Shorter teal band + a small gentle curve on portrait-ish viewports,
+   so the wide PSD sweep is not stretched into a big green wedge.
+   Mirrors CARVE_SETTLED_MOBILE / CARVE_SETTLED_PHONE in timeline.ts,
+   which LabScrubber writes per frame at the same breakpoints — these
+   rules are just the pre-JS fallback. */
+@media (max-width: 1100px) {
+  .lab[data-phase="scroll"] .lab-media {
+    --carve-h: 88%;
+    --carve-rx: 7%;
+    --carve-ry: 5%;
+  }
+}
+/* Phones: taller band so it sits behind BOTH stacked CTA pills. */
+@media (max-width: 780px) {
+  .lab[data-phase="scroll"] .lab-media {
+    --carve-h: 78%;
+  }
+}
+
 /* Always the full viewport, whatever the carve is doing — the frame
    is a full-screen background that the box above crops, exactly as
    the template's <img> was sized to the whole hero and cropped.
@@ -276,6 +295,21 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   transition: opacity 0.2s linear;
 }
 .lab-media__canvas[data-ready="true"] { opacity: 1; }
+
+/* Mobile + tablet only. On iOS Safari `100svh` resolves to the SHORT
+   viewport (toolbars-visible), but .lab-media / .lab-viewport are
+   `position: fixed; inset: 0` and fill the REAL, taller visible area
+   once the toolbar collapses. That left a flat teal strip of page
+   background along the bottom that never cleared on scroll. `100dvh`
+   tracks the actual visible viewport, so the frame always covers it.
+   Desktop (>1100px) keeps the base `100svh` rule untouched — with no
+   collapsing toolbar the two values are identical there anyway. */
+@media (max-width: 1100px) {
+  .lab-media__canvas,
+  .lab-media__poster {
+    height: 100dvh;
+  }
+}
 
 /* One screen. Every section layer stacks inside it. */
 .lab-viewport {
@@ -557,10 +591,11 @@ html.lab-menu-open body {
 }
 
 /* ---------- menu hamburger reveal ----------
-   Dead since the lab's own menu was removed in favour of the single
-   app-wide GlobalHeader; IntroNavGate now does the reveal, keyed to
-   the same LOGO_EXIT_FRAMES[1] (70). Kept only so the selectors below
-   still document what the frame gate used to drive. */
+   Dead since the lab's own menu was replaced by the app-wide
+   GlobalHeader (copied from Production); IntroNavGate now does the
+   reveal, keyed to the same LOGO_EXIT_FRAMES[1] (70). Kept only so
+   the selectors below still document what the frame gate used to
+   drive. */
 .lab-menu__hamburger {
   opacity: 0;
   transform: scale(0.7);
@@ -675,18 +710,77 @@ html.lab-menu-open body {
   right: 30px;
   bottom: 40px;
   z-index: 20;
-  display: grid;
-  place-items: center;
-  width: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* 0 at rest, not 14px: flex `gap` still inserts space between items
+     even when one is collapsed to max-width:0, which left this a
+     70x56 oval instead of a clean 56px circle. Only opens up on
+     hover, alongside the label itself. */
+  gap: 0;
+  /* Fixed at the orb's OWN resting box (56px) — the label is
+     collapsed to zero width below, so this never reflows at rest;
+     hover only grows the label's own width, not this container. */
   height: 56px;
+  padding: 0;
   border-radius: 999px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.4s var(--ease-out), transform 0.2s var(--ease-out);
+  /* All four share one duration/curve, opacity included — the hover
+     expand (background/gap/padding) originally ran faster (0.28s)
+     than opacity's reveal-fade (0.4s) and wasn't fully in sync; also
+     padding had no transition at all at first and snapped instantly.
+     Slowed to 0.4s across the board for a visibly gentler feel. */
+  transition: opacity 0.4s var(--ease-out),
+    background-color 0.4s var(--ease-out),
+    gap 0.4s var(--ease-out),
+    padding 0.4s var(--ease-out);
 }
+/* Pill backdrop appears only on hover/focus, behind the label — the
+   orb needs none, it already reads against any background. Kept as
+   the sampled intro colour (see .lab-intro's own comment) so it never
+   clashes with whatever section is scrolled behind it. */
 .lab-ai-fab:hover,
 .lab-ai-fab:focus-visible {
-  transform: scale(1.08);
+  background-color: rgba(9, 84, 115, 0.82);
+  padding: 0 8px 0 18px;
+  gap: 14px;
+}
+
+.lab-ai-fab__label {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  /* Collapsed at rest: zero width AND clipped, so it takes no layout
+     space and cannot be tabbed/read as visible until it actually is.
+     max-width (not width) so "nowrap" text is never truncated once
+     it opens — comfortably wider than the string needs. */
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  /* Same 0.4s/curve as the container above and the orb below, no
+     stagger — all three move as one motion instead of arriving at
+     different times. */
+  transition: max-width 0.4s var(--ease-out), opacity 0.4s var(--ease-out);
+}
+.lab-ai-fab:hover .lab-ai-fab__label,
+.lab-ai-fab:focus-visible .lab-ai-fab__label {
+  max-width: 220px;
+  opacity: 1;
+}
+
+.lab-ai-fab__orb {
+  position: relative;
+  flex: none; /* never squeezed by the label */
+  width: 56px;
+  height: 56px;
+  transition: transform 0.4s var(--ease-out);
+}
+.lab-ai-fab:hover .lab-ai-fab__orb,
+.lab-ai-fab:focus-visible .lab-ai-fab__orb {
+  transform: scale(1.3); /* +30%, requested size */
 }
 
 /* Ported verbatim from Horizon (Backend)'s src/app/globals.css — same
@@ -718,7 +812,11 @@ html.lab-menu-open body {
 .animate-orb-pulse { animation: orb-pulse 3s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .lab-ai-fab { transition: none; }
+  .lab-ai-fab,
+  .lab-ai-fab__label,
+  .lab-ai-fab__orb {
+    transition: none;
+  }
   .animate-orb-spin,
   .animate-orb-rotate-x,
   .animate-orb-rotate-y,
@@ -1008,11 +1106,14 @@ html.lab-menu-open body {
    inside the fixed lab stage at tablet and phone widths; it must not inherit
    a desktop nowrap that can push the phrase off-screen. */
 @media (min-width: 781px) and (max-width: 1100px) {
-  .lab-media {
-    height: min(var(--carve-h, 100%), calc(90% - 25px));
-    border-radius: 0 0 min(var(--carve-rx, 0%), 6%) min(var(--carve-rx, 0%), 6%) /
-      0 0 min(var(--carve-ry, 0%), 6%) min(var(--carve-ry, 0%), 6%);
-  }
+  /* NO height/radius clamp here. It used to cap .lab-media at ~90%,
+     which meant that even after the carve OPENS on scroll
+     (--carve-h: 100%) a teal band stayed pinned to the bottom on
+     tablet and never cleared — desktop and phone both let the carve
+     vars drive the box directly, so tablet now does too. The wide-
+     sweep concern the clamp addressed is already handled by the
+     CARVE_SETTLED_MOBILE shape (timeline.ts), which this range now
+     uses via CARVE_MOBILE_MAX_WIDTH = 1100. */
 
   .s-main-start__title--lower {
     top: 50%;
@@ -1577,6 +1678,14 @@ html.lab-menu-open body {
     grid-template-columns: repeat(2, 1fr);
     grid-auto-columns: auto;
   }
+  /* The trio row wraps to 2 + 1; the lone "Concise Report Structure"
+     card would otherwise sit in the left column. Span it across both
+     tracks and centre it at one column's width. */
+  .s-approach2__grid--trio > li:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - (var(--a2-gap-card) / 2));
+  }
   .s-approach2__title { max-width: none; }
   .s-approach2__lead { max-width: none; }
 }
@@ -1587,7 +1696,9 @@ html.lab-menu-open body {
    geometry and keeps every CTA label inside its pill. */
 @media (min-width: 701px) and (max-width: 1100px) {
   .s-approach2 {
-    --a2-nav-clear: 42px;
+    /* 42px sat the heading right under the fixed hamburger — needs to
+       clear it with breathing room, like desktop does. */
+    --a2-nav-clear: 76px;
     --a2-foot: 28px;
     --a2-gutter-x: 28px;
     --a2-gap-title: 12px;
@@ -1607,7 +1718,8 @@ html.lab-menu-open body {
 
   .s-approach2__stage { align-items: flex-start; }
   .s-approach2__col { margin-inline: auto; }
-  .s-approach2__cta-row { gap: 10px; }
+  /* +30px below the last card before the CTA row (VJ's call). */
+  .s-approach2__cta-row { gap: 10px; margin-top: 50px; }
   .s-approach2__cta { width: auto; min-width: 0; min-height: 44px; padding-inline: 18px; }
 }
 
@@ -1635,7 +1747,9 @@ html.lab-menu-open body {
   .s-approach2__stage {
     align-items: flex-start;
     min-height: 100%;
-    padding: 4svh var(--a2-gutter-x) 2svh;
+    /* Top pad clears the fixed hamburger + status bar; 4svh let the
+       heading collide with it on phones. */
+    padding: clamp(56px, 8svh, 76px) var(--a2-gutter-x) 2svh;
   }
   .s-approach2__col { width: 100%; }
   .s-approach2__title { line-height: 1.05; }
@@ -1648,7 +1762,8 @@ html.lab-menu-open body {
   .s-approach2__badge { max-width: 42px; margin-bottom: 6px; }
   .s-approach2__card-label { line-height: 1.15; }
   .s-approach2__card-body { line-height: 1.25; }
-  .s-approach2__cta-row { gap: 8px; margin-top: 14px; }
+  /* +20px below the last card before the CTA row (VJ's call). */
+  .s-approach2__cta-row { gap: 8px; margin-top: 34px; }
   .s-approach2__cta { width: auto; min-width: 0; min-height: 40px; padding-inline: 14px; }
 }
 
@@ -1874,9 +1989,15 @@ html.lab-menu-open body {
 .s-digital2__avatar--animated { background: rgba(255, 255, 255, 0.96); }
 .s-digital2__lottie { display: block; width: 58%; height: 58%; }
 .s-digital2__lottie svg { width: 100%; height: 100%; }
-.s-digital2__profile:nth-child(2) .s-digital2__lottie { transform: translateX(4px); }
+/* "User Profiles.json" draws its two-figure glyph left of centre in its
+   own 430x430 canvas (a heavier front figure lower-left, a lighter back
+   figure upper-right), so at translateX(0) it visibly sits left in the
+   circle. 1px nudge (VJ's call, judged on the live page). Held at the
+   same offset on hover so it doesn't slide sideways while the avatar
+   scales up. */
+.s-digital2__profile:nth-child(2) .s-digital2__lottie,
 .s-digital2__profile:nth-child(2):hover .s-digital2__lottie,
-.s-digital2__profile:nth-child(2):focus-within .s-digital2__lottie { transform: translateX(8px); }
+.s-digital2__profile:nth-child(2):focus-within .s-digital2__lottie { transform: translateX(1px); }
 
 .s-digital2__profile-label {
   color: #ffffff;
@@ -1900,18 +2021,20 @@ html.lab-menu-open body {
   transform: translateY(20px);
 }
 
-/* White -> gold/amber only while hovered/focused, every circle. */
+/* Stays white while hovered/focused (was a gold/amber tint) — the circle
+   just lifts, scales up and gets a soft white halo, keeping the teal
+   glyph. Every circle. */
 .s-digital2__profile:hover .s-digital2__avatar,
 .s-digital2__profile:focus-within .s-digital2__avatar,
 .s-digital2__profile--cta:hover .s-digital2__avatar,
 .s-digital2__profile--cta:focus-visible .s-digital2__avatar {
   transform: scale(1.24);
-  background: rgba(242, 203, 111, 0.62);
-  color: #ffffff;
+  background: #ffffff;
+  color: #0791a3;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.18),
-    0 0 0 16px rgba(242, 203, 111, 0.10),
-    0 0 0 30px rgba(242, 203, 111, 0.055),
+    0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 0 0 16px rgba(255, 255, 255, 0.12),
+    0 0 0 30px rgba(255, 255, 255, 0.06),
     0 14px 34px rgba(32, 76, 89, 0.16);
 }
 
@@ -1969,6 +2092,11 @@ html.lab-menu-open body {
   .s-digital2__profile, .s-digital2__profile--cta { width: 92px; }
 }
 
+/* ---------- tablet ----------
+   The tablet layout lives in the `min-width: 701px and max-width: 1100px`
+   block further down ("Final live-lab responsive pass") — that one is
+   later in the file and wins. Nothing here. */
+
 /* ---------- mobile ---------- */
 @media (max-width: 780px) {
   .s-digital2__panel {
@@ -1979,19 +2107,23 @@ html.lab-menu-open body {
     height: auto;
     min-height: 0;
     max-height: none;
-    margin: 36px 18px 0;
+    /* Top margin clears the fixed hamburger + a ~40px gap. */
+    margin: calc(clamp(64px, 9svh, 84px) + 20px) 18px 0;
     padding: 28px 20px;
     border-radius: 34px 10px 30px 8px;
   }
   .s-digital2__title { font-size: clamp(25px, 7vw, 38px); white-space: normal; }
   .s-digital2__lead { font-size: clamp(13px, 3.6vw, 16px); }
   .s-digital2__features { grid-template-columns: 1fr; margin-top: 28px; row-gap: 15px; }
+  /* Pull the quicklinks group up (tighter eyebrow + row top margin) and
+     leave more air beneath it. */
+  .s-digital2__profiles-eyebrow { margin-bottom: 34px; }
   .s-digital2__profiles-row {
     position: relative;
     left: auto;
     right: auto;
     bottom: auto;
-    margin: 34px 18px 42px;
+    margin: 14px 18px 88px;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 28px 16px;
@@ -2074,28 +2206,100 @@ html.lab-menu-open body {
   }
 }
 
-/* Final live-lab responsive pass for Section 4. Unlike the standalone page,
-   the Animation Lab section is a fixed frame layer, so its mobile content
-   must fit one viewport rather than growing a second page underneath it. */
-@media (min-width: 701px) and (max-width: 1100px) {
-  .s-digital2__panel {
-    top: 4%;
-    right: 4%;
-    width: min(56vw, 620px);
-    height: min(58svh, 620px);
-    min-height: 0;
-    max-height: none;
-    padding: 22px 24px 26px;
+/* Tab + mobile only: drop the full-screen white wash and back each
+   paragraph with its own soft panel instead. Opacity is driven per
+   frame from IntroStatementLayer.tsx as `--intro-wash` on each <p> —
+   it rises while that paragraph's words reveal, then recedes as the
+   next paragraph takes over, so focus walks down to the lower one.
+   The `:last-child` value here is the settled resting state (JS
+   overrides it while the reveal is animating). Desktop is untouched. */
+@media (max-width: 1100px) {
+  .s-intro__media { opacity: 0; }
+
+  .s-intro__statement p {
+    position: relative;
+    isolation: isolate;
   }
 
-  .s-digital2__title { font-size: clamp(24px, 2.6vw, 32px); }
-  .s-digital2__lead { margin-block: 12px 18px; font-size: clamp(12px, 1.25vw, 15px); }
-  .s-digital2__features { column-gap: 18px; row-gap: 14px; }
-  .s-digital2__feature { grid-template-columns: 36px 1fr; gap: 10px; }
-  .s-digital2__icon { width: 40px; height: 40px; }
-  .s-digital2__icon svg,
-  .s-digital2__icon img { width: 58%; height: 58%; }
-  .s-digital2__feature-label { font-size: clamp(11px, 1.15vw, 14px); }
+  .s-intro__statement p:last-child { --intro-wash: 0.3; }
+
+  .s-intro__statement p::before {
+    position: absolute;
+    inset: -0.5em -1.15em;
+    z-index: -1;
+    border-radius: 40px;
+    background: radial-gradient(
+      120% 140% at 50% 45%,
+      rgba(236, 246, 248, 0.96) 0%,
+      rgba(236, 246, 248, 0.9) 55%,
+      rgba(236, 246, 248, 0) 100%
+    );
+    opacity: var(--intro-wash, 0);
+    content: "";
+  }
+}
+
+/* Final live-lab responsive pass for Section 4. This block wins over the
+   earlier `781-1100` one (same specificity, later in the file), so the
+   full tablet layout lives HERE.
+
+   Card: near-full-width, in-flow from the top (like the phone layout),
+   only as tall as its content + small slack. Contents keep the section's
+   default type sizes. Quicklinks row stays pinned to the layer bottom. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  /* Layer stacks the card and the quicklinks as one centred group with
+     a fixed 50px gap between them: the card drops down from the top,
+     the quicklinks rise from the bottom, exactly as VJ marked. */
+  .s-digital2 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .s-digital2__stage {
+    height: auto;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .s-digital2__panel {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    justify-content: center;
+    width: min(96%, 1320px);
+    height: auto;
+    /* Card hugs its content — no forced tall box. */
+    min-height: min(42svh, 480px);
+    max-height: none;
+    margin: 0 auto;
+    padding: 32px clamp(30px, 4vw, 56px) 36px;
+  }
+  .s-digital2__lead { margin-block: 14px 20px; }
+  .s-digital2__features { column-gap: clamp(28px, 5vw, 64px); row-gap: 18px; }
+  .s-digital2__profiles-row {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    flex: 0 0 auto;
+    width: min(94%, 760px);
+    margin: 50px auto 0;   /* the 50px gap below the card */
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    justify-items: center;
+  }
+  .s-digital2__profiles { display: contents; }
+  .s-digital2__profiles-eyebrow {
+    position: static;
+    inset: auto;
+    grid-column: 1 / -1;
+    margin: 0 0 18px;
+  }
+  .s-digital2__profile,
+  .s-digital2__profile--cta { width: 100%; max-width: 120px; }
 }
 
 @media (max-width: 700px) {
@@ -2103,11 +2307,12 @@ html.lab-menu-open body {
   .s-digital2__stage { height: 100%; min-height: 0; }
   .s-digital2__panel {
     position: absolute;
-    top: 4%;
+    /* +20px lower — more clearance under the fixed hamburger. */
+    top: calc(4% + 20px);
     right: 4%;
     left: 4%;
     width: auto;
-    height: 54%;
+    height: 50%;
     min-height: 0;
     max-height: none;
     margin: 0;
@@ -2132,7 +2337,8 @@ html.lab-menu-open body {
     position: absolute;
     left: 4%;
     right: 4%;
-    bottom: 3%;
+    /* +40px higher — lifts the quicklinks well clear of the bottom edge. */
+    bottom: calc(3% + 40px);
     margin: 0;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2155,18 +2361,55 @@ html.lab-menu-open body {
 /* Short laptop screens: keep the complete desktop composition visible
    during the section's entrance offset by tightening sizes only. Nothing
    is removed or hidden; all five quicklinks and the full panel remain. */
-@media (min-width: 701px) and (max-height: 820px) {
-  .s-digital2__panel { padding: 18px 24px 24px; }
-  .s-digital2__title { font-size: clamp(22px, 2.2vw, 30px); }
-  .s-digital2__lead { margin-block: 12px 18px; font-size: clamp(12px, 0.9vw, 14px); }
-  .s-digital2__features { row-gap: 14px; }
-  .s-digital2__feature-label { font-size: clamp(11px, 0.85vw, 14px); }
-  .s-digital2__profiles-row { bottom: 5%; }
-  .s-digital2__profiles-eyebrow { margin-bottom: 30px; font-size: 21px; }
+/* Small-laptop breakpoint — 1366×768 (and 1280×720, landscape tablet,
+   ≥150% zoom). Gated on width so a 1440×900 laptop always keeps the
+   full layout regardless of its browser-chrome height: `max-width: 1366px`
+   is the 13–14" / zoomed class, `max-height: 820px` then only excludes a
+   tall window at that width. Section 4's card + quicklinks can't both fit
+   here, so everything shrinks to one screen. Size-only. */
+@media (min-width: 701px) and (max-width: 1366px) and (max-height: 820px) {
+  /* Anchor the stacked group to the top so any leftover overflow
+     spills below the fold, never up under the header. (No-op where
+     .s-digital2 isn't a flex column, i.e. > 1100px.) */
+  .s-digital2 { justify-content: flex-start; }
+
+  .s-digital2__panel {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    margin: 12px auto 0;
+    padding: 16px clamp(24px, 3vw, 44px) 18px;
+  }
+  .s-digital2__title { font-size: clamp(19px, 2vw, 27px); }
+  .s-digital2__lead {
+    margin-block: 8px 12px;
+    font-size: clamp(11px, 0.85vw, 13px);
+    line-height: 1.35;
+  }
+  .s-digital2__features {
+    row-gap: 10px;
+    column-gap: clamp(20px, 3.5vw, 44px);
+  }
+  .s-digital2__feature { gap: 10px; }
+  .s-digital2__icon { width: 38px; height: 38px; }
+  .s-digital2__feature-label {
+    font-size: clamp(10px, 0.8vw, 13px);
+    line-height: 1.15;
+  }
+
+  .s-digital2__profiles-row {
+    bottom: 4%;
+    margin-top: 18px;
+    gap: 10px;
+  }
+  .s-digital2__profiles-eyebrow {
+    margin: 0 0 10px;
+    font-size: clamp(15px, 1.9vw, 19px);
+  }
   .s-digital2__profile,
-  .s-digital2__profile--cta { width: 112px; gap: 8px; }
-  .s-digital2__avatar { width: 72px; height: 72px; }
-  .s-digital2__profile-label { font-size: clamp(11px, 0.85vw, 13px); }
+  .s-digital2__profile--cta { width: 100%; max-width: 104px; gap: 6px; }
+  .s-digital2__avatar { width: 46px; height: 46px; }
+  .s-digital2__profile-label { font-size: clamp(9px, 0.8vw, 11px); line-height: 1.1; }
 }
 
 /* =========================================================
@@ -2548,7 +2791,20 @@ html.lab-menu-open body {
   .s-glance2__pills { margin-top: 8px; }
 }
 
-@media (max-width: 780px) {
+@media (max-width: 1100px) {
+  .s-glance2__stage {
+    justify-content: flex-start;
+    max-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+    scrollbar-width: none;
+    padding-bottom: clamp(40px, 8svh, 80px);
+  }
+  .s-glance2__stage::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+@media (max-width: 1100px) {
   .s-glance2__body { grid-template-columns: 1fr; }
   .s-glance2__body { margin-top: 18px; }
   .s-glance2__quote { max-width: 100%; }
@@ -2823,21 +3079,33 @@ html.lab-menu-open body {
    --------------------------------------------------------- */
 @media (min-width: 781px) and (max-width: 1100px) {
   .lab-hero-logo {
-    top: 4%;
+    /* Lowered and stepped down a size — at 4%/22% it crowded the
+       title block below it on tablet. */
+    top: calc(7% + 20px);
     left: 4%;
-    width: min(22%, 26.90svh);
+    width: min(19%, 24svh);
     transform: none;
   }
 
   .s-hero__brand {
     left: 50%;
-    top: 17%;
+    /* Pushed down to clear the lowered logo above and leave a gap
+       before the wordmark at 31%. */
+    top: 22%;
     max-width: 90%;
     transform: translateX(-50%);
     text-align: center;
   }
 
-  .s-hero__brand-line--2 { left: 50%; transform: translateX(-50%); }
+  /* The two title lines were ~4px apart on `line-height: 1` and
+     collided when line 1 wrapped. Give them room to breathe. */
+  .s-hero__brand-line { line-height: 1.3; }
+  .s-hero__brand-line--2 {
+    position: static;
+    left: auto;
+    transform: none;
+    margin-top: 0.4rem;
+  }
 
   .s-hero__video {
     top: 4%;
@@ -2884,10 +3152,11 @@ html.lab-menu-open body {
   .lab-media__canvas { object-position: 50% 38%; }
 
   .lab-hero-logo {
-    top: 4%;
-    left: 6%;
+    /* Centred on phones (VJ's call). */
+    top: calc(4% + 20px);
+    left: 50%;
     width: min(54%, 24svh);
-    transform: none;
+    transform: translateX(-50%);
   }
 
   .s-hero__brand,
@@ -2902,15 +3171,9 @@ html.lab-menu-open body {
     right: auto;
   }
 
-  .s-hero__video {
-    position: absolute;
-    top: 4%;
-    right: 6%;
-    width: min(30%, 150px);
-  }
-
-  .s-hero__video { width: min(26%, 13svh); }
-  .s-hero__video-caption { display: none; }
+  /* Video card is dropped entirely on phones (VJ's call) — the theme
+     video is still reachable from the nav / other sections. */
+  .s-hero__video { display: none; }
   .s-hero__brand {
     order: 2;
     position: relative;
@@ -2942,17 +3205,10 @@ html.lab-menu-open body {
     justify-content: center;
     gap: var(--sp-3);
     transform: translate(-50%, -50%);
-    /* Frosted teal pad so the white CTA pills read cleanly over the
-       busy dune artwork on phones. Small corner curve, subtle tint. */
-    padding: var(--sp-3);
-    border-radius: 18px;
-    background: rgba(0, 119, 142, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
   }
 
-  .s-hero__brand-line--2 { position: static; margin-top: var(--sp-1); }
+  .s-hero__brand-line { line-height: 1.3; }
+  .s-hero__brand-line--2 { position: static; margin-top: var(--sp-2); }
   .s-hero__brand-line--1 { white-space: normal; }
 
   .lab-viewport {
@@ -3068,12 +3324,20 @@ html.lab-menu-open body {
   }
 }
 
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-governance2__content { padding: clamp(118px, 16svh, 150px) clamp(32px, 6vw, 72px) 44px; }
+  .s-governance2__title { max-width: 760px; white-space: normal; font-size: clamp(34px, 4.4vw, 42px); margin-bottom: clamp(38px, 6svh, 56px); }
+  .s-governance2__stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(30px, 5svh, 46px) clamp(28px, 5vw, 56px); }
+  .s-governance2__stat-value { font-size: clamp(48px, 6vw, 64px); }
+  .s-governance2__stat-label { max-width: 18ch; font-size: clamp(14px, 1.7vw, 17px); }
+}
+
 @media (max-width: 700px) {
-  .s-governance2__content { padding: 90px 24px 30px; }
-  .s-governance2__title { white-space: normal; font-size: 32px; margin-bottom: 24px; }
-  .s-governance2__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 20px; }
-  .s-governance2__stat-value { font-size: 48px; }
-  .s-governance2__stat-label { font-size: 14px; }
+  .s-governance2__content { padding: 118px 26px 40px; }
+  .s-governance2__title { white-space: normal; font-size: clamp(30px, 9vw, 36px); margin-bottom: 36px; }
+  .s-governance2__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px 26px; }
+  .s-governance2__stat-value { font-size: clamp(46px, 13vw, 56px); }
+  .s-governance2__stat-label { font-size: 14px; line-height: 1.22; }
 }
 
 /* =========================================================
@@ -3258,13 +3522,20 @@ html.lab-menu-open body {
 
 .s-nonfinancial9__card {
   position: relative;
-  min-height: min(330px, 38svh);
+  min-height: min(363px, 42svh);
   overflow: hidden;
   border-radius: 20px;
   border: 1.5px solid rgba(170, 235, 232, 0.34);
   color: #fff;
   background: linear-gradient(180deg, rgba(93, 124, 127, 0.76), rgba(10, 77, 108, 0.9));
-  box-shadow: 0 18px 38px rgba(8, 57, 73, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 38px rgba(8, 57, 73, 0.2);
+  transition: min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: min-height;
+}
+
+.s-nonfinancial9__card:hover {
+  min-height: min(430px, 48svh);
+  z-index: 2;
 }
 
 .s-nonfinancial9__card-image {
@@ -3304,21 +3575,25 @@ html.lab-menu-open body {
 
 .s-nonfinancial9__content h2 {
   margin: 0;
-  padding-top: 28px;
-  border-top: 1px solid rgba(255, 255, 255, 0.38);
   font-size: clamp(20px, 1.4vw, 28px);
   font-weight: 400;
   line-height: 1.16;
 }
 
 .s-nonfinancial9__content p {
-  max-height: none;
-  margin: 12px 0 0;
+  max-height: 0;
+  margin: 0;
   overflow: hidden;
-  opacity: 1;
+  opacity: 0;
   font-size: 17px;
   line-height: 1.45;
   transition: max-height 0.45s ease, opacity 0.45s ease, margin 0.45s ease;
+}
+
+.s-nonfinancial9__card:hover .s-nonfinancial9__content p {
+  max-height: 220px;
+  margin-top: 12px;
+  opacity: 1;
 }
 
 @media (max-width: 900px) {
@@ -3372,6 +3647,18 @@ html.lab-menu-open body {
   .s-nonfinancial9__content {
     padding: 26px 24px;
   }
+}
+
+@media (max-width: 1100px) {
+  .s-nonfinancial9 { overflow-x: hidden; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; }
+  .s-nonfinancial9.is-scrollable { overflow-y: auto; }
+  .s-nonfinancial9__intro { padding: 64px clamp(20px, 6vw, 64px) 0; }
+  .s-nonfinancial9__intro h1 { font-size: clamp(30px, 4vw, 42px); }
+  .s-nonfinancial9__intro p { max-width: 760px; margin-top: 18px; font-size: 15px; line-height: 1.45; }
+  .s-nonfinancial9__viewport { margin-top: 38px; padding-bottom: 52px; }
+  .s-nonfinancial9__rail { width: min(100% - 40px, 680px); grid-template-columns: 1fr; gap: 24px; }
+  .s-nonfinancial9__card { min-height: min(420px, 58svh); }
+  .s-nonfinancial9__content p, .s-nonfinancial9__card:hover .s-nonfinancial9__content p { max-height: 220px; margin-top: 12px; opacity: 1; }
 }
 
 /* final/15 Horizon of Progress.html foreground treatment. The supplied template image
@@ -3438,10 +3725,9 @@ html.lab-menu-open body {
 .s-strategy__title {
   margin: 0;
   color: #fff;
-  font-family: "Avenir Lab", Arial, sans-serif;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
   font-size: clamp(32px, 5.2svh, 58px);
-  font-weight: 300;
-  letter-spacing: -0.025em;
+  font-weight: 400;
   line-height: 1.05;
 }
 
@@ -3451,9 +3737,9 @@ html.lab-menu-open body {
   gap: 18px;
   margin: 0 0 14px;
   color: #fff;
-  font-family: "Avenir Lab", Arial, sans-serif;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
   font-size: clamp(21px, 2.7svh, 30px);
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.1;
 }
 
@@ -3678,10 +3964,19 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   }
 }
 
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-govcards__content { justify-content: flex-start; padding: clamp(116px, 16svh, 150px) clamp(28px, 6vw, 68px) 44px; }
+  .s-govcards__title { max-width: 760px; margin-inline: auto; white-space: normal; font-size: clamp(32px, 4vw, 40px); margin-bottom: clamp(34px, 5svh, 48px); }
+  .s-govcards__cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 3vw, 28px); }
+  .s-govcards__card { min-height: clamp(170px, 23svh, 210px); }
+}
+
 @media (max-width: 700px) {
-  .s-govcards__content { padding: 42vh 20px 40px; justify-content: flex-start; }
-  .s-govcards__title { white-space: normal; font-size: 31px; margin-bottom: 30px; }
-  .s-govcards__cards { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .s-govcards { overflow-x: hidden; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; }
+  .s-govcards.is-scrollable { overflow-y: auto; }
+  .s-govcards__content { height: auto; min-height: 100%; padding: 112px 20px 52px; justify-content: flex-start; }
+  .s-govcards__title { white-space: normal; font-size: clamp(30px, 8.5vw, 36px); margin-bottom: 34px; }
+  .s-govcards__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .s-govcards__card { min-height: 160px; padding: 16px 10px; }
   .s-govcards__badge { width: 46px; height: 46px; margin-bottom: 10px; }
   .s-govcards__lottie { width: 46px; height: 46px; flex-basis: 46px; }
@@ -4234,7 +4529,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .s-fincap__title {
   margin: 0;
   color: var(--on-dark);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
   font-size: calc(var(--fincap-u) * 43);
   font-weight: 400;
   line-height: calc(var(--fincap-u) * 49);
@@ -4245,8 +4540,8 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   margin: clamp(14px, 2.2svh, 24px) auto 0;
   color: #ffffff;
   font-family: "Avenir Lab", Arial, sans-serif;
-  font-size: calc(var(--fincap-u) * 16 + 2px);
-  line-height: calc(var(--fincap-u) * 25 + 3px);
+  font-size: calc(var(--fincap-u) * 20);
+  line-height: calc(var(--fincap-u) * 30);
 }
 
 .s-fincap__cards {
@@ -4293,7 +4588,8 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .s-fincap__cta {
   position: absolute;
   right: clamp(18px, 2.6vw, 30px);
-  bottom: clamp(14px, 2svh, 20px);
+  /* sits lower over the card image (VJ) — was clamp(14px, 2svh, 20px) */
+  bottom: clamp(6px, 1svh, 10px);
   z-index: 2;
 }
 
@@ -4395,6 +4691,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 
 .s-fincap__stat strong {
   display: block;
+  color: #8bdce0;
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
   font-size: clamp(29px, 3.1vw, 52px);
   font-weight: 400;
@@ -4403,7 +4700,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 }
 
 .s-fincap__stat strong em {
-  color: #efd36d;
+  color: #8bdce0;
   font-style: normal;
 }
 
@@ -4416,46 +4713,97 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   color: rgba(255, 255, 255, 0.82);
 }
 
+/* ---------- Section 14 · TABLET (701–1100px) ----------
+   The scroll-jack carousel stays live here — the only thing that
+   breaks at this width is the --fincap-u type (its 0.0625vw term
+   collapses the heading/lede on a narrow viewport), so those are
+   pinned to readable clamp() px. Card geometry is left as desktop. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-fincap__intro { width: min(760px, calc(100% - 2 * var(--gutter))); }
+  .s-fincap__title { font-size: clamp(30px, 4.6vw, 40px); line-height: 1.14; }
+  .s-fincap__lede {
+    max-width: none;
+    margin-top: clamp(12px, 2svh, 20px);
+    font-size: clamp(15px, 2.05vw, 18px);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .s-fincap__card-body p { max-width: 42ch; font-size: clamp(14px, 1.9vw, 16px); }
+  .s-fincap__stat strong { font-size: clamp(21px, 3.5vw, 30px); }
+  .s-fincap__stat span { font-size: clamp(12px, 1.5vw, 14px); }
+}
+
+/* ---------- Section 14 · MOBILE (≤700px) ----------
+   The carousel now runs on phones too (it used to be replaced by a
+   plain static stack here). The cards are kept compact — natural
+   height ≈ 40–50svh — so FinancialCapitalLayer.tsx's peek geometry
+   (the next card parks just below the active one) still holds
+   without touching its motion constants. The card's side image
+   becomes a top band; stats stay a 3-up row, just smaller. */
 @media (max-width: 700px) {
-  /* Mobile: no scrub carousel — undo the full-viewport stage and let
-     the cards fall back to a plain scrollable stack. */
-  .s-fincap__stage { position: static; height: auto; }
   .s-fincap__intro {
-    position: static;
-    transform: none;
+    left: 0;
+    right: 0;
     bottom: auto;
-    width: auto;
-    margin: 0 0 20px;
-    padding: 0 12px;
-    pointer-events: auto;
-  }
-  .s-fincap__title { font-size: 30px; line-height: 1.1; }
-  .s-fincap__lede { font-size: 15px; line-height: 22px; }
-  .s-fincap__cards {
-    position: relative;
-    left: auto;
-    top: auto;
+    top: clamp(22px, 4.5svh, 44px);
     transform: none;
-    width: 100%;
-    height: auto !important;
-    overflow: visible;
+    width: auto;
+    padding: 0 clamp(16px, 5vw, 22px);
   }
-  .s-fincap__card {
+  .s-fincap__title { font-size: clamp(24px, 7vw, 32px); line-height: 1.12; }
+  .s-fincap__lede {
+    max-width: none;
+    margin-top: clamp(8px, 2svh, 14px);
+    font-size: clamp(12.5px, 3.5vw, 14px);
+    line-height: 1.42;
+    text-wrap: pretty;
+  }
+  .s-fincap__cards { width: calc(100% - 2 * var(--gutter)); }
+
+  /* flex column so "Explore More" can align to the right edge below
+     the copy (the image stays position:absolute, out of this flow). */
+  .s-fincap__card-upper { min-height: 0; display: flex; flex-direction: column; }
+  .s-fincap__card-image {
+    inset: 0 0 auto 0;
+    height: clamp(100px, 14.5svh, 132px);
+    -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+  }
+  .s-fincap__card-image::after {
+    background: linear-gradient(180deg, rgba(11, 52, 64, 0.2) 0%, rgba(11, 52, 64, 0.72) 100%);
+  }
+  .s-fincap__card-body {
+    padding: calc(clamp(100px, 14.5svh, 132px) + clamp(10px, 2.6vw, 16px)) clamp(16px, 5vw, 22px) clamp(8px, 2vw, 12px);
+  }
+  .s-fincap__card-body h2 { font-size: clamp(20px, 5.6vw, 26px); }
+  .s-fincap__card-body p {
+    max-width: none;
+    margin-top: clamp(6px, 1.6vw, 10px);
+    font-size: clamp(12px, 3.4vw, 14px);
+    line-height: 1.4;
+  }
+  /* "Explore More" drops into normal flow under the description and
+     sits at the right edge (was floated over the image band, where it
+     clashed with the heading). */
+  .s-fincap__cta {
     position: static;
-    margin-bottom: 20px;
-    opacity: 1 !important;
-    transform: none !important;
-    visibility: visible !important;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    align-self: flex-end;
+    margin: clamp(8px, 2vw, 12px) clamp(16px, 5vw, 22px) clamp(6px, 1.5vw, 10px);
   }
-  .s-fincap__card-upper { min-height: 240px; }
-  .s-fincap__card-image { inset: 0; }
-  .s-fincap__card-image::after { background: linear-gradient(90deg, rgba(11, 52, 64, 0.78), rgba(11, 52, 64, 0.42)); }
-  .s-fincap__card-body { padding: 26px 22px 16px; }
-  .s-fincap__card-body h2 { font-size: clamp(21px, 5.6vw, 27px); }
-  .s-fincap__card-lower { padding: 0 22px 24px; }
-  .s-fincap__stats { gap: 8px; }
-  .s-fincap__stat strong { font-size: clamp(15px, 4.4vw, 20px); }
-  .s-fincap__stat span { font-size: 11px; }
+  .s-fincap__card-lower { padding: 0 clamp(16px, 5vw, 22px) clamp(12px, 3vw, 16px); }
+  .s-fincap__rule { margin-bottom: clamp(8px, 2vw, 12px); }
+  .s-fincap__stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(6px, 2.5vw, 12px);
+    margin-top: clamp(8px, 2vw, 12px);
+  }
+  .s-fincap__stat { min-width: 0; }
+  .s-fincap__stat strong { font-size: clamp(17px, 5vw, 22px); white-space: normal; }
+  .s-fincap__stat strong small { font-size: 0.6em; }
+  .s-fincap__stat span { font-size: clamp(10.5px, 3vw, 12.5px); line-height: 1.2; }
 }
 
 
@@ -4480,13 +4828,18 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
    position:absolute; inset:0. */
 .s-financial2 { min-height: 100vh; min-height: 100svh; overflow: hidden; background: transparent; color: #fff; }
 
-.s-financial2__stage { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; min-height: 100svh; padding: clamp(28px,5.5svh,60px) 7vw clamp(20px,3svh,32px); }
+.s-financial2__stage { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; min-height: 100svh; padding: clamp(28px,5.5svh,60px) 7vw clamp(20px,3svh,32px); }
 .s-financial2__head, .s-financial2__col, .s-financial2__chartcard, .s-financial2__actions { --reveal: clamp(0, calc((var(--financial-reveal,0) - var(--reveal-start,0)) * 5), 1); opacity: var(--reveal); transform: translate3d(0, calc((1 - var(--reveal)) * 20px), 0); }
 .s-financial2__head { --reveal-start: 0; text-align: center; }
 .s-financial2__eyebrow { margin: 0 0 clamp(6px,1svh,10px); color: rgba(255,255,255,.92); font-family: "Minion Pro", Georgia, serif; font-size: clamp(16px,2.1svh,24px); font-weight: 400; line-height: 1.2; }
 .s-financial2__title { margin: 0; color: #fff; font-family: "Minion Pro", Georgia, serif; font-size: clamp(30px,5.1svh,55px); font-weight: 400; line-height: 1.15; }
 .s-financial2__lead { max-width: 1100px; margin: clamp(18px,2.7svh,29px) auto 0; color: rgba(255,255,255,.92); font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(14px,1.94svh,21px); line-height: 1.45; }
-.s-financial2__grid { flex: 1; display: grid; grid-template-columns: 1fr minmax(0,1.6fr) 1fr; gap: clamp(24px,3vw,58px); align-content: center; align-items: center; margin-top: clamp(18px,2.8svh,30px); }
+/* Was flex:1, which stretched the grid to fill the stage and centred the
+   chart in it — that opened a big empty band above and below the chart.
+   Now the head / grid / actions centre as one group (stage
+   justify-content:center) so the gaps are just these two margins:
+   62px above the chart row, 70px below it (≈30px tighter than before). */
+.s-financial2__grid { flex: 0 1 auto; display: grid; grid-template-columns: 1fr minmax(0,1.6fr) 1fr; gap: clamp(24px,3vw,58px); align-content: center; align-items: center; margin-top: 62px; }
 .s-financial2__col { --reveal-start: .08; min-width: 0; }
 .s-financial2__grid > .s-financial2__col:last-child { --reveal-start: .24; }
 .s-financial2__colhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -4512,7 +4865,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .s-financial2__col:first-child .s-financial2__metric:hover, .s-financial2__col:first-child .s-financial2__metric:focus-visible, .s-financial2__col:first-child .s-financial2__metric.is-active { transform: translateX(12px) scale(1.02); }
 .s-financial2__col:last-child .s-financial2__metric:hover, .s-financial2__col:last-child .s-financial2__metric:focus-visible, .s-financial2__col:last-child .s-financial2__metric.is-active { transform: translateX(-12px) scale(1.02); }
 .s-financial2__metric-label { font-size: clamp(14px,1.6svh,17px); line-height: 1.2; }.s-financial2__metric-value { flex: none; font-size: clamp(16px,1.85svh,20px); white-space: nowrap; }
-.s-financial2__chartcard { --reveal-start: .16; min-width: 0; padding: clamp(18px,2.4svh,26px); border-radius: 20px; background: rgba(255,255,255,.85); backdrop-filter: blur(14px); box-shadow: 0 24px 60px rgba(0,23,37,.25); }.s-financial2__chartcard figure { margin: 0; }.s-financial2__chart-img { display: block; width: 100%; height: auto; max-height: 47svh; object-fit: contain; }
+.s-financial2__chartcard { --reveal-start: .16; min-width: 0; padding: clamp(18px,2.4svh,26px); border-radius: 20px; background: rgba(255,255,255,.85); backdrop-filter: blur(14px); box-shadow: 0 24px 60px rgba(0,23,37,.25); }.s-financial2__chartcard figure, .s-financial2__inline-chart figure { margin: 0; }.s-financial2__chart-img { display: block; width: 100%; height: auto; max-height: 47svh; object-fit: contain; }.s-financial2__inline-chart { display: none; }
 
 /* Chart-swap fade/pop, ported from the source's own click handler
    (FinancialLayer.tsx toggles these classes on a timer matching the
@@ -4529,14 +4882,14 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 }
 @keyframes financial-chart-pop { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
 @keyframes financial-card-pop { from { opacity: .18; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
-.s-financial2__actions { --reveal-start: .58; display: flex; justify-content: center; gap: clamp(14px,1.35vw,26px); margin-top: clamp(16px,2.4svh,26px); }.s-financial2__cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: clamp(190px,17.21vw,260px); height: clamp(44px,5.7svh,76px); padding: 0 clamp(22px,2vw,38px); border-radius: 999px; color: #16869a; background: #fff; font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(14px,1.6svh,17px); text-decoration: none; white-space: nowrap; transition: transform var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out); }.s-financial2__cta svg, .s-financial2__cta img { width: 18px; height: 18px; object-fit: contain; }.s-financial2__cta--primary { color: #fff; background: #16869a; box-shadow: var(--shadow-btn); }.s-financial2__cta:hover { transform: translateY(-2px); background: rgba(18,118,134,.72); color: #fff; }
+.s-financial2__actions { --reveal-start: .58; display: flex; justify-content: center; gap: clamp(14px,1.35vw,26px); margin-top: 70px; }.s-financial2__cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: clamp(190px,17.21vw,260px); height: clamp(44px,5.7svh,76px); padding: 0 clamp(22px,2vw,38px); border-radius: 999px; color: #16869a; background: #fff; font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(14px,1.6svh,17px); text-decoration: none; white-space: nowrap; transition: transform var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out); }.s-financial2__cta svg, .s-financial2__cta img { width: 18px; height: 18px; object-fit: contain; }.s-financial2__cta--primary { color: #fff; background: #16869a; box-shadow: var(--shadow-btn); }.s-financial2__cta:hover { transform: translateY(-2px); background: rgba(18,118,134,.72); color: #fff; }
 /* Ghost variant, ported from the source (was referenced in the JSX
    but never actually defined here — the base .s-financial2__cta
    already happens to look close, but without the source's inset
    border ring separating it from the page). */
 .s-financial2__cta--ghost { color: #16869a; background: #fff; box-shadow: inset 0 0 0 1px #16869a, var(--shadow-btn); }
 .s-financial2__cta--ghost:hover { color: #fff; background: rgba(22,134,154,.72); }
-@media (max-width:1100px) { .s-financial2 { overflow: visible; }.s-financial2__stage { min-height: 0; padding: 48px 6vw; }.s-financial2__grid { grid-template-columns: 1fr; gap: 32px; margin-top: 32px; }.s-financial2__chartcard { order: -1; width: 100%; max-width: 720px; margin-inline: auto; }.s-financial2__metrics { grid-template-columns: 1fr 1fr; }.s-financial2__actions { flex-wrap: wrap; margin-top: 40px; } }
+@media (max-width:1100px) { .s-financial2 { overflow: visible; }.s-financial2__stage { min-height: 0; max-height: 100dvh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; scrollbar-width: none; justify-content: flex-start; padding: 48px 6vw 80px; }.s-financial2__stage::-webkit-scrollbar { width: 0; height: 0; }.s-financial2__grid { grid-template-columns: 1fr; gap: 32px; margin-top: 32px; }.s-financial2__chartcard { display: none; }.s-financial2__metrics { grid-template-columns: 1fr; }.s-financial2__inline-chart { display: block; grid-column: 1 / -1; padding: clamp(16px, 3vw, 24px); border-radius: 20px; background: rgba(255,255,255,.85); box-shadow: 0 16px 40px rgba(0,23,37,.25); }.s-financial2__actions { flex-direction: column; align-items: stretch; margin-top: 40px; }.s-financial2__cta { width: 100%; } }
 @media (max-width:620px) { .s-financial2__stage { padding: 40px 18px; }.s-financial2__metrics { grid-template-columns: 1fr; }.s-financial2__actions { flex-direction: column; align-items: stretch; }.s-financial2__cta { width: 100%; min-height: 50px; } }
 @media (prefers-reduced-motion: reduce) { .s-financial2__head, .s-financial2__col, .s-financial2__chartcard, .s-financial2__actions, .s-financial2__metrics li, .s-financial2__metric, .s-financial2__cta { transform: none; transition: none; } }
 
@@ -4571,8 +4924,8 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 }
 
 .s-leadership5__head { position: relative; z-index: 2; padding: calc(var(--leadership5-u) * 84) 24px 0; text-align: center; }
-.s-leadership5__head h1 { margin: 0; color: #fff; font: 400 calc(var(--leadership5-u) * 42) / 1.15 Georgia, "Times New Roman", serif; }
-.s-leadership5__intro { max-width: calc(var(--leadership5-u) * 736); margin: calc(var(--leadership5-u) * 21) auto 0; color: #fff; font-size: calc(var(--leadership5-u) * 16); line-height: calc(var(--leadership5-u) * 24); letter-spacing: .002em; }
+.s-leadership5__head h1 { margin: 0; color: #fff; font: 400 calc(var(--leadership5-u) * 42) / 1.15 "Minion Pro", Georgia, "Times New Roman", serif; }
+.s-leadership5__intro { max-width: calc(var(--leadership5-u) * 980); margin: calc(var(--leadership5-u) * 21) auto 0; color: #fff; font-size: calc(var(--leadership5-u) * 18); line-height: calc(var(--leadership5-u) * 27); letter-spacing: .002em; }
 
 /* Centre the reference canvas. people/portrait coordinates are anchored
    to the reference's 1600-wide canvas; on viewports wider than 16:9 that
@@ -4584,24 +4937,38 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 
 .s-leadership5__people { position: absolute; z-index: 2; top: calc(var(--leadership5-u) * 397); left: calc(var(--leadership5-u) * 107); display: flex; gap: calc(var(--leadership5-u) * 345); }
 .s-leadership5__person { position: relative; height: calc(var(--leadership5-u) * 302); border-radius: calc(var(--leadership5-u) * 16); background: rgba(21,106,109,.9); backdrop-filter: blur(8px); }
-.s-leadership5__person--chairman { width: calc(var(--leadership5-u) * 633); padding: calc(var(--leadership5-u) * 32) calc(var(--leadership5-u) * 28) 0 calc(var(--leadership5-u) * 48); }
+/* Right padding widened (was 28) to reserve the zone the chairman
+   portrait overlaps, so the statement wraps clear of it instead of
+   tucking behind the figure. Card height goes auto (min 302) so the
+   extra wrapped lines aren't clipped by the fixed box. */
+.s-leadership5__person--chairman { width: calc(var(--leadership5-u) * 633); min-height: calc(var(--leadership5-u) * 302); height: auto; padding: calc(var(--leadership5-u) * 32) calc(var(--leadership5-u) * 190) calc(var(--leadership5-u) * 16) calc(var(--leadership5-u) * 48); }
+/* This card's copy is the longest and its column is the most
+   portrait-constrained; 15 (vs the section's 16) keeps it to a sane
+   line count without tucking under the figure. */
+.s-leadership5__person--chairman .s-leadership5__statement { font-size: calc(var(--leadership5-u) * 15); line-height: calc(var(--leadership5-u) * 21); }
 .s-leadership5__person--md { width: calc(var(--leadership5-u) * 489); padding: calc(var(--leadership5-u) * 32) calc(var(--leadership5-u) * 24) 0 calc(var(--leadership5-u) * 91); }
-.s-leadership5__person--md { width: calc(var(--leadership5-u) * 537); margin-left: calc(var(--leadership5-u) * -48); padding-left: calc(var(--leadership5-u) * 139); }
+.s-leadership5__person--md { width: calc(var(--leadership5-u) * 588); margin-left: calc(var(--leadership5-u) * -48); padding-left: calc(var(--leadership5-u) * 139); }
 .s-leadership5__person--md .s-leadership5__rule { display: none; }
 .s-leadership5__portrait { position: absolute; z-index: 3; object-fit: cover; object-position: top center; }
+.s-leadership5__portrait-mobile { display: none; }
 .s-leadership5__portrait--chairman { left: calc(var(--leadership5-u) * 560); top: calc(var(--leadership5-u) * 274); width: calc(var(--leadership5-u) * 280); height: calc(var(--leadership5-u) * 425); }
 .s-leadership5__portrait--md { left: calc(var(--leadership5-u) * 900); top: calc(var(--leadership5-u) * 277); width: calc(var(--leadership5-u) * 266); height: calc(var(--leadership5-u) * 425); }
-.s-leadership5__role { margin: 0 0 calc(var(--leadership5-u) * 2); color: rgba(255,255,255,.78); font: 400 calc(var(--leadership5-u) * 15) / 1.3 Georgia, "Times New Roman", serif; }
+.s-leadership5__role { margin: 0 0 calc(var(--leadership5-u) * 2); color: rgba(255,255,255,.78); font: 400 calc(var(--leadership5-u) * 17) / 1.3 "Minion Pro", Georgia, "Times New Roman", serif; }
 .s-leadership5__name { margin: 0; color: #fff; font-size: calc(var(--leadership5-u) * 31); font-weight: 400; line-height: 1.2; letter-spacing: .005em; }
-.s-leadership5__rule { display: block; height: calc(var(--leadership5-u) * 1); margin: calc(var(--leadership5-u) * 12) 0 0; background: rgba(255,255,255,.5); }
-.s-leadership5__person--chairman .s-leadership5__rule { width: calc(var(--leadership5-u) * 113); margin-left: auto; }.s-leadership5__person--md .s-leadership5__rule { width: 100%; }
-.s-leadership5__statement { margin: calc(var(--leadership5-u) * 18) 0 0; color: #eaf3f3; font-size: calc(var(--leadership5-u) * 14.5); line-height: calc(var(--leadership5-u) * 21.7); white-space: nowrap; }
+.s-leadership5__rule { display: block; height: calc(var(--leadership5-u) * 1); margin: calc(var(--leadership5-u) * 8) 0 0; background: rgba(255,255,255,.5); }
+.s-leadership5__person--chairman .s-leadership5__rule { display: none; }.s-leadership5__person--md .s-leadership5__rule { width: 100%; }
+.s-leadership5__statement { margin: calc(var(--leadership5-u) * 10) 0 0; color: #eaf3f3; font-size: calc(var(--leadership5-u) * 16); line-height: calc(var(--leadership5-u) * 22); white-space: normal; }
 
 .s-leadership5__actions { position: absolute; z-index: 2; top: calc(var(--leadership5-u) * 750); left: 0; right: 0; display: flex; justify-content: center; gap: calc(var(--leadership5-u) * 30); }
-.s-leadership5__pill { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--leadership5-u) * 10); height: calc(var(--leadership5-u) * 47); min-width: calc(var(--leadership5-u) * 216); padding: 0 calc(var(--leadership5-u) * 28); border: calc(var(--leadership5-u) * 2) solid #1594a1; border-radius: 999px; color: #1a7684; background: #fff; font-family: inherit; font-size: calc(var(--leadership5-u) * 15); font-weight: 500; text-decoration: none; white-space: nowrap; cursor: pointer; transition: transform .18s var(--ease-out), background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); }
+.s-leadership5__pill { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--leadership5-u) * 10); height: calc(var(--leadership5-u) * 47); min-width: calc(var(--leadership5-u) * 216); padding: 0 calc(var(--leadership5-u) * 28); border: calc(var(--leadership5-u) * 2) solid #1594a1; border-radius: 999px; outline: 1px solid transparent; outline-offset: 4px; color: #1a7684; background: #fff; font-family: inherit; font-size: calc(var(--leadership5-u) * 15); font-weight: 500; text-decoration: none; white-space: nowrap; cursor: pointer; transition: transform .18s var(--ease-out), background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), outline-color var(--dur-base) var(--ease-out); }
+/* Hover animation ported from section 3's shared buttons: a detached
+   hairline ring fades in (via outline + outline-offset, so it survives
+   the .lab-shine overflow:hidden the live pills carry) plus the same
+   transform — scale(1.06) for the outline pills (section 3 "Explore
+   More"), translateY(-2px) for the filled pill (section 3 "Watch"). */
 .s-leadership5__pill svg, .s-leadership5__pill img { width: calc(var(--leadership5-u) * 17); height: calc(var(--leadership5-u) * 17); flex: 0 0 auto; object-fit: contain; }.s-leadership5__pill--primary { min-width: calc(var(--leadership5-u) * 241); color: #fff; background: #128f9f; border-color: #128f9f; }
-.s-leadership5__pill:hover { transform: translateY(-2px); background: #eaf5f7; border-color: #128f9f; box-shadow: 0 calc(var(--leadership5-u) * 10) calc(var(--leadership5-u) * 24) rgba(6, 65, 77, .28); }
-.s-leadership5__pill--primary:hover { transform: translateY(-2px); background: #0f7d8b; border-color: #0f7d8b; box-shadow: 0 calc(var(--leadership5-u) * 10) calc(var(--leadership5-u) * 24) rgba(6, 65, 77, .32); }
+.s-leadership5__pill:hover { transform: scale(1.06); outline-color: rgba(255, 255, 255, 0.85); }
+.s-leadership5__pill--primary:hover { transform: translateY(-2px); background: #0f7d8b; border-color: #0f7d8b; outline-color: #1d7f94; }
 .s-leadership5__pill:active { transform: translateY(0); }
 .s-leadership5__pill:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 
@@ -4623,7 +4990,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .s-leadership5__video-dialog iframe { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 90svh; border: 2px solid #4caf78; border-radius: 14px; background: transparent; }
 .s-leadership5__video-dialog-close { position: absolute; top: 10px; right: 10px; z-index: 1; display: grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid #4caf78; border-radius: 999px; color: #fff; background: transparent; cursor: pointer; font: 400 28px/1 Arial, sans-serif; }
 @media (prefers-reduced-motion: reduce) {
-  .s-leadership5__pill { transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out); }
+  .s-leadership5__pill { transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), outline-color var(--dur-base) var(--ease-out); }
   .s-leadership5__pill:hover, .s-leadership5__pill--primary:hover, .s-leadership5__pill:active { transform: none; }
 }
 
@@ -4667,15 +5034,59 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .s-leadership5__lang-menu a:hover,
 .s-leadership5__lang-menu a:focus-visible { background: #eaf5f7; outline: none; }
 
-@media (max-width: 900px) {
-  .s-leadership5 { --leadership5-u: 1px; overflow: auto; }
+@media (max-width: 1100px) {
+  .s-leadership5 { --leadership5-u: 1px; overflow-x: hidden; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; }
+  .s-leadership5.is-scrollable { overflow-y: auto; }
   .s-leadership5__stage { position: static; width: auto; height: auto; transform: none; }
   .s-leadership5__lang { display: block; width: 100%; }
   .s-leadership5__lang-menu { position: static; transform: none; left: auto; bottom: auto; width: 100%; margin: 10px 0 0; box-shadow: none; display: none; }
   .s-leadership5__lang.is-open .s-leadership5__lang-menu { display: block; transform: none; animation: none; }
-  .s-leadership5__head { padding-top: 56px; }.s-leadership5__head h1 { font-size: 30px; }.s-leadership5__intro { max-width: none; margin-top: 16px; font-size: 15px; line-height: 22px; }.s-leadership5__intro br { display: none; }
-  .s-leadership5__people { position: static; flex-direction: column; gap: 110px; margin: 150px 20px 0; }.s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md { width: auto; height: auto; margin-left: 0; padding: 120px 22px 24px; }.s-leadership5__statement { font-size: 15px; line-height: 22px; margin-top: 16px; white-space: normal; }.s-leadership5__statement br { display: none; }.s-leadership5__rule, .s-leadership5__person--chairman .s-leadership5__rule { width: 100%; margin-left: 0; margin-top: 10px; }
-   .s-leadership5__name { font-size: 26px; }.s-leadership5__role { font-size: 14px; }.s-leadership5__portrait, .s-leadership5__portrait--chairman, .s-leadership5__portrait--md { left: 50%; top: -100px; width: 180px; height: auto; transform: translateX(-50%); }.s-leadership5__actions { position: static; flex-wrap: wrap; margin: 40px 20px; padding-bottom: 40px; gap: 14px; }.s-leadership5__pill { height: 48px; padding: 0 22px; font-size: 14px; width: 100%; }
+  .s-leadership5__head { padding: 56px 24px 0; }.s-leadership5__head h1 { font-size: clamp(30px, 4vw, 38px); }.s-leadership5__intro { max-width: 760px; margin-top: 16px; font-size: 15px; line-height: 22px; }.s-leadership5__intro br { display: none; }
+  .s-leadership5__people { position: static; flex-direction: column; gap: 128px; margin: 138px clamp(20px, 6vw, 64px) 0; }
+  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md { width: auto; min-height: 0; height: auto; margin-left: 0; padding: 124px clamp(22px, 4vw, 42px) 28px; }
+  .s-leadership5__statement, .s-leadership5__person--chairman .s-leadership5__statement { font-size: 15px; line-height: 22px; margin-top: 16px; white-space: normal; }.s-leadership5__statement br { display: none; }.s-leadership5__rule, .s-leadership5__person--chairman .s-leadership5__rule { width: 100%; margin-left: 0; margin-top: 10px; }
+  .s-leadership5__name { font-size: 26px; }.s-leadership5__role { font-size: 14px; }
+  .s-leadership5__portrait:not(.s-leadership5__portrait-mobile) { display: none; }
+  .s-leadership5__portrait-mobile { display: block; left: 50%; top: -108px; width: 190px; height: auto; transform: translateX(-50%); }
+  .s-leadership5__actions { position: static; flex-direction: column; align-items: stretch; margin: 42px clamp(20px, 6vw, 64px); padding-bottom: 48px; gap: 14px; }.s-leadership5__pill { height: 48px; padding: 0 22px; font-size: 14px; width: 100%; }
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
+  .s-leadership5__people { gap: 88px; margin-top: 82px; }
+  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md {
+    display: grid;
+    grid-template-columns: minmax(190px, 36%) minmax(0, 1fr);
+    column-gap: clamp(22px, 3vw, 38px);
+    align-items: stretch;
+    min-height: 320px;
+    padding: 28px clamp(24px, 4vw, 44px) 28px 0;
+    overflow: visible;
+  }
+  .s-leadership5__portrait-mobile {
+    position: absolute;
+    left: 0;
+    top: auto;
+    bottom: 0;
+    width: min(36%, 260px);
+    height: 360px;
+    transform: none;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+  .s-leadership5__role, .s-leadership5__name, .s-leadership5__rule, .s-leadership5__statement { grid-column: 2; }
+  .s-leadership5__role { align-self: end; }
+  .s-leadership5__statement { align-self: start; }
+}
+
+@media (max-width: 640px) {
+  .s-leadership5__head { padding-top: 52px; }
+  .s-leadership5__people { gap: 112px; margin-top: 122px; }
+  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md { padding-top: 196px; border-radius: 0; background: transparent; backdrop-filter: none; isolation: isolate; }
+  .s-leadership5__person::before { position: absolute; z-index: 0; top: 166px; right: 0; bottom: 0; left: 0; border-radius: 16px; background: rgba(21,106,109,.9); box-shadow: 0 10px 24px rgba(0, 38, 47, .16); content: ""; }
+  .s-leadership5__person > :not(.s-leadership5__portrait-mobile) { position: relative; z-index: 1; }
+  .s-leadership5__portrait-mobile { top: -109px; width: 220px; transform: none; }
+  .s-leadership5__portrait-mobile--chairman { right: auto; left: 18px; }
+  .s-leadership5__portrait-mobile--md { right: 18px; left: auto; }
 }
 
 /* Final Strategy cascade from 15 Horizon of Progress: this must remain after
@@ -4693,9 +5104,10 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .lab .s-strategy__panel { position: relative; z-index: 1; width: min(calc(100% - 48px), 1536px); max-width: 100%; margin: 0 auto; padding: clamp(22px, 3svh, 38px) clamp(24px, 4.8vw, 76px) clamp(24px, 3.5svh, 44px); border: 0; border-radius: 14px; background: transparent; box-shadow: none; backdrop-filter: none; will-change: transform; }
 .lab .s-strategy__panel > section { padding-top: 50px; }
 .lab .s-strategy__header { max-width: 1080px; margin: 0 auto clamp(20px, 2.6svh, 30px); text-align: center; }
-.lab .s-strategy__title, .lab .s-strategy__section-title, .lab .s-strategy__card-title, .lab .s-strategy__metric, .lab .s-strategy__metric-label, .lab .s-strategy__card-copy, .lab .s-strategy__risk-list, .lab .s-strategy__cta { font-family: "Avenir Lab", Arial, sans-serif; }
-.lab .s-strategy__title { margin: 100px 0 0; color: #fff; font-size: clamp(40px, 6svh, 70px); font-weight: 300; letter-spacing: -0.025em; line-height: 1.05; }
-.lab .s-strategy__section-title { display: flex; align-items: center; gap: 18px; margin: 0 0 25px; color: #fff; font-size: clamp(32px, 4svh, 46px); font-weight: 300; line-height: 1.1; }
+.lab .s-strategy__card-title, .lab .s-strategy__metric, .lab .s-strategy__metric-label, .lab .s-strategy__card-copy, .lab .s-strategy__risk-list, .lab .s-strategy__cta { font-family: "Avenir Lab", Arial, sans-serif; }
+.lab .s-strategy__title, .lab .s-strategy__section-title { font-family: "Minion Pro", Georgia, "Times New Roman", serif; }
+.lab .s-strategy__title { margin: 100px 0 0; color: #fff; font-size: clamp(40px, 6svh, 70px); font-weight: 400; line-height: 1.05; }
+.lab .s-strategy__section-title { display: flex; align-items: center; gap: 18px; margin: 0 0 25px; color: #fff; font-size: clamp(32px, 4svh, 46px); font-weight: 400; line-height: 1.1; }
 .lab .s-strategy__panel > section[aria-labelledby="pillars-title"] { margin-top: 10px; }
 .lab .s-strategy__panel > section[aria-labelledby="risks-title"] { margin-top: 10px; }
 
@@ -4710,14 +5122,16 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .lab .s-strategy__risks { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 10px; }
 .lab .s-strategy__card { min-width: 0; padding: clamp(16px, 1.8vw, 24px); border: 1px solid rgba(194, 230, 231, 0.2); border-radius: 7px; color: #fff; background: rgba(0, 54, 70, 0.86); box-shadow: 0 10px 22px rgba(0, 30, 42, 0.14); }
 .lab .s-strategy__pillar { min-height: 300px; }
-.lab .s-strategy__card-title { margin: 0; color: #fff; font-size: clamp(18px, 1.9svh, 23px); font-weight: 700; line-height: 1.2; }
-.lab .s-strategy__card-copy { min-height: 64px; margin: 14px 0 0; color: #d8e7e9; font-size: clamp(15px, 1.7svh, 19px); line-height: 1.4; }
+.lab .s-strategy__card-title { margin: 0; color: #fff; font-size: clamp(20px, 1.9svh, 23px); font-weight: 700; line-height: 1.2; }
+.lab .s-strategy__card-copy { min-height: 64px; margin: 14px 0 0; color: #d8e7e9; font-size: clamp(17px, 1.7svh, 19px); line-height: 1.4; }
 .lab .s-strategy__metric { margin: 0; color: #8bdce0; font-size: clamp(26px, 2.8svh, 34px); font-weight: 300; line-height: 1.1; }
-.lab .s-strategy__metric-label { margin: 3px 0 13px; color: #d8e7e9; font-size: clamp(14px, 1.45svh, 17px); }
+.lab .s-strategy__metric-label { margin: 3px 0 13px; color: #d8e7e9; font-size: clamp(16px, 1.6svh, 18px); }
 .lab .s-strategy__risk { position: relative; min-height: 210px; padding-top: 25px; }
-.lab .s-strategy__risk-list { display: grid; gap: 8px; margin: 18px 0 0; padding-left: 20px; color: #d8e7e9; font-size: clamp(15px, 1.65svh, 19px); line-height: 1.3; }
+.lab .s-strategy__risk-list { display: grid; gap: 9px; margin: 18px 0 0; padding-left: 2px; list-style: none; color: #d8e7e9; font-size: clamp(17px, 1.7svh, 19px); line-height: 1.45; }
+.lab .s-strategy__risk-list li { position: relative; padding-left: 18px; }
+.lab .s-strategy__risk-list li::before { position: absolute; left: 2px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--risk-accent, #8bdce0); content: ""; }
 .lab .s-strategy__actions { display: flex; justify-content: center; margin-top: clamp(24px, 3.5svh, 38px); }
-.lab .s-strategy__cta { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 30px; border-radius: 999px; color: #fff; background: #07899a; box-shadow: var(--shadow-btn); font-size: clamp(17px, 1.8svh, 21px); font-weight: 500; text-decoration: none; }
+.lab .s-strategy__cta { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 30px; border-radius: 999px; color: #fff; background: #07899a; box-shadow: var(--shadow-btn); font-size: clamp(18px, 1.9svh, 21px); font-weight: 500; text-decoration: none; }
 .lab .s-strategy__cta svg { width: 17px; height: 17px; margin-right: 9px; }
 
 @media (max-width: 1100px) {
@@ -5012,14 +5426,22 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   .s-community__card-rule { margin-block: 8px; }
 }
 
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-community__stage { padding: clamp(20px, 3svh, 32px) clamp(20px, 4vw, 44px); }
+  .s-community__head { max-width: 760px; margin-bottom: clamp(16px, 2.5svh, 24px); }
+  .s-community__heading { font-size: clamp(34px, 4.6vw, 44px); }
+  .s-community__intro { margin-top: 14px; font-size: clamp(14px, 1.8vw, 16px); }
+  .s-community__card { flex-basis: min(62vw, 460px); }
+}
+
 @media (max-width: 700px) {
-  .s-community { overflow: visible; }
-  .s-community__story-viewport { overflow: visible; }
-  .s-community__stage { min-height: 100svh; justify-content: flex-start; padding-inline: 16px; }
+  .lab .s-community { overflow: hidden; }
+  .s-community__story-viewport { flex: 1; min-height: 0; overflow: hidden !important; }
+  .s-community__stage { height: 100svh; min-height: 100svh; justify-content: flex-start; padding-inline: 16px; }
   .s-community__heading { font-size: clamp(32px, 10vw, 48px); }
   .s-community__intro { font-size: 13px; }
-  .s-community__stories { width: calc(100% + 16px); margin-right: -16px; }
-  .s-community__card { flex-basis: min(82vw, 360px); }
+  .s-community__stories { width: 100%; margin: 0; flex-direction: column; align-items: center; gap: 20px; overflow: visible; will-change: transform; }
+  .s-community__card { flex: 0 0 auto; width: min(82vw, 360px); }
   .s-community__card { aspect-ratio: 1.35 / 1; }
 }
 
@@ -5030,6 +5452,10 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   inset: 0;
   min-height: 0;
   overflow: visible;
+}
+
+@media (max-width: 700px) {
+  .lab .s-community { overflow: hidden; }
 }
 
 /* ---------------------------------------------------------
@@ -5043,7 +5469,13 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   z-index: 9999;
   display: grid;
   place-items: center;
-  background: #1d7f94; /* project accent — "our green" */
+  /* Sampled from /hero/intro.mp4's own opening frame (stable across
+     the first 2s — not a fade-in), not the /ai-assistant page's navy.
+     The video sits under this overlay from the very first paint (see
+     LabIntro.tsx), so matching its actual colour — not a generic
+     brand tone — is what makes the "loading" -> "playing" handoff
+     invisible instead of a visible colour jump. */
+  background: #095473;
   transition: opacity 0.55s ease;
 }
 .lab-intro[data-stage="leaving"] {
@@ -5057,49 +5489,196 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   display: block;
   width: 100%;
   height: 100%;
+  z-index: 1; /* under the load overlay while it crossfades out */
+  /* A <video> now (was a manually cover-fit <canvas>); object-fit
+     reproduces the same fill behaviour with no JS. */
+  object-fit: cover;
+  background: #095473; /* matches the load screen's base, no flash */
 }
 
-/* thin progress bar pinned to the very top edge — a full-width track
-   with a scaleX fill, so its length never depends on how the browser
-   resolves a percentage width on a fixed element. */
-.lab-intro__bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.18);
-  overflow: hidden;
+/* Load-screen visuals (aurora + counter). Stays mounted through the
+   hand-off and fades out over the intro's first frame — no hard cut. */
+.lab-intro__load {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.6s ease;
 }
-.lab-intro__bar-fill {
-  display: block;
-  height: 100%;
-  width: 100%;
-  background: #ffffff;
-  transform: scaleX(var(--pct, 0));
-  transform-origin: left center;
-  transition: transform 0.25s ease;
+.lab-intro__load[data-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Load-screen background — ported 1:1 from the live /ai-assistant page:
+   Horizon project/src/components/AuroraBackground.tsx
+   + @keyframes fluid-1..4 in Horizon project/src/app/globals.css
+   (base #081F2B, brand-main #147385 blobs, noise overlay). Pure CSS
+   keyframe drift — no JS, no pointer interaction. */
+.lab-intro__aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lab-intro__aurora-base {
+  position: absolute;
+  inset: 0;
+  /* Matches .lab-intro's own base — see the comment there. */
+  background: #095473;
+}
+.lab-intro__fluid {
+  position: absolute;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 9999px;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+.lab-intro__fluid--1 {
+  left: -10%;
+  top: -10%;
+  background: rgba(20, 115, 133, 0.8); /* brand-main / 80 */
+  filter: blur(150px);
+  animation: lab-intro-fluid-1 16s ease-in-out infinite alternate;
+}
+.lab-intro__fluid--2 {
+  right: -10%;
+  top: 5%;
+  background: rgba(20, 115, 133, 0.5); /* brand-main / 50 */
+  filter: blur(200px);
+  animation: lab-intro-fluid-2 18s ease-in-out infinite alternate;
+}
+.lab-intro__fluid--3 {
+  left: -5%;
+  bottom: -10%;
+  background: rgba(20, 115, 133, 0.3); /* brand-main / 30 */
+  filter: blur(180px);
+  animation: lab-intro-fluid-3 15s ease-in-out infinite alternate;
+}
+.lab-intro__fluid--4 {
+  right: -5%;
+  bottom: -5%;
+  background: #051d21; /* color-mix(brand-main 25%, black) */
+  filter: blur(200px);
+  animation: lab-intro-fluid-4 20s ease-in-out infinite alternate;
+}
+.lab-intro__aurora-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@keyframes lab-intro-fluid-1 {
+  from { transform: translate3d(-8vw, -8vh, 0) scale(1); }
+  to { transform: translate3d(44vw, 36vh, 0) scale(1.35); }
+}
+@keyframes lab-intro-fluid-2 {
+  from { transform: translate3d(10vw, 12vh, 0) scale(1.1); }
+  to { transform: translate3d(-40vw, -26vh, 0) scale(0.85); }
+}
+@keyframes lab-intro-fluid-3 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-34vw, -38vh, 0) scale(1.5); }
+}
+@keyframes lab-intro-fluid-4 {
+  from { transform: translate3d(-16vw, -10vh, 0) scale(1.2); }
+  to { transform: translate3d(28vw, -34vh, 0) scale(0.9); }
 }
 
 .lab-intro__loader {
   position: relative;
+  z-index: 1;
   text-align: center;
   color: #ffffff;
 }
+
+/* the % sits inside a thin circular progress ring */
+.lab-intro__dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(260px, 64vw);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+.lab-intro__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.lab-intro__ring-track,
+.lab-intro__ring-fill {
+  fill: none;
+}
+.lab-intro__ring-track {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 2;
+}
+.lab-intro__ring-fill {
+  /* White, matching the comet trail's own colour — was a warm
+     orange-to-green gradient (labIntroDialGrad, now removed). */
+  stroke: #ffffff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.2s linear;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+/* Bright comet-head tip at the ring-fill's leading edge — same bloom
+   look as /hero/intro.mp4's own opening shot (a glowing point trailed
+   by a fading line), echoed here so the load screen and the video it
+   hands off to read as one visual, not two different treatments. */
+.lab-intro__ring-head {
+  /* Same circle, same radius, same stroke-dashoffset formula as
+     .lab-intro__ring-fill — see the comment on the element in
+     LabIntro.tsx for why this is a dash on the same geometry rather
+     than a separately-positioned marker. */
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  /* ~1.2 units of a 100-unit pathLength — round linecap turns that
+     short a dash into a dot rather than a visible line segment. */
+  stroke-dasharray: 0.01 99.99;
+  transform: rotate(-90deg); /* static, same as ring-fill — never re-set */
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.2s linear; /* identical to ring-fill's own */
+  /* Dot size is unchanged (stroke-width above) — only the glow around
+     it is bigger/brighter here, to match the video's own bloom. */
+  filter:
+    drop-shadow(0 0 3px rgba(255, 255, 255, 1))
+    drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))
+    drop-shadow(0 0 22px rgba(180, 235, 245, 0.75));
+}
 .lab-intro__count {
   margin: 0;
-  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
-  font-size: clamp(56px, 12vw, 132px);
-  font-weight: 400;
+  font-family: "Avenir Lab", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(2.8rem, 11vw, 4.6rem);
+  font-weight: 900;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+.lab-intro__count-pct {
+  font-size: 0.32em;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 0.12em;
+  vertical-align: 0.6em;
 }
 .lab-intro__label {
-  margin: 0.5em 0 0;
-  font-size: clamp(11px, 1.5vw, 14px);
-  letter-spacing: 0.3em;
+  margin: 1.4rem 0 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 /* minimal variant — small ring, no big counter */
@@ -5124,6 +5703,11 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   position: fixed;
   right: 22px;
   bottom: 22px;
+  /* Higher than .lab-intro__load's z-index:2 — without this the button
+     had no z-index at all (auto), so during the aurora's 0.6s fade-out
+     right as "playing" begins, the still-fading (higher, explicit
+     z-index) overlay could paint over it. */
+  z-index: 3;
   padding: 9px 20px;
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 999px;
@@ -5138,12 +5722,6 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .lab-intro__skip:hover,
 .lab-intro__skip:focus-visible {
   background: rgba(0, 0, 0, 0.36);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lab-intro { transition: none; }
-  .lab-intro__spinner { animation: none; }
-  .lab-intro__bar-fill { transition: none; }
 }
 
 /* =========================================================
@@ -5170,4 +5748,48 @@ html.lab-nav-hidden [data-global-nav]:first-of-type {
    which only loads on `/`. */
 button[data-global-nav] {
   position: fixed !important;
+}
+
+/* Force the hamburger bars white on `/`. GlobalHeader.tsx resolves them
+   to teal (#147385) here because home isn't in its whiteBarPages list,
+   but this page's backdrop is the dark scrubbed video canvas the whole
+   way down, so white is what reads. Scoped to this file, which only
+   loads on `/`; the open-state bars are already white in GlobalHeader. */
+button[data-global-nav] > span > span {
+  background-color: #fff !important;
+}
+
+html.lab-nav-teal button[data-global-nav][aria-label="Open menu"] > span > span {
+  background-color: #147385 !important;
+}
+
+/* Background-music toggle (BackgroundMusic.tsx) gets the exact same
+   colour treatment as the hamburger on `/`: hidden until IntroNavGate
+   reveals the nav, white icon over the dark scrubbed canvas, and teal
+   on the light-themed sections that add `lab-nav-teal`. Mirrors the
+   [data-global-nav] rules above; scoped to this file, `/` only. */
+html.lab-nav-hidden [data-bg-music] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.4s ease;
+}
+[data-bg-music] {
+  color: #fff !important;
+}
+[data-bg-music][aria-pressed="true"] {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+html.lab-nav-teal [data-bg-music] {
+  color: #147385 !important;
+}
+html.lab-nav-teal [data-bg-music][aria-pressed="true"] {
+  color: rgba(20, 115, 133, 0.5) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-intro { transition: none; }
+  .lab-intro__spinner { animation: none; }
+  .lab-intro__fluid { animation: none !important; }
+  .lab-intro__ring-fill { transition: none; }
+  .lab-intro__load { transition: none; }
 }

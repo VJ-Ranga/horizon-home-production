@@ -8,40 +8,58 @@
    fully-mounted <AnimationLab> that is holding on the handoff frame
    (HANDOFF_FRAME) with scroll locked. Sequence:
 
-     1. "playing"  the 240 intro frames scrubbed on this component's
-                   own <canvas> at INTRO_FPS. There is no load screen:
-                   playback starts on mount and the frames stream in
-                   underneath it. Skippable — click, key, wheel, or
-                   the Skip button.
-     2. "leaving"  the overlay fades out; onDone() releases the lab's
+     1. "loading"  project-colour screen: a real 0 -> 100 counter
+                   driven by decoded intro frames, plus a thin
+                   progress bar pinned to the top edge. The "minimal"
+                   variant shows a small spinner instead.
+     2. "playing"  the intro shot plays as a real <video>
+                   (/hero/intro.mp4 — H.264, 1920px wide, CRF 26, no
+                   audio) at its native 30fps. This used to be 240
+                   webp frames scrubbed on a <canvas> at ~7.8fps
+                   (240 / 30.8s) — visibly stepped no matter how the
+                   scrub math was tuned, since the frame rate itself
+                   was the problem, not the drawing. A muted autoplay
+                   video is both smoother (true 30fps) and an order of
+                   magnitude smaller (6.7MB vs the old set's 66MB).
+                   Skippable — key, wheel, or the Skip button, deliberately
+                   NOT a click anywhere (see the skip-affordances effect
+                   below for why).
+     3. "leaving"  the overlay fades out; onDone() releases the lab's
                    entry autoplay (which was gated on this, reusing
                    the same hold the slow-decode path already uses),
                    then the node removes itself.
 
-   The frames are 66MB, so waiting for all of them before the first
-   paint meant a long dead screen. They are all still requested up
-   front, but playback no longer waits for them: the clock is clamped
-   to the highest contiguously-decoded frame, so the intro starts on
-   frame 1 and HOLDS whenever it catches up with the download,
-   resuming where it left off. It never skips ahead and never shows
-   an undrawn frame.
-
-   loaderOnly keeps the old "loading" screen, reached only from
-   /animation-lab-loading for tuning that screen in isolation: it
-   waits for the full decode, parks with the bar full, and never
-   calls onDone, so the lab underneath stays on the handoff frame.
+   loaderOnly: stop at step 1 with the bar full — for tuning the
+   screen in isolation on /animation-lab-loading. onDone is never
+   called, so the lab underneath stays parked on the handoff frame.
 
    Nothing here touches timeline.ts's scroll math or the page height.
    With none of the -full / -intro / -loading routes active this file
    is never imported. */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { INTRO_FRAME_COUNT, INTRO_FPS, introFrameSrc } from "./timeline";
+import {
+  FRAME_DIR_DEV,
+  LAB_FIRST_FRAME,
+  LAB_FRAME_COUNT,
+  frameSrc,
+} from "./timeline";
 
 type Stage = "loading" | "playing" | "leaving";
 
-/* How long a decode may hold a loaded frame before it is used anyway. */
-const DECODE_GRACE_MS = 300;
+const INTRO_VIDEO_SRC = "/hero/intro.mp4";
+
+/* The load screen buffers the first quarter of the MAIN animation frames —
+   enough that the hero and its opening beats are already decoded when the
+   lab takes over. 0 -> 100 tracks THIS batch and the screen finishes the
+   moment it is in; LabScrubber then keeps loading from where this left off,
+   every frame warm in the browser cache. The intro video loads alongside
+   (see INTRO_VIDEO_SRC below) but never counts toward the visible %. */
+const PRELOAD_FRACTION = 0.25;
+const PRELOAD_FRAME_COUNT = Math.max(
+  1,
+  Math.round(LAB_FRAME_COUNT * PRELOAD_FRACTION),
+);
 
 export default function LabIntro({
   loaderOnly = false,
@@ -52,17 +70,16 @@ export default function LabIntro({
   minimal?: boolean;
   onDone: () => void;
 }) {
-  // No load screen: the intro is already playing on mount. loaderOnly is the
-  // one path that still shows the old screen.
-  const [stage, setStage] = useState<Stage>(loaderOnly ? "loading" : "playing");
+  const [stage, setStage] = useState<Stage>("loading");
   const [pct, setPct] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imagesRef = useRef<HTMLImageElement[]>([]);
-  /* Highest frame number (1-based) decoded with no gap before it. The clock
-     never advances past this, so playback holds instead of skipping. */
-  const readyRef = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const doneRef = useRef(false);
+  const targetRef = useRef(0); // real progress, 0..100
+  const shownRef = useRef(0); // eased value actually on screen
+  const mainDoneRef = useRef(false);
+  const fullAtRef = useRef(0); // when the bar first reached 100
+  const introReadyRef = useRef(false); // intro video can play through
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
@@ -74,134 +91,164 @@ export default function LabIntro({
     }, 650);
   }, [onDone]);
 
-  /* ---- preload the intro frames, tracking contiguous readiness ---- */
+  /* ---- preload the first 25% of the main frames. targetRef tracks REAL
+         progress (frames decoded / batch); a wave of already-downloaded
+         frames can decode almost together, so the raw number lurches. The
+         displayed % is eased toward targetRef in the effect below so it
+         climbs steadily. Intro frames load alongside and never move it. ---- */
   useEffect(() => {
     let disposed = false;
     let loaded = 0;
-    const images: HTMLImageElement[] = new Array(INTRO_FRAME_COUNT);
-    const decoded: boolean[] = new Array(INTRO_FRAME_COUNT).fill(false);
 
-    imagesRef.current = images;
-    readyRef.current = 0;
-
-    /* Mark frame i usable and extend the contiguous-ready run. Idempotent:
-       decode-settle and the grace timer race to call it. */
-    const settle = (i: number) => {
-      if (disposed || decoded[i]) return;
-      decoded[i] = true;
-      while (readyRef.current < INTRO_FRAME_COUNT && decoded[readyRef.current]) {
-        readyRef.current += 1;
-      }
+    const bump = () => {
       loaded += 1;
-      setPct(Math.round((loaded / INTRO_FRAME_COUNT) * 100));
+      targetRef.current = Math.min(100, (loaded / PRELOAD_FRAME_COUNT) * 100);
     };
 
-    /* Every frame is requested up front, exactly as before. Nothing here may
-       depend on another frame having finished: an earlier windowed version
-       pumped the next request from each settle, and when a request hung with
-       no load and no error event the whole queue deadlocked behind it. */
-    for (let i = 0; i < INTRO_FRAME_COUNT; i += 1) {
+    // the batch the % is tied to: main frames 1 .. 25%. Progress is counted
+    // on `load` (bytes in, cache warm — the point of the preload) and decode
+    // is kicked off best-effort. Gating the count on decode() would freeze
+    // the whole screen if the tab is ever backgrounded, since browsers pause
+    // image decoding for a hidden document.
+    const mainJobs = Array.from({ length: PRELOAD_FRAME_COUNT }, (_, i) => {
       const img = new Image();
       img.decoding = "async";
-      images[i] = img;
+      return new Promise<void>((resolve) => {
+        let settled = false;
+        const settle = () => {
+          if (settled) return;
+          settled = true;
+          bump();
+          resolve();
+        };
+        img.onload = () => {
+          void img.decode().catch(() => {});
+          settle();
+        };
+        img.onerror = settle; // a missing frame must not stall the screen
+        img.src = frameSrc(LAB_FIRST_FRAME + i, FRAME_DIR_DEV);
+      });
+    });
 
-      img.onload = () => {
-        /* Prefer decoding before the frame is painted, but never wait on it
-           indefinitely — decode() can fail to settle under this many parallel
-           decodes, and a frame stuck undecoded would block the ready run and
-           freeze playback. The image is loaded either way, so the worst case
-           is one synchronous decode inside drawImage. */
-        const guard = window.setTimeout(() => settle(i), DECODE_GRACE_MS);
-        void img
-          .decode()
-          .catch(() => {})
-          .finally(() => {
-            window.clearTimeout(guard);
-            settle(i);
-          });
-      };
-      // A frame that 404s or fails must not block the run; paint() skips any
-      // image that never got pixels, so the previous frame simply holds.
-      img.onerror = () => settle(i);
-
-      img.src = introFrameSrc(i + 1);
+    // The intro video — needed for the "playing" stage, but it loads in
+    // the background (the <video> below has preload="auto" from mount)
+    // and never touches the visible %. introReadyRef flips once it can
+    // play through without stalling; the gate below falls back to a
+    // grace period if that never fires (e.g. a very slow connection).
+    if (!loaderOnly) {
+      const video = videoRef.current;
+      if (video) {
+        const markReady = () => {
+          introReadyRef.current = true;
+        };
+        video.addEventListener("canplaythrough", markReady, { once: true });
+      }
     }
+
+    void Promise.all(mainJobs).then(() => {
+      if (disposed) return;
+      targetRef.current = 100;
+      mainDoneRef.current = true;
+    });
 
     return () => {
       disposed = true;
     };
-  }, []);
+  }, [loaderOnly]);
 
-  /* ---- play the intro on a clock ---- */
+  /* ---- ease the displayed % toward the real one, so it never lurches,
+         then hand over to the intro on a smooth, unhurried beat ---- */
   useEffect(() => {
-    if (stage !== "playing") return;
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!canvas || !context) return;
+    if (stage !== "loading") return;
+    const startedAt = performance.now();
+    const MIN_SWEEP_MS = 1200; // never fill the whole bar faster than this
+    const MIN_VISIBLE_MS = 2000; // load screen stays up at least this long
+    const HOLD_MS = 500; // sit on 100 for a beat before leaving
+    const INTRO_GRACE_MS = 3500; // don't wait on a slow intro video forever
+    // On a cold cache the first batch of main frames can take several
+    // seconds to arrive, leaving the counter frozen on 0 the whole time.
+    // A time-based floor drifts the displayed % up toward the 25% preload
+    // mark on its own so the screen always reads as alive; it eases off as
+    // it nears 25 (exp curve, never quite reaches it) and real frame
+    // progress takes over the moment it overtakes this floor. The floor is
+    // capped at the preload fraction — real loading still carries 25→100.
+    const CREEP_CEIL = PRELOAD_FRACTION * 100; // 25
+    const CREEP_TAU = 3200; // ms; ~16% by 3.2s, ~22% by 6.4s, asymptotic to 25
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const size = () => {
-      canvas.width = Math.round(window.innerWidth * dpr);
-      canvas.height = Math.round(window.innerHeight * dpr);
-    };
-    size();
-    window.addEventListener("resize", size);
+    const id = window.setInterval(() => {
+      const now = performance.now();
+      const elapsed = now - startedAt;
+      const ceil = elapsed < MIN_SWEEP_MS ? 96 : 100;
+      const creepFloor = CREEP_CEIL * (1 - Math.exp(-elapsed / CREEP_TAU));
+      const target = Math.min(ceil, Math.max(targetRef.current, creepFloor));
+      const gap = target - shownRef.current;
+      if (gap > 0) {
+        shownRef.current = Math.min(
+          target,
+          shownRef.current + Math.max(1.8, gap * 0.09),
+        );
+      }
+      setPct(Math.floor(shownRef.current));
 
-    const paint = (n: number) => {
-      const img = imagesRef.current[Math.min(n, INTRO_FRAME_COUNT) - 1];
-      if (!img || !img.naturalWidth) return;
-      const ratio = Math.max(
-        canvas.width / img.naturalWidth,
-        canvas.height / img.naturalHeight,
-      );
-      const w = img.naturalWidth * ratio;
-      const h = img.naturalHeight * ratio;
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-    };
+      if (shownRef.current < 100 || !mainDoneRef.current) return;
+      if (fullAtRef.current === 0) fullAtRef.current = now;
 
-    let rafId = 0;
-    let last = 0;
-    let played = 1; // current position, in frames, fractional
-
-    /* Advance by real elapsed time, but never past the frames we actually
-       have. When the loader falls behind, `played` stops moving and the last
-       good frame stays up; when it catches up, playback resumes from there
-       rather than jumping to where the wall clock would have been. */
-    const tick = (now: number) => {
-      if (last === 0) last = now;
-      const dt = (now - last) / 1000;
-      last = now;
-
-      played = Math.min(played + dt * INTRO_FPS, Math.max(1, readyRef.current));
-      paint(Math.round(played));
-
-      if (played >= INTRO_FRAME_COUNT) {
-        finish();
+      if (loaderOnly) {
+        window.clearInterval(id);
         return;
       }
-      rafId = requestAnimationFrame(tick);
-    };
-    paint(1);
-    rafId = requestAnimationFrame(tick);
 
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", size);
-    };
+      const sinceFull = now - fullAtRef.current;
+      const introReady = introReadyRef.current || sinceFull >= INTRO_GRACE_MS;
+      if (introReady && sinceFull >= HOLD_MS && elapsed >= MIN_VISIBLE_MS) {
+        window.clearInterval(id);
+        setStage("playing"); // .lab-intro__load then crossfades out over the first frame
+      }
+    }, 1000 / 30);
+
+    return () => window.clearInterval(id);
+  }, [stage, loaderOnly]);
+
+  /* ---- play the intro ----
+     The video is mounted from first render (not stage-gated) so it has
+     the whole "loading" stage to preload; here we just start it once
+     "playing" begins. Its own "ended" event calls finish() — no manual
+     clock needed, native playback is the clock now.
+
+     Guarded on video.paused, NOT just [stage, finish]: `finish` is a
+     useCallback keyed on onDone, and AnimationLab passes onDone as a
+     fresh inline arrow every render — so finish's identity is not
+     stable, and this effect can re-run while still in the "playing"
+     stage. Without the guard that would reset currentTime and call
+     play() again mid-playback on every such re-render. */
+  useEffect(() => {
+    if (stage !== "playing") return;
+    const video = videoRef.current;
+    if (!video || !video.paused) return;
+
+    video.currentTime = 0;
+    // Autoplay can be blocked in rare cases even when muted; if it is,
+    // there is nothing to show, so move on rather than stall on black.
+    void video.play().catch(() => finish());
   }, [stage, finish]);
 
-  /* ---- skip affordances, only while the intro is playing ---- */
+  /* ---- skip affordances, only while the intro is playing ----
+     Deliberate actions only — keydown and wheel, not pointerdown.
+     A global click-anywhere used to be here too, and since the video
+     covers almost the whole screen, that meant the very first click
+     ANYWHERE (very often one aimed at the Skip button itself) ended
+     the intro before the button could register as a distinct,
+     visible control — "clicking the video skips it" and "the Skip
+     button is missing" were the same bug. The button's own onClick
+     below is now the only click-based way to skip. */
   useEffect(() => {
     if (stage !== "playing") return;
     const skip = () => finish();
     window.addEventListener("keydown", skip);
     window.addEventListener("wheel", skip, { passive: true });
-    window.addEventListener("pointerdown", skip);
     return () => {
       window.removeEventListener("keydown", skip);
       window.removeEventListener("wheel", skip);
-      window.removeEventListener("pointerdown", skip);
     };
   }, [stage, finish]);
 
@@ -213,27 +260,102 @@ export default function LabIntro({
       data-variant={minimal ? "minimal" : "full"}
       role="presentation"
     >
-      {stage !== "loading" ? (
-        <canvas ref={canvasRef} className="lab-intro__canvas" aria-hidden="true" />
+      {/* Mounted from first render, not stage-gated, so preload="auto"
+          gets the whole "loading" stage to warm the video before
+          "playing" needs it — same reasoning the old per-frame preload
+          had, just one asset instead of 240. Sits under the load
+          overlay (z-index) until that stage ends, so nothing needs an
+          extra visibility toggle. loaderOnly never needs it at all. */}
+      {!loaderOnly ? (
+        <video
+          ref={videoRef}
+          className="lab-intro__canvas"
+          aria-hidden="true"
+          muted
+          playsInline
+          preload="auto"
+          src={INTRO_VIDEO_SRC}
+          onEnded={finish}
+        />
       ) : null}
 
-      {stage === "loading" ? (
-        <>
-          <div
-            className="lab-intro__bar"
-            style={{ ["--pct" as string]: String(pct / 100) }}
-          >
-            <span className="lab-intro__bar-fill" />
-          </div>
-          {minimal ? (
+      {/* Load-screen visuals. Kept mounted through the hand-off so they can
+          crossfade out over the intro's first frame rather than hard-cut. */}
+      <div className="lab-intro__load" data-hidden={stage !== "loading"}>
+        {/* background — 1:1 with the live /ai-assistant AuroraBackground
+            (see lab.css for the port notes). */}
+        <div className="lab-intro__aurora" aria-hidden="true">
+          <span className="lab-intro__aurora-base" />
+          <span className="lab-intro__fluid lab-intro__fluid--1" />
+          <span className="lab-intro__fluid lab-intro__fluid--2" />
+          <span className="lab-intro__fluid lab-intro__fluid--3" />
+          <span className="lab-intro__fluid lab-intro__fluid--4" />
+          <span className="lab-intro__aurora-noise" />
+        </div>
+
+        {stage === "loading" ? (
+          minimal ? (
             <span className="lab-intro__spinner" aria-hidden="true" />
           ) : (
             <div className="lab-intro__loader">
+              <div className="lab-intro__dial">
+                <svg
+                  className="lab-intro__ring"
+                  viewBox="0 0 260 260"
+                  aria-hidden="true"
+                >
+                  <circle
+                    className="lab-intro__ring-track"
+                    cx="130"
+                    cy="130"
+                    r="120"
+                    pathLength={100}
+                  />
+                  <circle
+                    className="lab-intro__ring-fill"
+                    cx="130"
+                    cy="130"
+                    r="120"
+                    pathLength={100}
+                    style={{ strokeDashoffset: 100 - pct }}
+                  />
+                  {/* Bright glowing tip at the arc's leading edge — same
+                      comet-head look as the intro video's own opening
+                      shot, so the two feel like one visual language.
+                      NOT a separate circle animated via transform or
+                      cx/cy: both were tried and both drift out of sync
+                      with the fill (cx/cy transitions are not reliably
+                      animatable across browsers, and repeatedly
+                      re-setting transform on an element that already
+                      has a CSS transition on transform gets stuck
+                      after the first change — reproduced directly,
+                      independent of React). Instead this is a second
+                      stroke on the SAME circle geometry as ring-fill,
+                      with an almost-zero-length dash — same
+                      stroke-dashoffset value, same transition, same
+                      static -90deg rotate. It is guaranteed to sit
+                      exactly at the fill's tip because it is driven by
+                      the identical formula through the identical,
+                      already-proven-smooth mechanism. */}
+                  <circle
+                    className="lab-intro__ring-head"
+                    cx="130"
+                    cy="130"
+                    r="120"
+                    pathLength={100}
+                    style={{ strokeDashoffset: 100 - pct }}
+                  />
+                </svg>
+                <p className="lab-intro__count" aria-live="polite">
+                  {pct}
+                  <span className="lab-intro__count-pct">%</span>
+                </p>
+              </div>
               <p className="lab-intro__label">Loading</p>
             </div>
-          )}
-        </>
-      ) : null}
+          )
+        ) : null}
+      </div>
 
       {stage === "playing" ? (
         <button type="button" className="lab-intro__skip" onClick={finish}>

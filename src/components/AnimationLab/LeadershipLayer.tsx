@@ -95,6 +95,13 @@ export default function LeadershipLayer() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const videoFrameRef = useRef<HTMLIFrameElement>(null);
   const currentFrameRef = useRef(LEADERSHIP.settledFrame);
+  // The internal-scroll fallback (.is-scrollable + data-lenis-prevent)
+  // only exists <=1100px — the section is a fixed-viewport composition on
+  // desktop. Gating it here keeps that machinery off desktop entirely,
+  // where it otherwise put data-lenis-prevent on the full-viewport layer
+  // (killing page smooth-scroll once the section became interactive) and
+  // toggled a no-op class on every frame near the settle point.
+  const [isCompact, setIsCompact] = useState(false);
   const [videoDialog] = useState(() =>
     createVideoDialogController({
       closeAfterFrames: POPUP_CLOSE_AFTER_FRAMES,
@@ -105,28 +112,57 @@ export default function LeadershipLayer() {
     })
   );
 
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1100px)");
+    const update = () => setIsCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
   useFrameEffect((frame) => {
     currentFrameRef.current = frame;
     videoDialog.sync(frame);
   });
 
+  useFrameEffect((frame) => {
+    const element = ref.current;
+    if (!element) return;
+
+    if (!isCompact) {
+      element.classList.remove("is-scrollable");
+      return;
+    }
+
+    const scrollUnlocked = frame >= LEADERSHIP.settledFrame &&
+      frame <= (LEADERSHIP.exit?.frames[0] ?? LEADERSHIP.settledFrame);
+    element.classList.toggle("is-scrollable", scrollUnlocked);
+    if (!scrollUnlocked) element.scrollTop = 0;
+  });
+
+  useEffect(() => () => {
+    ref.current?.classList.remove("is-scrollable");
+  }, [ref]);
+
   return (
-    <div className="lab-layer s-leadership5" ref={ref} data-section={LEADERSHIP.id} data-initial-hidden="true" aria-labelledby="leadership5-title">
+    <div className="lab-layer s-leadership5" ref={ref} data-section={LEADERSHIP.id} data-initial-hidden="true" data-lenis-prevent={isCompact ? "" : undefined} aria-labelledby="leadership5-title">
       <header className="s-leadership5__head">
         <h1 id="leadership5-title">Leadership at Haycarb</h1>
         <p className="s-leadership5__intro">Our leadership team steers Haycarb with vision, integrity, and a long-term commitment to innovation<br />and sustainability. Shaped by experience and guided by purpose, they drive strategic<br />growth, empower people, and ensure we deliver value to stakeholders.</p>
       </header>
 
       <div className="s-leadership5__stage">
-        <section className="s-leadership5__people" aria-label="Leadership messages">
-          <article className="s-leadership5__person s-leadership5__person--chairman">
-            <p className="s-leadership5__role">Chairman</p>
+          <section className="s-leadership5__people" aria-label="Leadership messages">
+            <article className="s-leadership5__person s-leadership5__person--chairman">
+              <img className="s-leadership5__portrait s-leadership5__portrait-mobile s-leadership5__portrait-mobile--chairman" src="/leadership/MP-web-small.png" alt="Mohan Pandithage, Chairman" />
+              <p className="s-leadership5__role">Chairman</p>
             <h2 className="s-leadership5__name">Mohan Pandithage</h2>
             <span className="s-leadership5__rule" aria-hidden="true" />
             <p className="s-leadership5__statement">The Group continued to demonstrate resilience and<br />adaptability amidst evolving market dynamics by further<br />strengthening its position within the value-added carbon<br />category while effectively navigating supply chain<br />constraints and an increasingly complex global operating<br />environment to deliver sustainable growth and consistent<br />shareholder value.</p>
-          </article>
-          <article className="s-leadership5__person s-leadership5__person--md">
-            <p className="s-leadership5__role">Managing Director</p>
+            </article>
+            <article className="s-leadership5__person s-leadership5__person--md">
+              <img className="s-leadership5__portrait s-leadership5__portrait-mobile s-leadership5__portrait-mobile--md" src="/leadership/RK-web-small.png" alt="Rajitha Kariyawasan, Managing Director" />
+              <p className="s-leadership5__role">Managing Director</p>
             <h2 className="s-leadership5__name">Rajitha Kariyawasan</h2>
             <span className="s-leadership5__rule" aria-hidden="true" />
             <p className="s-leadership5__statement">As a purpose-driven organisation, Haycarb remains<br />focused on addressing the world&apos;s evolving purification<br />and energy storage needs through sustainable innovation,<br />technical excellence and a strong culture of<br />customer-centricity, empowered by the capabilities of<br />our people.</p>

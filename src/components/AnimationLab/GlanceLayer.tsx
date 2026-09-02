@@ -203,7 +203,7 @@ export default function GlanceLayer() {
       data-initial-hidden="true"
       aria-labelledby="glance2-title"
     >
-      <div className="s-glance2__stage">
+      <div className="s-glance2__stage" data-lenis-prevent>
         <h2 className="s-glance2__title" id="glance2-title">
           {TITLE_TOKENS.map((token, tokenIndex) => {
             if (token.trim() === "") {

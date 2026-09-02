@@ -25,6 +25,8 @@ import {
   LAB_FRAME_COUNT,
   LAB_LAST_FRAME,
   SECTIONS,
+  CARVE_MOBILE_MAX_WIDTH,
+  CARVE_PHONE_MAX_WIDTH,
   carveAt,
   frameSrc,
   progressBetween,
@@ -231,7 +233,12 @@ export default function LabScrubber({
     /* ---- the carve ---- */
     const media = mediaRef.current;
     if (media) {
-      const carve = carveAt(frame);
+      const vw = typeof window !== "undefined" ? window.innerWidth : Infinity;
+      const carve = carveAt(
+        frame,
+        vw <= CARVE_MOBILE_MAX_WIDTH,
+        vw <= CARVE_PHONE_MAX_WIDTH
+      );
       media.style.setProperty("--carve-h", `${carve.height}%`);
       media.style.setProperty("--carve-rx", `${carve.radiusX}%`);
       media.style.setProperty("--carve-ry", `${carve.radiusY}%`);

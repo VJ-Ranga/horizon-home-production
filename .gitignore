@@ -46,10 +46,13 @@ next-env.d.ts
 /public/frames-hq-old-*/
 /public/frames-old-*/
 
-# Source design files and built video — large binaries kept out of git
+# Source design files and built video — large binaries kept out of git.
+# public/hero/intro.mp4 is the exception: a small (~6.7MB) H.264 encode
+# the app actually loads at runtime (LabIntro.tsx), not disposable footage.
 *.psd
 *.psb
 *.mp4
+!/public/hero/intro.mp4
 
 # Dense (2x / 4x) frame sets — generated from the source video, not shipped.
 # Regenerate with ffmpeg: -ss 22.700, fps = N x 5.1922, scale=1942:1080,

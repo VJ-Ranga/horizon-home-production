@@ -14,9 +14,20 @@
 
 import { useEffect } from "react";
 import { useFrameEffect } from "./useFrameTimeline";
+import { SECTIONS } from "./timeline";
 
 /* The frame the hamburger appears on, and stays visible from. */
 const REVEAL_FRAME = 60;
+const TEAL_NAV_IDS = new Set(["05-intro-statement", "06-key-data-points"]);
+const [tealStart, tealEnd] = SECTIONS
+  .filter((s) => TEAL_NAV_IDS.has(s.id))
+  .reduce<[number, number]>(
+    ([lo, hi], s) => [
+      Math.min(lo, s.enter?.frames[0] ?? s.settledFrame),
+      Math.max(hi, s.exit?.frames[1] ?? s.settledFrame),
+    ],
+    [Infinity, -Infinity],
+  );
 
 export default function IntroNavGate() {
   useFrameEffect((frame) => {
@@ -26,8 +37,17 @@ export default function IntroNavGate() {
     );
   });
 
+  useFrameEffect((frame) => {
+    document.documentElement.classList.toggle(
+      "lab-nav-teal",
+      frame >= tealStart && frame <= tealEnd,
+    );
+  });
+
   useEffect(
-    () => () => document.documentElement.classList.remove("lab-nav-hidden"),
+    () => () => {
+      document.documentElement.classList.remove("lab-nav-hidden", "lab-nav-teal");
+    },
     [],
   );
 

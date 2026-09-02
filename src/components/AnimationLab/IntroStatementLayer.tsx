@@ -59,9 +59,28 @@ const PARAGRAPHS = [
 const WORD_GROUPS = PARAGRAPHS.map((paragraph) => paragraph.trim().split(/\s+/));
 const WORD_COUNT = WORD_GROUPS.reduce((total, words) => total + words.length, 0);
 
+const PARA_LENGTHS = WORD_GROUPS.map((words) => words.length);
+
+// Per-paragraph white backing (tab/mobile only — see the `@media
+// (max-width: 1100px)` block in lab.css). Its opacity is written here as
+// `--intro-wash` on each <p>: it rises while that paragraph's words are
+// revealing, then recedes as the next paragraph takes over, so the focus
+// walks down to the lower paragraph. Desktop keeps the static
+// .s-intro__media wash and never reads this variable.
+const WASH_PEAK = 0.82;
+const WASH_REST = 0.3;
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const washTop = (revTop: number, revBottom: number) =>
+  WASH_PEAK * clamp01(revTop * 2.5) * (1 - revBottom);
+const washBottom = (rev: number) => {
+  const peakCurve = clamp01(rev * 2.5) * (1 - clamp01((rev - 0.75) * 4));
+  return clamp01(rev * 5) * (WASH_REST + (WASH_PEAK - WASH_REST) * peakCurve);
+};
+
 export default function IntroStatementLayer() {
   const ref = useSectionLayer(INTRO);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const paraRefs = useRef<Array<HTMLParagraphElement | null>>([]);
 
   useFrameEffect((frame, _phase, scrollPx) => {
     const virtualEnter = virtualEnterProgressAtScrollPx(
@@ -79,9 +98,10 @@ export default function IntroStatementLayer() {
       ? frame
       : INTRO.settledFrame + virtualEnter * (INTRO.virtualEnterFrames ?? 0);
 
+    const revSum = [0, 0];
+
     for (let index = 0; index < WORD_COUNT; index += 1) {
       const word = wordRefs.current[index];
-      if (!word) continue;
       // Exit reverses the entrance order — the last word to arrive is
       // the first to leave — by staggering on the count minus index.
       const t = virtualExit !== null
@@ -99,8 +119,21 @@ export default function IntroStatementLayer() {
         : frame <= INTRO.settledFrame
         ? 1
         : 1 - staggerProgressAt(WORD_COUNT - 1 - index, WORD_COUNT, frame, EXIT_FRAMES);
-      word.style.opacity = String(t);
+      revSum[index < PARA_LENGTHS[0] ? 0 : 1] += t;
+      if (word) word.style.opacity = String(t);
     }
+
+    // Per-paragraph reveal fraction → white backing opacity (tab/mobile).
+    const revTop = revSum[0] / PARA_LENGTHS[0];
+    const revBottom = revSum[1] / PARA_LENGTHS[1];
+    paraRefs.current[0]?.style.setProperty(
+      "--intro-wash",
+      washTop(revTop, revBottom).toFixed(3)
+    );
+    paraRefs.current[1]?.style.setProperty(
+      "--intro-wash",
+      washBottom(revBottom).toFixed(3)
+    );
   });
 
   return (
@@ -119,7 +152,12 @@ export default function IntroStatementLayer() {
               .slice(0, paragraphIndex)
               .reduce((total, group) => total + group.length, 0);
             return (
-              <p key={paragraphIndex}>
+              <p
+                key={paragraphIndex}
+                ref={(node) => {
+                  paraRefs.current[paragraphIndex] = node;
+                }}
+              >
                 {words.map((word, wordIndex) => (
                   <span key={`${word}-${wordIndex}`}>
                     <span

@@ -48,3 +48,48 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Site-wide background-music toggle — pinned top-right, mirrors the
+   GlobalHeader hamburger on the left. Below the hamburger (z 9999) and
+   the open mega-menu (z 999) so the menu covers it when open. */
+.bg-music-toggle {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 998;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #147385;
+  cursor: pointer;
+  transition: opacity 0.4s ease, transform 0.2s ease, color 0.2s ease;
+}
+.bg-music-toggle:hover {
+  transform: scale(1.06);
+  color: #0d5563;
+}
+.bg-music-toggle svg {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+.bg-music-toggle[aria-pressed="true"] {
+  color: #6b8a91;
+}
+
+@media (max-width: 780px) {
+  .bg-music-toggle {
+    width: 48px;
+    height: 48px;
+  }
+  .bg-music-toggle svg {
+    width: 23px;
+    height: 23px;
+  }
+}
