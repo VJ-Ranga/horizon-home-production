@@ -1415,6 +1415,15 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [1035, 1055], from: { y: 4 } },
     holdFrames: 10,
     exit: { frames: [1055, 1080], to: { y: -4 } },
+    // 20 crawl frames each side of settledFrame at half scroll speed,
+    // instead of the shared 4-frame/6x default. The 20 after settledFrame
+    // are the ask: the end screen keeps moving but takes twice the scroll
+    // to get through 1055 -> 1075. The same 20 land on the way in, which
+    // is what the enter window [1035, 1055] already spans — per the rule
+    // that a reveal wider than crawlFrames otherwise plays out at full
+    // scroll speed outside the slow zone.
+    holdCrawlFrames: 20,
+    holdSlowdown: 2,
     // Virtual frames pinned at settledFrame, same pattern as 18-community:
     // 10 held after the word-by-word reveal completes (the dark overlay
     // finishes filling here), then 10 more that drive the reversed exit
