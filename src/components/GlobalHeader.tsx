@@ -105,7 +105,7 @@ export default function GlobalHeader() {
             {/* Logo (Right) */}
             <img
               src="/images/logo.png"
-              alt="HeyCarb"
+              alt="Haycarb"
               className="!h-16 sm:!h-20 md:!h-24 lg:!h-32 xl:!h-40 max-md:!h-20 w-auto object-contain mt-4 mr-4 md:mt-6 md:mr-8 lg:mt-8 lg:mr-10"
             />
           </div>

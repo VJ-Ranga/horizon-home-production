@@ -37,6 +37,7 @@ import Lenis from "lenis";
 import HeroLogo from "./HeroLogo";
 import IntroNavGate from "./IntroNavGate";
 import ScrollProgress from "./ScrollProgress";
+import AiAssistantFab from "./AiAssistantFab";
 import HeroLayer from "./HeroLayer";
 import MainStartLayer from "./MainStartLayer";
 import ApproachLayer from "./ApproachLayer";
@@ -678,6 +679,7 @@ export default function AnimationLab({
         {SHOW_HERO_LOGO && <HeroLogo />}
         <IntroNavGate />
         <ScrollProgress />
+        <AiAssistantFab />
 
         {/* Poster = whatever frame the page opens on, so the first
             paint is already the right image: the handoff frame for a
