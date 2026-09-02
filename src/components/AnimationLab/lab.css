@@ -390,7 +390,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   width: min(100%, 1000px);
   margin: 0;
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
-  font-size: clamp(19px, 2.55svh, 31px);
+  /* 48px is the target on a normal desktop (5.33svh hits it at a 900px
+     viewport) and the clamp caps it there on taller screens; short
+     laptops and phones scale down from it rather than overflowing.
+     Minion Pro ships one weight only, so this stays 400 — anything else
+     renders as faux bold. */
+  font-size: clamp(19px, 5.33svh, 48px);
   font-weight: 400;
   letter-spacing: 0.005em;
   line-height: 1.35;

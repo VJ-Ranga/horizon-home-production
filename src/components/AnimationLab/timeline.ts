@@ -1402,10 +1402,19 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "19-end-screen",
     label: "End screen message",
-    settledFrame: 1100,
-    enter: { frames: [1080, 1100], from: { y: 4 } },
+    // Moved 45 frames earlier (was settled 1100, enter [1080, 1100], exit
+    // [1100, 1125]). The whole window shifts, so the 20-frame reveal and
+    // 25-frame exit keep the pace they had; only their position changes.
+    // It now crossfades with 18-community's exit [1038, 1054] instead of
+    // leaving the 26-frame dead gap that sat between them.
+    //
+    // LAB_LAST_FRAME stays 1125: that is the number of files in
+    // public/frames/, not a marker for this section, so shortening it to
+    // match the new exit would drop the last 45 frames of footage.
+    settledFrame: 1055,
+    enter: { frames: [1035, 1055], from: { y: 4 } },
     holdFrames: 10,
-    exit: { frames: [1100, 1125], to: { y: -4 } },
+    exit: { frames: [1055, 1080], to: { y: -4 } },
     // Virtual frames pinned at settledFrame, same pattern as 18-community:
     // 10 held after the word-by-word reveal completes (the dark overlay
     // finishes filling here), then 10 more that drive the reversed exit
