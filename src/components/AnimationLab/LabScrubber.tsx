@@ -68,14 +68,15 @@ import { useMouseParallax } from "./useMouseParallax";
 function resolveFrameDir(
   densify: number,
   hq: boolean,
-  fourK: boolean
+  fourK: boolean,
+  phone: boolean
 ): string {
   if (densify === 4) return FRAME_DIR_4X;
   if (densify === 2) return hq ? FRAME_DIR_2X_HQ : FRAME_DIR_2X;
   if (fourK) return FRAME_DIR_4K;
   if (hq) return FRAME_DIR_HQ;
   // Phones read the small set — same 1125 files, ~7x less bitmap.
-  return isPhoneViewport() ? FRAME_DIR_MOBILE : FRAME_DIR_DEV;
+  return phone ? FRAME_DIR_MOBILE : FRAME_DIR_DEV;
 }
 
 const LOAD_CONCURRENCY = 6;
@@ -104,7 +105,22 @@ export default function LabScrubber({
   /* HQ preview only. Both values below are the dev behaviour when hq
      is false, so the default path is byte-for-byte what it was.
      fourK takes precedence when set, and is likewise off by default. */
-  const frameDir = resolveFrameDir(densify, hq, fourK);
+  /* `mounted` is false on the server and on the first client render, so
+     the poster <img src> below matches between the two (window /
+     matchMedia are client-only) — no hydration mismatch. Once it flips
+     the frame dir resolves for real and the loader effect starts (it
+     bails while !mounted), so the loader never briefly pulls the full
+     set on a phone. */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const frameDir = resolveFrameDir(
+    densify,
+    hq,
+    fourK,
+    mounted && isPhoneViewport()
+  );
 
   /* THE ONLY THING `densify` CHANGES: which FILE a frame maps to.
      Frame numbers everywhere else stay in 840-space. `frame` is
@@ -137,6 +153,10 @@ export default function LabScrubber({
   });
 
   useEffect(() => {
+    // Hold off until the viewport is known, so a phone never starts the
+    // full-size set and then restarts on the small one.
+    if (!mounted) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -234,7 +254,7 @@ export default function LabScrubber({
     /* hq / frameDir are fixed for the life of the page — they come
        from the server-read query string, so this never actually
        re-runs. Listed so the dependency is honest. */
-  }, [hq, fourK, densify, frameDir, denseScale, fileCount]);
+  }, [mounted, hq, fourK, densify, frameDir, denseScale, fileCount]);
 
   useFrameEffect((frame) => {
     /* ---- the carve ---- */
