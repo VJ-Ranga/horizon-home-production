@@ -183,12 +183,19 @@ html.intro-seen .lab-intro {
     overflow-wrap: anywhere;
   }
 
-  /* digital2 is an absolute two-block layout (glass panel pinned near
-     the top, quicklinks pinned near the bottom) — not a flow section,
-     so the rule above can't help it. Drop the panel below the sticky
-     bar directly. `.lab` prefix out-specifies lab.css's own
-     `.s-digital2__panel { top: ... }` without !important. */
+  /* Sections whose top heading is positioned (not in the flow the rule
+     above pads): drop each below the sticky bar directly. `.lab` prefix
+     out-specifies lab.css's own values without !important.
+     - digital2: absolute glass panel near the top
+     - leadership5: __head has a fixed 52px top pad on <=700 in lab.css
+     - fincap: __intro is absolutely pinned at ~29px */
   .lab .s-digital2__panel {
     top: calc(60px + env(safe-area-inset-top, 0px) + 12px);
+  }
+  .lab .s-leadership5__head {
+    padding-top: var(--mobile-topbar-clear);
+  }
+  .lab .s-fincap__intro {
+    top: var(--mobile-topbar-clear);
   }
 }
