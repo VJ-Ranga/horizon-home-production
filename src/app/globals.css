@@ -94,6 +94,48 @@
   }
 }
 
+/* ---- Mobile sticky glass header ----
+   Phones only (<= 700px, the project's own phone breakpoint). A
+   full-width frosted bar behind the fixed hamburger (GlobalHeader) and
+   the music toggle (BackgroundMusic), so page content scrolling under
+   them is visually separated instead of colliding with the bare icons.
+   Purely decorative: pointer-events none, so the icons and the content
+   underneath keep every tap. Sits below the icons (z 998/9999) and the
+   open mega-menu (z 999) but above the fixed lab viewport (z 2). */
+.mobile-topbar-scrim {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .mobile-topbar-scrim {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(60px + env(safe-area-inset-top, 0px));
+    z-index: 900;
+    pointer-events: none;
+    background: rgba(8, 28, 34, 0.34);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    transition: opacity 0.4s ease;
+  }
+
+  /* Light-themed sections (IntroNavGate adds lab-nav-teal on `/`): a
+     brighter glass so it still reads as a panel over pale backdrops. */
+  html.lab-nav-teal .mobile-topbar-scrim {
+    background: rgba(255, 255, 255, 0.55);
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+  }
+
+  /* Gone while the intro owns the screen, in step with the hamburger. */
+  html.lab-nav-hidden .mobile-topbar-scrim {
+    opacity: 0;
+  }
+}
+
 /* Set by the blocking script in layout.tsx when this browsing session has
    already seen the intro. The overlay is still rendered (so hydration
    matches the server) and dropped on mount; this keeps it invisible in

@@ -55,6 +55,11 @@ export default function GlobalHeader() {
 
   return (
     <>
+      {/* Phones only (styled in globals.css): a frosted bar behind the
+          fixed hamburger + music toggle so scrolling content doesn't
+          collide with the bare icons. Decorative, pointer-events none. */}
+      <div className="mobile-topbar-scrim" aria-hidden="true" />
+
       <button
         type="button"
         data-global-nav
