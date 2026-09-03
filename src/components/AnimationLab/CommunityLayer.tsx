@@ -114,14 +114,17 @@ export default function CommunityLayer() {
     const mobileRail = window.matchMedia("(max-width: 700px)").matches;
 
     if (mobileRail) {
+      // Phones: no card-by-card slider — the 7 cards are a plain vertical
+      // list and the section's scroll budget just pans the whole list up
+      // by one viewport-worth of overflow, linearly.
       const padStart = parseFloat(styles.paddingTop) || 0;
       const padEnd = parseFloat(styles.paddingBottom) || 0;
-      const cardHeight = firstCard.offsetHeight;
-      const start = viewport.clientHeight / 2 - cardHeight / 2 - padStart;
-      const lastCardTop = rail.scrollHeight - padEnd - cardHeight;
-      const end = viewport.clientHeight / 2 - cardHeight / 2 - lastCardTop;
-      const y = start - (progress / (CARD_COUNT - 1)) * (start - end);
-      rail.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`;
+      const travel = Math.max(
+        rail.scrollHeight - padStart - padEnd - viewport.clientHeight,
+        0,
+      );
+      const t = SWEEP_PX > 0 ? sweepPx / SWEEP_PX : 0;
+      rail.style.transform = `translate3d(0, ${(-t * travel).toFixed(2)}px, 0)`;
       return;
     }
 

@@ -220,6 +220,9 @@ html.intro-seen .lab-intro {
   .lab .s-leadership5__head {
     padding-top: var(--mobile-topbar-clear);
   }
+  .lab .s-community__head {
+    padding-top: var(--mobile-topbar-clear);
+  }
   .lab .s-fincap__intro {
     /* Just clear the bar — going the full bar+30 pushed the lede down
        onto the active card. */
