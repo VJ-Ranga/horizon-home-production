@@ -1,5 +1,5 @@
 (() => {
-  const sections = [...document.querySelectorAll(".video-section")];
+  const sections = [...document.querySelectorAll(".media-section")];
   const frameCount = 1125;
   const durationSeconds = 247.233333;
   let activeIndex = -1;
@@ -11,7 +11,9 @@
     const video = section.querySelector(".section-motion");
     const start = frameToTime(Number(section.dataset.startFrame));
     const end = frameToTime(Number(section.dataset.endFrame));
+    const settled = frameToTime(Number(section.dataset.settledFrame));
     const token = ++replayToken;
+    video.pause();
     video.currentTime = start;
     section.classList.add("is-playing");
     void video.play().catch(() => {});
@@ -19,7 +21,7 @@
       if (token !== replayToken) return;
       if (video.currentTime >= end) {
         video.pause();
-        video.currentTime = end;
+        video.currentTime = settled;
         section.classList.remove("is-playing");
         video.removeEventListener("timeupdate", onTimeUpdate);
       }
@@ -28,7 +30,7 @@
   }
 
   function updateActiveSection() {
-    const center = window.scrollY + window.innerHeight * 0.42;
+    const center = window.scrollY + window.innerHeight * 0.5;
     let nextIndex = 0;
     sections.forEach((section, index) => { if (section.offsetTop <= center) nextIndex = index; });
     if (nextIndex !== activeIndex) { activeIndex = nextIndex; playSectionMotion(activeIndex); }
@@ -39,6 +41,5 @@
     if (raf) return;
     raf = requestAnimationFrame(() => { raf = 0; updateActiveSection(); });
   }, { passive: true });
-  document.querySelectorAll(".replay").forEach((button, index) => button.addEventListener("click", () => playSectionMotion(index)));
   updateActiveSection();
 })();
