@@ -1647,8 +1647,8 @@ export const WORDMARK_EXIT_FRAMES: [number, number] = [50, 70];
 /** The logo's own fade-out window, matching WORDMARK_EXIT_FRAMES and
     the hero section's own exit (also [50, 70]) — the logo now leaves
     with the rest of the hero instead of shrinking to a sticky dock.
-    HeroLogo.tsx and LabMenu.tsx (which reveals the instant this
-    finishes) both read this. */
+    HeroLogo.tsx and IntroNavGate.tsx (which unhides the app-wide
+    GlobalHeader the instant this finishes) both read this. */
 export const LOGO_EXIT_FRAMES: [number, number] = [50, 70];
 
 export function wordmarkExitStateAt(frame: number): {
