@@ -143,3 +143,42 @@
 html.intro-seen .lab-intro {
   display: none !important;
 }
+
+/* AnimationLab phone clearance. Keep this override in globals.css so the
+   active lab.css worktree remains untouched; every declaration is scoped to
+   the phone breakpoint and uses !important only to win against section-local
+   mobile blocks loaded by the lab component. */
+:root {
+  --mobile-topbar-clear: calc(60px + env(safe-area-inset-top, 0px) + 30px);
+}
+
+@media (max-width: 700px) {
+  .s-approach2__stage,
+  .s-digital2__stage,
+  .s-glance2__stage,
+  .s-financial2__stage,
+  .s-govcards__content,
+  .s-leadership5__head,
+  .s-fincap__stage,
+  .s-nonfinancial9__intro,
+  .s-strategy__panel,
+  .s-community__stage {
+    padding-top: var(--mobile-topbar-clear) !important;
+  }
+
+  .s-approach2__title,
+  .s-digital2__title,
+  .s-glance2__title,
+  .s-financial2__title,
+  .s-govcards__title,
+  .s-leadership5__head h1,
+  .s-fincap__title,
+  .s-nonfinancial9__intro h1,
+  .s-strategy__title,
+  .s-community__heading {
+    max-width: 100% !important;
+    font-size: clamp(26px, 8.5vw, 36px) !important;
+    line-height: 1.08 !important;
+    overflow-wrap: anywhere;
+  }
+}
