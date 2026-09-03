@@ -11,6 +11,7 @@
   function playSectionMotion(index) {
     const section = sections[index];
     const video = section.querySelector(".section-motion");
+    if (!video) return;
     const start = frameToTime(Number(section.dataset.startFrame));
     const end = frameToTime(Number(section.dataset.endFrame));
     const settled = frameToTime(Number(section.dataset.settledFrame));
