@@ -174,6 +174,14 @@ html.intro-seen .lab-intro {
     padding-bottom: 40px;
   }
 
+  /* Governance-cards is a fixed 2x3 grid — it only just overflows, so it
+     doesn't need the full bar+30 top gap, and its last row needs to sit
+     clear of the AI fab at the bottom-right. */
+  .lab .s-govcards__content {
+    padding-top: calc(60px + env(safe-area-inset-top, 0px) + 8px) !important;
+    padding-bottom: 96px;
+  }
+
   .s-approach2__title,
   .s-glance2__title,
   .s-financial2__title,
