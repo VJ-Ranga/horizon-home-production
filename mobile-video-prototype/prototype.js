@@ -1,30 +1,18 @@
 (() => {
   const sections = [...document.querySelectorAll(".media-section")];
-  // The full mobile video contains the intro before Set-C. In the real
-  // timeline, Set-C frame 1 hands off at 22.700s and runs at 5.1922fps.
-  const handoffVideoSeconds = 22.7;
-  const setCFps = 5.1922;
   let activeIndex = -1;
-  let replayToken = 0;
-  const frameToTime = (frame) => handoffVideoSeconds + (frame - 1) / setCFps;
 
   function playSectionMotion(index) {
     const section = sections[index];
     const video = section.querySelector(".section-motion");
     if (!video) return;
-    const start = frameToTime(Number(section.dataset.startFrame));
-    const end = frameToTime(Number(section.dataset.endFrame));
-    const settled = frameToTime(Number(section.dataset.settledFrame));
-    const token = ++replayToken;
     video.pause();
-    video.currentTime = start;
+    video.currentTime = 0;
     section.classList.add("is-playing");
     void video.play().catch(() => {});
     const onTimeUpdate = () => {
-      if (token !== replayToken) return;
-      if (video.currentTime >= end) {
+      if (video.ended) {
         video.pause();
-        video.currentTime = settled;
         section.classList.remove("is-playing");
         video.removeEventListener("timeupdate", onTimeUpdate);
       }
