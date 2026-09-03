@@ -174,12 +174,29 @@ html.intro-seen .lab-intro {
     padding-bottom: 40px;
   }
 
-  /* Governance-cards is a fixed 2x3 grid — it only just overflows, so it
-     doesn't need the full bar+30 top gap, and its last row needs to sit
-     clear of the AI fab at the bottom-right. */
+  /* Governance-cards: 5 cards in a 2-col grid (rows of 2,2,1). Shrink
+     the heading + cards so the whole section fits ~one screen and the
+     heading stays in view instead of scrolling away; centre the lone
+     5th card; keep the last row clear of the AI fab. */
   .lab .s-govcards__content {
     padding-top: calc(60px + env(safe-area-inset-top, 0px) + 8px) !important;
-    padding-bottom: 96px;
+    padding-bottom: 92px;
+  }
+  .lab .s-govcards__title {
+    font-size: clamp(20px, 6vw, 25px);
+    line-height: 1.16;
+    margin-bottom: 14px;
+  }
+  .lab .s-govcards__card {
+    min-height: 118px;
+  }
+  .lab .s-govcards__cards {
+    gap: 12px;
+  }
+  .lab .s-govcards__cards > .s-govcards__card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - 6px);
   }
 
   .s-approach2__title,
