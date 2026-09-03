@@ -48,6 +48,7 @@ import {
 type Stage = "loading" | "playing" | "leaving";
 
 const INTRO_VIDEO_SRC = "/hero/intro.mp4";
+const MOBILE_INTRO_VIDEO_SRC = "/video-mobile/intro-540x960.mp4";
 
 /* The load screen buffers the first quarter of the MAIN animation frames —
    enough that the hero and its opening beats are already decoded when the
@@ -80,6 +81,23 @@ export default function LabIntro({
   const mainDoneRef = useRef(false);
   const fullAtRef = useRef(0); // when the bar first reached 100
   const introReadyRef = useRef(false); // intro video can play through
+
+  // Keep the server/client render deterministic, then select the portrait
+  // derivative for phones once the browser can evaluate the viewport.
+  const [introVideoSrc, setIntroVideoSrc] = useState(INTRO_VIDEO_SRC);
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 700px)");
+    const updateSource = () => {
+      setIntroVideoSrc(
+        query.matches ? MOBILE_INTRO_VIDEO_SRC : INTRO_VIDEO_SRC,
+      );
+    };
+
+    updateSource();
+    query.addEventListener("change", updateSource);
+    return () => query.removeEventListener("change", updateSource);
+  }, []);
 
   const finish = useCallback(() => {
     if (doneRef.current) return;
@@ -274,7 +292,7 @@ export default function LabIntro({
           muted
           playsInline
           preload="auto"
-          src={INTRO_VIDEO_SRC}
+          src={introVideoSrc}
           onEnded={finish}
         />
       ) : null}
