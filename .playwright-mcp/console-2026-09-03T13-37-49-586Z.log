@@ -308,3 +308,27 @@
 [ 1063783ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://annualreport.haycarb.com/frames-mobile/frame_0160.webp:0
 [ 1063784ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://annualreport.haycarb.com/frames-mobile/frame_0163.webp:0
 [ 1063786ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://annualreport.haycarb.com/frames-mobile/frame_0164.webp:0
+[ 1228582ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://annualreport.haycarb.com/audio/08-financial/return-on-equity.mp3:0
+[ 1228582ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://annualreport.haycarb.com/frames-mobile/frame_0162.webp:0
+[ 1228582ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://annualreport.haycarb.com/frames-mobile/frame_0165.webp:0
+[ 1228582ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://annualreport.haycarb.com/frames-mobile/frame_0161.webp:0
+[ 1228583ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://annualreport.haycarb.com/audio/08-financial/total-equity.mp3:0
+[ 1228583ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_TIMED_OUT @ https://annualreport.haycarb.com/hero/intro.mp4:0
+[ 1240045ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0166.webp:0
+[ 1240045ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0167.webp:0
+[ 1240046ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0168.webp:0
+[ 1240046ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0169.webp:0
+[ 1240047ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0170.webp:0
+[ 1240047ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0171.webp:0
+[ 1256176ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/hero/intro.mp4:0
+[ 1256176ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0172.webp:0
+[ 1256177ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0173.webp:0
+[ 1256177ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0174.webp:0
+[ 1256178ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/audio/08-financial/return-on-equity.mp3:0
+[ 1256178ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/audio/08-financial/total-equity.mp3:0
+[ 1268462ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0175.webp:0
+[ 1268463ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0176.webp:0
+[ 1268463ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0177.webp:0
+[ 1268464ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0178.webp:0
+[ 1268465ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0179.webp:0
+[ 1268465ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://annualreport.haycarb.com/frames-mobile/frame_0180.webp:0
