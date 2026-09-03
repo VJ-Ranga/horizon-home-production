@@ -151,7 +151,7 @@ const CARDS: Card[] = [
     title: "Financial Capital",
     body: "Financial resources generated and deployed to sustain operations, drive growth and deliver long term value to stakeholders.",
     link: "/pdf/home/capitals/financial-capital.pdf",
-    image: "/fincap/capitals/financial-capital.png",
+    image: "/fincap/capitals/financial-capital.webp",
     stats: [
       { money: true, value: "67.1", unit: "Bn", label: "Revenue" },
       { money: true, value: "5.9", unit: "Bn", label: "Profit Before Tax" },
@@ -162,7 +162,7 @@ const CARDS: Card[] = [
     title: "Natural Capital",
     body: "Natural resources and ecosystems that support our operations, with a focus on responsible use and environmental stewardship.",
     link: "/pdf/home/capitals/natural-capital.pdf",
-    image: "/fincap/capitals/natural-capital.png",
+    image: "/fincap/capitals/natural-capital.webp",
     stats: [
       { value: "77", unit: "%", label: "Renewable Energy usage" },
       { value: "16", unit: "%", label: "Sustainable Water Sourcing" },
@@ -173,7 +173,7 @@ const CARDS: Card[] = [
     title: "Social and Relationship Capital",
     body: "Connections, trust and partnerships built with customers, suppliers, communities and other stakeholders.",
     link: "/pdf/home/capitals/social-and-relationship-capital.pdf",
-    image: "/fincap/capitals/social-and-relationship-capital.png",
+    image: "/fincap/capitals/social-and-relationship-capital.webp",
     stats: [
       { value: ">600", label: "Customers" },
       { value: ">500", label: "Suppliers" },
@@ -184,7 +184,7 @@ const CARDS: Card[] = [
     title: "Intellectual Capital",
     body: "Knowledge, expertise, innovation and processes that enhance efficiency and drive competitive advantage.",
     link: "/pdf/home/capitals/intellectual-capital.pdf",
-    image: "/fincap/capitals/intellectual-capital.png",
+    image: "/fincap/capitals/intellectual-capital.webp",
     stats: [
       { money: true, value: "261", unit: "Mn", label: "Investment in R&D" },
       { value: "32", label: "No of Certifications" },
@@ -195,7 +195,7 @@ const CARDS: Card[] = [
     title: "Human Capital",
     body: "Skills, experience and wellbeing of our people, enabling performance, innovation and organisational resilience.",
     link: "/pdf/home/capitals/human-capital.pdf",
-    image: "/fincap/capitals/human-capital.png",
+    image: "/fincap/capitals/human-capital.webp",
     stats: [
       { value: "2,084", label: "No of Employees" },
       { money: true, value: "5.58", unit: "Bn", label: "Payments to Employees" },
@@ -206,7 +206,7 @@ const CARDS: Card[] = [
     title: "Manufactured Capital",
     body: "Our production facilities, infrastructure and equipment that underpin efficient and high quality operations.",
     link: "/pdf/home/capitals/manufactured-capital.pdf",
-    image: "/fincap/capitals/manufactured-capital.png",
+    image: "/fincap/capitals/manufactured-capital.webp",
     stats: [
       { money: true, value: "16.17", unit: "Bn", label: "Total Property Plant & Equipment" },
       { money: true, value: "4.15", unit: "Bn", label: "Capital Expenditure" },
@@ -217,7 +217,7 @@ const CARDS: Card[] = [
     title: "Digital Capital",
     body: "Technology, systems and data capabilities that enable digital transformation, innovation and smarter decision making.",
     link: "/pdf/home/capitals/digital-capital.pdf",
-    image: "/fincap/capitals/digital-capital.png",
+    image: "/fincap/capitals/digital-capital.webp",
     stats: [
       { money: true, value: "70.5", unit: "Mn", label: "Investment in Digital Platforms" },
       { money: true, value: "11.7", unit: "Mn", label: "Digital Marketing Spend" },

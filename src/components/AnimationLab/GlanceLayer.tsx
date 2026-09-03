@@ -37,9 +37,8 @@
    (2.8s infinite), not a scroll reveal, same precedent as every
    other section's purely-decorative always-on motion. Video dialog
    is ported the same way HeroLayer.tsx's own popup works: a
-   dialogRef and showModal(), reusing the same already-copied
-   /hero/haycarb-summary.mp4 asset rather than copying the source's
-   raw Intro.mp4 — it's the same "annual report summary" video. */
+   dialogRef and showModal(), loading a YouTube embed
+   (SUMMARY_VIDEO_SRC below) — same as HeroLayer's popup now does. */
 
 import { useRef } from "react";
 import { SECTIONS, staggerProgressAt, progressBetween, easeOut } from "./timeline";
@@ -293,7 +292,7 @@ export default function GlanceLayer() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/glance/report-mockup.png"
+              src="/glance/report-mockup.webp"
               alt="Beyond the Beyond annual report book preview on a desert horizon"
               decoding="async"
             />
