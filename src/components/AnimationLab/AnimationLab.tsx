@@ -455,7 +455,16 @@ export default function AnimationLab({
     if (phase !== "scroll") return;
     if (skipEntry) return; // reduced motion: leave native scrolling alone
 
-    const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+    const isMobile = window.matchMedia("(max-width: 700px)").matches;
+    const lenis = new Lenis({
+      lerp: 0.1,
+      smoothWheel: true,
+      // Native touch momentum is abrupt when the frame timeline is driven
+      // directly by scrollY. Let Lenis smooth the page-level touch gesture;
+      // nested panels opt out with data-lenis-prevent and remain native.
+      syncTouch: isMobile,
+      syncTouchLerp: 0.075,
+    });
     lenisRef.current = lenis;
     let rafId = 0;
 

@@ -157,6 +157,16 @@ html.intro-seen .lab-intro {
 }
 
 @media (max-width: 700px) {
+  /* The lab paints a fixed teal canvas over the document. On iOS/Android,
+     a root rubber-band past the spacer can otherwise expose the site's light
+     body background as a white strip at the bottom. Nested section scrollers
+     still handle their own touch movement below. */
+  html,
+  body {
+    background-color: #00778e;
+    overscroll-behavior-y: none;
+  }
+
   .s-approach2__stage,
   .s-glance2__stage,
   .s-financial2__stage,
@@ -168,7 +178,10 @@ html.intro-seen .lab-intro {
     justify-content: safe center;
     max-height: 100dvh;
     overflow-y: auto;
-    overscroll-behavior-y: contain;
+    /* Let a phone hand the gesture back to the timeline at the inner
+       scroller's edge; `contain` traps the page when touch momentum lands
+       exactly on the last card. */
+    overscroll-behavior-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-top: var(--mobile-topbar-clear) !important;
     padding-bottom: 40px;
@@ -216,6 +229,9 @@ html.intro-seen .lab-intro {
      - fincap: __intro is absolutely pinned at ~29px */
   .lab .s-digital2__panel {
     top: calc(60px + env(safe-area-inset-top, 0px) + 12px);
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .lab .s-leadership5__head {
     padding-top: var(--mobile-topbar-clear);

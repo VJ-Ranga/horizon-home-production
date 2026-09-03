@@ -245,7 +245,7 @@ export default function DigitalLayer() {
       aria-labelledby="digital2-title"
     >
       <div className="s-digital2__stage">
-        <article className="s-digital2__panel">
+        <article className="s-digital2__panel" data-lenis-prevent>
           <h2 className="s-digital2__title" id="digital2-title">
             {TITLE_TOKENS.map((token, tokenIndex) => {
               if (token.trim() === "") {

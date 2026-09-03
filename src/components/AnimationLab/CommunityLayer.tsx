@@ -140,7 +140,7 @@ export default function CommunityLayer() {
 
   return (
     <div className="lab-layer s-community" ref={ref} data-section={COMMUNITY.id} data-initial-hidden="true" aria-labelledby="community-title">
-      <div className="s-community__stage">
+      <div className="s-community__stage" data-lenis-prevent>
         <header className="s-community__head">
           <h1 className="s-community__heading" id="community-title">Community Impact</h1>
           <p className="s-community__intro">Creating lasting value beyond our business, we invest in communities through initiatives that promote education, wellbeing, environmental stewardship, and sustainable development.</p>

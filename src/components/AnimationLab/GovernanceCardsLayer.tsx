@@ -199,7 +199,7 @@ export default function GovernanceCardsLayer() {
       data-initial-hidden="true"
       aria-hidden="true"
     >
-      <div className="s-govcards__content">
+      <div className="s-govcards__content" data-lenis-prevent>
         <h1 className="s-govcards__title">
           {TITLE_TOKENS.map((token, tokenIndex) => {
             if (token.trim() === "") {

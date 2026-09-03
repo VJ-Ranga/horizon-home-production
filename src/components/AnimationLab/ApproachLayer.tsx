@@ -160,7 +160,7 @@ export default function ApproachLayer() {
       data-initial-hidden="true"
       aria-labelledby="approach2-title"
     >
-      <div className="s-approach2__stage">
+      <div className="s-approach2__stage" data-lenis-prevent>
         <div className="s-approach2__col">
           <h2 className="s-approach2__title" id="approach2-title">
             {TITLE_TOKENS.map((token, tokenIndex) => {
