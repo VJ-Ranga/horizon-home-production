@@ -1081,7 +1081,11 @@ html.lab-menu-open body {
      still has none of its own, same as before. */
   color: var(--on-dark);
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
-  font-size: clamp(20px, 2.6svh, 32px);
+  /* VJ 2026-09-03: pinned to a tight 32-34px band. Still height-driven
+     so it nudges up on taller screens, but the 34px ceiling keeps the
+     51-character nowrap line inside the container at the narrow end of
+     the desktop width range. (Earlier steps: 20-32 -> 26-40 -> here.) */
+  font-size: clamp(32px, 3.6svh, 34px);
   font-weight: 400;
   letter-spacing: 0.005em;
   line-height: 1.2;
