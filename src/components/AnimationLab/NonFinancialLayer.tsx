@@ -6,8 +6,12 @@
    Copy is from the spec (PDF p.15, "Non-Financial Highlights"): the intro
    paragraph verbatim and one static reporting card per bullet. */
 
-import { useEffect } from "react";
-import { SECTIONS } from "./timeline";
+import { useEffect, useRef, useState } from "react";
+import {
+  SECTIONS,
+  readPxPerFrame,
+  virtualExitProgressAtScrollPx,
+} from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
 const NONFINANCIAL = SECTIONS[15];
@@ -37,19 +41,58 @@ const CARDS = [
 
 export default function NonFinancialLayer() {
   const ref = useSectionLayer(NONFINANCIAL);
+  // Which card is expanded. Click a card to open it (closing any other);
+  // click it again to close. Replaces the old :hover expand — VJ
+  // 2026-09-03: "make it click and action".
+  const [openCard, setOpenCard] = useState<number | null>(null);
+  const wasRevealedRef = useRef(false);
 
-  useFrameEffect((frame) => {
+  const toggleCard = (index: number) =>
+    setOpenCard((current) => (current === index ? null : index));
+
+  useFrameEffect((frame, _phase, scrollPx) => {
     const element = ref.current;
     if (!element) return;
 
-    const scrollUnlocked = frame >= NONFINANCIAL.settledFrame &&
-      frame <= (NONFINANCIAL.exit?.frames[1] ?? NONFINANCIAL.settledFrame);
+    const exitStart =
+      NONFINANCIAL.exit?.frames[0] ?? NONFINANCIAL.settledFrame;
+
+    const scrollUnlocked =
+      frame >= NONFINANCIAL.settledFrame &&
+      frame <= (NONFINANCIAL.exit?.frames[1] ?? exitStart);
     element.classList.toggle("is-scrollable", scrollUnlocked);
     if (!scrollUnlocked) element.scrollTop = 0;
+
+    // Park model (same as 08-financial): the intro + cards reveal with
+    // a plain time-based CSS transition — see lab.css's
+    // .s-nonfinancial9[data-revealed] block — fired only while the
+    // section sits on its virtual hold at settledFrame, and reversed
+    // the moment it starts leaving. `frame` is pinned at settledFrame
+    // through the whole 40 hold + 20 virtual-exit span, and
+    // virtualExitProgressAtScrollPx goes non-null once the pinned exit
+    // begins, so this flips true exactly for the readable stretch.
+    const virtualExit = virtualExitProgressAtScrollPx(
+      NONFINANCIAL,
+      scrollPx,
+      readPxPerFrame(),
+    );
+    const revealed =
+      virtualExit === null &&
+      frame >= NONFINANCIAL.settledFrame &&
+      frame < exitStart;
+    element.dataset.revealed = revealed ? "true" : "false";
+
+    // Collapse any open card on the way out, so it does not re-enter
+    // already expanded next pass. Edge-triggered — one setState, not
+    // one per frame.
+    if (!revealed && wasRevealedRef.current) setOpenCard(null);
+    wasRevealedRef.current = revealed;
   });
 
   useEffect(() => () => {
-    ref.current?.classList.remove("is-scrollable");
+    const element = ref.current;
+    element?.classList.remove("is-scrollable");
+    if (element) delete element.dataset.revealed;
   }, [ref]);
 
   return (
@@ -58,6 +101,7 @@ export default function NonFinancialLayer() {
       ref={ref}
       data-section={NONFINANCIAL.id}
       data-initial-hidden="true"
+      data-lenis-prevent
       aria-labelledby="nonfinancial9-title"
     >
       <header className="s-nonfinancial9__intro">
@@ -76,20 +120,33 @@ export default function NonFinancialLayer() {
         aria-label="Reporting highlights"
       >
         <div className="s-nonfinancial9__rail">
-          {CARDS.map((card) => (
-            <article
-              className="s-nonfinancial9__card"
-              key={card.title}
-            >
-              <img className="s-nonfinancial9__card-image" src={card.image} alt="" />
-              <div className="s-nonfinancial9__content">
-                <div>
-                  <h2>{card.title}</h2>
-                  <p>{card.body}</p>
+          {CARDS.map((card, index) => {
+            const isOpen = openCard === index;
+            return (
+              <article
+                className={`s-nonfinancial9__card${isOpen ? " is-open" : ""}`}
+                key={card.title}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isOpen}
+                onClick={() => toggleCard(index)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggleCard(index);
+                  }
+                }}
+              >
+                <img className="s-nonfinancial9__card-image" src={card.image} alt="" />
+                <div className="s-nonfinancial9__content">
+                  <div>
+                    <h2>{card.title}</h2>
+                    <p>{card.body}</p>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </section>
     </div>

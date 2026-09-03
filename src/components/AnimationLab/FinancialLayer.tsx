@@ -29,8 +29,6 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
-  staggerProgressAt,
-  virtualEnterProgressAtScrollPx,
   virtualExitProgressAtScrollPx,
 } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
@@ -167,10 +165,7 @@ export default function FinancialLayer() {
   );
   const swapTimerRef = useRef<number | null>(null);
   const enterTimerRef = useRef<number | null>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const leadRef = useRef<HTMLParagraphElement>(null);
-
-  const [revealStartFrame, revealEndFrame] = FINANCIAL.enter!.frames;
+  const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 1100px)");
@@ -183,75 +178,33 @@ export default function FinancialLayer() {
   useFrameEffect((frame, _phase, scrollPx) => {
     const element = ref.current;
     if (!element) return;
-    const virtualEnter = virtualEnterProgressAtScrollPx(
-      FINANCIAL,
-      scrollPx,
-      readPxPerFrame()
-    );
+
     const virtualExit = virtualExitProgressAtScrollPx(
       FINANCIAL,
       scrollPx,
       readPxPerFrame()
     );
-    if (virtualExit !== null || frame >= FINANCIAL.exit!.frames[0]) {
-      hoverAudio.stop();
-    }
-    const animationFrame = virtualEnter === null
-      ? frame
-      : revealEndFrame + virtualEnter * (FINANCIAL.virtualEnterFrames ?? 0);
-    element.style.setProperty(
-      "--financial-reveal",
-      String(
-        Math.max(
-          0,
-          Math.min(1, (animationFrame - revealStartFrame) / (revealEndFrame - revealStartFrame))
-        )
-      )
-    );
+    const exitStart = FINANCIAL.exit!.frames[0];
 
-    const finishingEnter = virtualEnter !== null || frame < FINANCIAL.settledFrame;
-    const titleProgress = virtualExit !== null
-      ? 1 - staggerProgressAt(
-          1,
-          2,
-          FINANCIAL.exit!.frames[0] +
-            virtualExit * (FINANCIAL.exit!.frames[1] - FINANCIAL.exit!.frames[0]),
-          FINANCIAL.exit!.frames
-        )
-      : finishingEnter
-      ? staggerProgressAt(
-          0,
-          2,
-          animationFrame,
-          [revealStartFrame, revealEndFrame + (FINANCIAL.virtualEnterFrames ?? 0)]
-        )
-      : 1 - staggerProgressAt(1, 2, frame, FINANCIAL.exit!.frames);
-    const leadProgress = virtualExit !== null
-      ? 1 - staggerProgressAt(
-          0,
-          2,
-          FINANCIAL.exit!.frames[0] +
-            virtualExit * (FINANCIAL.exit!.frames[1] - FINANCIAL.exit!.frames[0]),
-          FINANCIAL.exit!.frames
-        )
-      : finishingEnter
-      ? staggerProgressAt(
-          1,
-          2,
-          animationFrame,
-          [revealStartFrame, revealEndFrame + (FINANCIAL.virtualEnterFrames ?? 0)]
-        )
-      : 1 - staggerProgressAt(0, 2, frame, FINANCIAL.exit!.frames);
+    // "Parked" = sitting on the flat virtual hold at settledFrame: the
+    // frame has reached 436 and the exit hasn't begun. This is the ONLY
+    // state where the panel reveals, is readable, and takes clicks.
+    // Everything else — scrubbing up to 436, the exit, scrolled back
+    // above it — is hidden and click-dead.
+    const parked =
+      virtualExit === null && frame >= FINANCIAL.settledFrame && frame < exitStart;
 
-    if (titleRef.current) {
-      titleRef.current.style.opacity = String(titleProgress);
-      titleRef.current.style.transform = `translateY(${10 * (1 - titleProgress)}px)`;
-    }
-    if (leadRef.current) {
-      leadRef.current.style.opacity = String(leadProgress);
-      leadRef.current.style.transform = `translateY(${10 * (1 - leadProgress)}px)`;
-    }
+    if (!parked) hoverAudio.stop();
 
+    // One flip, not a per-frame ramp. The CSS @property transition on
+    // .s-financial2 (lab.css) plays the staggered fade in / out over
+    // ~0.45s — a normal quick animation, not scroll-scrubbed — the
+    // moment we park, and reverses it the moment we leave.
+    element.style.setProperty("--financial-reveal", parked ? "1" : "0");
+
+    if (stageRef.current) {
+      stageRef.current.style.pointerEvents = parked ? "auto" : "none";
+    }
   });
 
   // Mirrors the source's probe.onload -> setTimeout(160) -> swap ->
@@ -318,12 +271,12 @@ export default function FinancialLayer() {
       data-initial-hidden="true"
       aria-labelledby="financial2-title"
     >
-      <div className="s-financial2__stage">
+      <div className="s-financial2__stage" ref={stageRef} data-lenis-prevent>
         <header className="s-financial2__head" data-reveal="0">
-          <h1 className="s-financial2__title" id="financial2-title" ref={titleRef}>
+          <h1 className="s-financial2__title" id="financial2-title">
             Financial Highlights
           </h1>
-          <p className="s-financial2__lead" ref={leadRef}>
+          <p className="s-financial2__lead">
             The Financials section presents a clear and reliable overview of Haycarb
             PLC&apos;s performance and value creation for the year, supported by independent
             assurances and aligned with global reporting standards.

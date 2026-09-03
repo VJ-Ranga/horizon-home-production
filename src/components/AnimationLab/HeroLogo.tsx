@@ -90,7 +90,7 @@ export default function HeroLogo() {
     <img
       ref={ref}
       src="/hero/logo-white.png"
-      alt="Haycarb PLC"
+      alt="HAYCARB LOGO"
       decoding="async"
       className="lab-hero-logo"
     />

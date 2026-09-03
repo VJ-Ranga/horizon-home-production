@@ -1176,10 +1176,27 @@ export const SECTIONS: SectionTimeline[] = [
     // exactly on cue at 338); exit doesn't start until 344, after the
     // crawl zone ends at 342 — a real flat-opacity plateau from 338
     // to 344 instead of a momentary peak.
+    //
+    // 2026-09-03 (VJ review): the old 410->436 scroll-mapped entrance
+    // was the problem, not the fix. By ~frame 429 the panel already
+    // looked 100% done (HUD read "99%") while it was still scrubbing
+    // in, so the eye couldn't tell "loaded" from "still loading" and
+    // people clicked ghost buttons.
+    //
+    // NEW MODEL, this section only: NO scroll-driven reveal at all.
+    // The frame scrubs up to 436 with the panel absent (2-frame
+    // opacity snap, no offset), stops, and holds flat for 40 virtual
+    // frames. The panel's own reveal is a normal quick time-based
+    // animation (CSS @property transition on .s-financial2, ~0.45s
+    // staggered fade — see FinancialLayer.tsx / lab.css) fired the
+    // instant it parks, and reversed when it leaves. It is click-live
+    // only during that hold (.s-financial2__stage pointer-events
+    // gate). Scroll through the 40 frames and it exits, footage
+    // resumes. No virtualEnterFrames — nothing scroll-mapped to protect.
     settledFrame: 436,
-    enter: { frames: [410, 436], from: { y: 5 } },
+    enter: { frames: [434, 436], from: {} },
     exit: { frames: [448, 454], to: { y: -5 } },
-    holdFrames: 20,
+    holdFrames: 40,
     virtualExitFrames: 20,
   },
   {
@@ -1213,11 +1230,17 @@ export const SECTIONS: SectionTimeline[] = [
     // own opacity (not by the background moving) — see the other two
     // sections' own notes. Exit shortened to 7 frames (was 10) to
     // leave 10-governance-cards enough room of its own.
+    //
+    // 2026-09-03 (VJ, review): "it quickly moves, the numbers don't
+    // fully appear — keep this section a bit longer". +20 virtual hold
+    // frames (10 -> 30) pinned at the settled frame, and the stat
+    // numbers no longer count up (see GovernanceLayer.tsx) so they're
+    // fully readable the moment the cards are in.
     settledFrame: 533,
     enter: { frames: [520, 533], from: { y: 4 } },
     exit: { frames: [533, 540], to: { y: -4 } },
     virtualEnterFrames: 15,
-    holdFrames: 10,
+    holdFrames: 30,
     virtualExitFrames: 20,
   },
   {
@@ -1237,11 +1260,14 @@ export const SECTIONS: SectionTimeline[] = [
     // start" while Governance is still fading out, not cut in after a
     // gap. Exit shortened to 6 frames so Leadership has room to settle
     // before 415.
+    // 2026-09-03 (VJ): +30 hold frames (10 -> 40) so the cards get a
+    // real settle-down dwell to read, matching 10-governance's own
+    // longer hold. virtualExitFrames left at 20.
     settledFrame: 540,
     enter: { frames: [535, 540], from: { y: 6 } },
     exit: { frames: [540, 550], to: { y: -6 } },
     virtualEnterFrames: 20,
-    holdFrames: 10,
+    holdFrames: 40,
     virtualExitFrames: 20,
   },
   {
@@ -1256,12 +1282,38 @@ export const SECTIONS: SectionTimeline[] = [
     // start" crossfade). Exit is allowed to run past the shot's own
     // ~417 end (into 419) since that's just a fade-out, not a hold —
     // scroll resumes at normal pace into 12-banner-ocean well after.
+    //
+    // 2026-09-03 (VJ): "stop 555 and wait 60 virtual frames" — same
+    // park-and-hold model as 08-financial, and it removes three
+    // measured problems at once:
+    //
+    //   1. The old 12-frame enter [543,555] was wider than the default
+    //      ±4 crawl, so opacity ran 0.08 -> 0.965 in 160px at FULL
+    //      scroll pace and the 6x slow zone only covered the last 3.5%
+    //      of the fade. Same trap the 06-key-data-points note describes.
+    //   2. virtualEnterFrames made the section visibly KICK BACKWARDS
+    //      at its own settle: measured opacity 1.000 -> 0.911 and x
+    //      0 -> 0.36vw the instant the virtual-enter leg began, because
+    //      sectionLayerStateAt switches to combinedEnter (which starts
+    //      at 0.5) after the crawl had already carried it to 1.0. It
+    //      also flipped `interactive` true -> false -> true. Dropping
+    //      virtualEnterFrames sidesteps that path entirely.
+    //   3. Enter (~500px) was ~3.5x longer than the exit (~144px). A
+    //      2-frame enter inside the crawl is ~168px, so the two now
+    //      match without touching the exit.
+    //
+    // The 2-frame enter sits inside the ±4 crawl, so it is a soft
+    // ~168px arrival rather than a hard cut, then 60 frames pinned.
+    // LeadershipLayer has no internal stagger of its own, so nothing
+    // else has to change for this.
+    // 2026-09-03 (VJ): "add 20 frames before section gone" —
+    // virtualExitFrames 10 -> 20, so the fade-out is pinned at 555 for
+    // twice as long and the section leaves gently instead of snapping.
     settledFrame: 555,
-    enter: { frames: [543, 555], from: { x: 4 } },
+    enter: { frames: [553, 555], from: { x: 4 } },
     exit: { frames: [555, 575], to: { x: 4 } },
-    virtualEnterFrames: 20,
-    holdFrames: 10,
-    virtualExitFrames: 10,
+    holdFrames: 60,
+    virtualExitFrames: 20,
   },
   {
     id: "13-banner-ocean",
@@ -1326,21 +1378,83 @@ export const SECTIONS: SectionTimeline[] = [
     label: "Banner — mountain river",
     // Artboard 8: fully loaded at frame 613 in the OLD cut. Re-measured
     // against the new cut, 2026-08-25: settledFrame 590.
-    settledFrame: 830,
-    enter: { frames: [816, 830], from: { y: 4 } },
-    exit: { frames: [830, 841], to: { y: -4 } },
-    holdFrames: 10,
+    //
+    // 2026-09-03 (VJ): "780 to 800 start 15 section and stop, then 40
+    // virtual frames so we can animate text in that frames, then 800
+    // to 820 full gone."
+    //
+    // The 40 are virtualEnterFrames, NOT holdFrames. holdFrames is a
+    // pure freeze — `frame` is pinned and never advances — so a
+    // frame-driven stagger has nothing to read and the words cannot
+    // animate during it. virtualEnterFrames pins the background the
+    // same way but exposes a 0..1 progress
+    // (virtualEnterProgressAtScrollPx), which RiverBannerLayer maps
+    // onto 800 -> 840 to write the copy on word by word while the
+    // footage sits still.
+    //
+    // Settle moves 830 -> 800. Still clear of both neighbours:
+    // 14-financial-capital is gone by 693, 16-nonfinancial does not
+    // start entering until 843.
+    //
+    // holdFrames: 4 is NOT for dwell — it routes buildLegs through the
+    // monotonic `holdFrames > 0` branch. Without it (virtualEnterFrames
+    // set, holdFrames 0) buildLegs splices the pinned virtual-enter leg
+    // BEFORE the crawl-out leg, so after the 40 text frames the footage
+    // jumps BACKWARDS ~4 frames (800 -> 796) and slow-crawls back up —
+    // the "glitchy / slow around 800" bug. With any holdFrames the legs
+    // come out crawl-in, virtual-enter, hold, crawl-out, all forward.
+    //
+    // holdCrawlFrames: 0 — kill the automatic ±4-frame 6x crawl that
+    // otherwise brackets the hold. It was adding ~672px of molasses
+    // scroll (336px each side at 84px/frame) on top of the 616px
+    // pinned text span — a big "stuck" zone nobody asked for. Now the
+    // footage runs at normal 14px/frame right up to 800, freezes for
+    // the 40 text frames + 4, then normal pace resumes. Same treatment
+    // 01-hero uses.
+    // 2026-09-03 (VJ): settle 800 -> 782. Enter/exit shift with it so
+    // the 20-frame windows keep their shape.
+    settledFrame: 782,
+    enter: { frames: [762, 782], from: { y: 4 } },
+    exit: { frames: [782, 802], to: { y: -4 } },
+    virtualEnterFrames: 40,
+    holdFrames: 4,
+    holdCrawlFrames: 0,
   },
   {
     id: "16-nonfinancial",
     label: "Non-Financials",
     // Non-Financials: fully loaded at frame 635 in the OLD cut.
     // Re-measured against the new cut, 2026-08-25: settledFrame 620.
-    settledFrame: 860,
-    enter: { frames: [850, 860], from: { y: 4 } },
-    exit: { frames: [860, 875], to: { y: -4 } },
-    holdFrames: 10,
-    virtualEnterFrames: 20,
+    //
+    // 2026-09-03 (VJ): "use 845 frame and stop it and use 60 virtual
+    // frames — in that frame using normal animation section 16 load
+    // fully then gone". Same park model as 08-financial: the frame
+    // snaps up to 845 with the panel present but its contents at
+    // opacity 0, stops, and holds flat for 60 virtual frames (40 hold
+    // + 20 virtual exit). The intro + 4 cards reveal with a normal
+    // ~0.5s staggered CSS fade (NonFinancialLayer sets data-revealed;
+    // the cards keep their own min-height hover animation), reversed
+    // when it leaves. NOT scroll-scrubbed — this section has card
+    // hover animation, so a per-frame word stagger would fight it.
+    // Settle moves 860 -> 845, closing most of the dead gap after
+    // 15-banner-river (which is gone by ~820). 17-strategy does not
+    // enter until ~880, so exit [857, 863] is clear.
+    //
+    // SAME SHAPE AS 12-leadership: NO virtualEnterFrames (that path
+    // makes the container kick backwards at its own settle — see the
+    // 12-leadership note), a 2-frame enter that lands inside the ±4
+    // crawl for a soft arrival, then a long pure hold, then a virtual
+    // exit. Pinned budget, frame stays at 845 throughout:
+    //   holdFrames        60 — the CSS card reveal plays in the first
+    //                          ~0.9s, the rest is dead-static HOLD to
+    //                          hover the cards and read
+    //   virtualExitFrames 20 — the reverse fade
+    // data-revealed is true for the 60 hold frames, false for the 20.
+    // ~80 pinned frames ≈ 1120px on screen still, no dip.
+    settledFrame: 845,
+    enter: { frames: [843, 845], from: {} },
+    exit: { frames: [857, 863], to: { y: -4 } },
+    holdFrames: 60,
     virtualExitFrames: 20,
   },
   {

@@ -31,7 +31,10 @@
      (Math.floor(target * progress)), not the template's
      requestAnimationFrame-over-500ms-wall-clock counter — so the
      count is exactly in sync with scroll position, reversible if
-     scrolled backward, same as everything else.
+     scrolled backward, same as everything else. (Briefly removed
+     2026-09-03 on the "numbers don't fully appear" note, then
+     restored per VJ — the fix for that is the longer hold, holdFrames
+     30 in timeline.ts, not dropping the count.)
 
    Exit is its own reverse stagger for words/stats/counters (standing
    rule), not just riding the parent's own opacity fade from

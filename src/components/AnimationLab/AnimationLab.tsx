@@ -189,33 +189,28 @@ function FrameReadout() {
   const phaseRef = useRef<HTMLSpanElement>(null);
   const holdRef = useRef<HTMLSpanElement>(null);
   const rowRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const pxPerFrameRef = useRef(14);
 
   useEffect(() => {
-    const pxPerFrame = readPxPerFrame();
-    const updateHold = () => {
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const px =
-        scrollable > 0
-          ? (Math.min(Math.max(window.scrollY / scrollable, 0), 1) *
-              totalScrollPx(pxPerFrame))
-          : 0;
-      const hold = virtualHoldAtScrollPx(px, pxPerFrame);
-      if (!holdRef.current) return;
-      holdRef.current.textContent = hold
-        ? `hold: frame ${hold.frame} · ${hold.remainingFrames}/${hold.totalFrames} virtual frames remaining`
-        : "hold: —";
-    };
-
-    updateHold();
-    window.addEventListener("scroll", updateHold, { passive: true });
-    return () => window.removeEventListener("scroll", updateHold);
+    pxPerFrameRef.current = readPxPerFrame();
   }, []);
 
-  useFrameEffect((frame, phase) => {
+  useFrameEffect((frame, phase, scrollPx) => {
     if (frameRef.current) frameRef.current.textContent = frame.toFixed(1);
     if (phaseRef.current) {
       phaseRef.current.textContent =
         phase === "entry" ? "entry · autoplay · scroll locked" : "scroll";
+    }
+
+    // Refresh the hold readout on the SAME rAF tick as the frame
+    // counter. It used to update on native `scroll` events only, which
+    // Lenis suppresses — so it would freeze showing a stale hold long
+    // after the scroll head had left it.
+    if (holdRef.current) {
+      const hold = virtualHoldAtScrollPx(scrollPx, pxPerFrameRef.current);
+      holdRef.current.textContent = hold
+        ? `hold: frame ${hold.frame} · ${hold.remainingFrames}/${hold.totalFrames} virtual frames remaining`
+        : "hold: —";
     }
 
     for (const section of SECTIONS) {

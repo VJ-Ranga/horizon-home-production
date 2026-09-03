@@ -19,13 +19,15 @@ import { LOGO_EXIT_FRAMES, SECTIONS } from "./timeline";
 /* The frame the hamburger appears on, and stays visible from. */
 const REVEAL_FRAME = 60;
 
-/* The music toggle appears with the settled hero, one beat before the
-   hamburger. It controls audio that keeps playing for the whole page, so
-   unlike the hero it never leaves — it only moves: while the hero is up
-   the top-right corner belongs to the video card, so the toggle sits
-   under it, and once the hero has exited it takes the corner. */
-const MUSIC_REVEAL_FRAME = 50;
-const MUSIC_DOCK_FRAME = LOGO_EXIT_FRAMES[1];
+/* The music toggle stays hidden for the whole hero and only appears
+   once the hero has exited (VJ, 2026-09-03: "that sound icon only need
+   to show after frame 70"). It used to arrive at frame 50 and park
+   under the hero's video card — which owns the top-right corner while
+   the hero is up — before docking to that corner at 70. Now it simply
+   isn't there until 70, so it never has to share the corner and the
+   `lab-music-hero` dock never applies. It controls audio that plays
+   for the whole page, so from 70 on it never leaves. */
+const MUSIC_REVEAL_FRAME = LOGO_EXIT_FRAMES[1];
 const TEAL_NAV_IDS = new Set(["05-intro-statement", "06-key-data-points"]);
 const [tealStart, tealEnd] = SECTIONS
   .filter((s) => TEAL_NAV_IDS.has(s.id))
@@ -53,12 +55,9 @@ export default function IntroNavGate() {
   });
 
   useFrameEffect((frame) => {
-    const root = document.documentElement;
-    root.classList.toggle("lab-music-hidden", frame < MUSIC_REVEAL_FRAME);
-    // Parked under the hero's video card until the hero is gone.
-    root.classList.toggle(
-      "lab-music-hero",
-      frame >= MUSIC_REVEAL_FRAME && frame < MUSIC_DOCK_FRAME,
+    document.documentElement.classList.toggle(
+      "lab-music-hidden",
+      frame < MUSIC_REVEAL_FRAME,
     );
   });
 
@@ -68,7 +67,6 @@ export default function IntroNavGate() {
         "lab-nav-hidden",
         "lab-nav-teal",
         "lab-music-hidden",
-        "lab-music-hero",
       );
     },
     [],

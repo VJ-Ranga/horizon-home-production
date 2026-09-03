@@ -361,7 +361,7 @@ export default function ApproachLayer() {
             }}
           >
             {/* Spec (AR Crossword Puzzle PDF p.2): this section's two
-                buttons are "Explore More" and "Watch the Highlights"
+                buttons are "Explore More" and "Watch Key Highlights"
                 — not the hero's "Download Annual Report". */}
             <a
               className="btn s-approach2__cta"
@@ -376,7 +376,7 @@ export default function ApproachLayer() {
               className="btn btn--watch s-approach2__cta"
               aria-haspopup="dialog"
               aria-controls="approach-highlights-dialog"
-              aria-label="Watch the Highlights"
+              aria-label="Watch Key Highlights"
               onClick={() => {
                 dialogOpenedAtFrameRef.current = currentFrameRef.current;
                 if (videoFrameRef.current) videoFrameRef.current.src = HIGHLIGHTS_VIDEO_SRC;
@@ -386,7 +386,7 @@ export default function ApproachLayer() {
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="m8 5 11 7-11 7V5Z" />
               </svg>
-              <span>Watch the Highlights</span>
+              <span>Watch Key Highlights</span>
             </button>
           </div>
 
@@ -396,7 +396,7 @@ export default function ApproachLayer() {
             ref={dialogRef}
             className="s-approach2__video-dialog"
             id="approach-highlights-dialog"
-            aria-label="Watch the Highlights video"
+            aria-label="Watch Key Highlights video"
             onClick={(event) => {
               if (event.target === dialogRef.current) dialogRef.current?.close();
             }}
@@ -408,7 +408,7 @@ export default function ApproachLayer() {
             <iframe
               ref={videoFrameRef}
               className="s-approach2__video-embed"
-              title="Watch the Highlights video"
+              title="Watch Key Highlights video"
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
               allowFullScreen
             />

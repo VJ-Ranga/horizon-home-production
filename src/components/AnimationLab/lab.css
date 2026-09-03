@@ -1228,7 +1228,9 @@ html.lab-menu-open body {
   --a2-fs-title: clamp(38px, 5.93svh, 64px);
   --a2-fs-kicker: clamp(19px, 2.41svh, 26px);
   --a2-fs-lead: clamp(16px, 1.85svh, 20px);
-  --a2-fs-label: clamp(15px, 1.67svh, 18px);
+  /* VJ 2026-09-03: was clamp(15px, 1.67svh, 18px) — 15px on a 900px-tall
+     desktop. Nudged so the same viewport lands on 16px. */
+  --a2-fs-label: clamp(16px, 1.78svh, 19px);
   --a2-fs-body: clamp(13px, 1.48svh, 16px);
   --a2-fs-cta: clamp(15px, 1.67svh, 18px);
 }
@@ -1461,9 +1463,15 @@ html.lab-menu-open body {
   color: var(--glass-badge-ink);
 }
 
+/* The label is an <h3>, so globals.css's `h1..h6 { font-family:
+   var(--font-heading) }` was giving it Minion Pro — the only serif in
+   the card, and at weight 600 (no such face; Minion Pro ships 400
+   only) the browser was synthesizing a fake bold. Stated outright as
+   Avenir Lab per VJ 2026-09-03, matching the card body underneath. */
 .s-approach2__card-label {
   margin: 0;
   color: var(--glass-ink);
+  font-family: "Avenir Lab", Arial, sans-serif;
   font-size: var(--a2-fs-label);
   font-weight: 600;
   line-height: 1.35;
@@ -3521,9 +3529,17 @@ html.lab-menu-open body {
   box-shadow: 0 18px 38px rgba(8, 57, 73, 0.2);
   transition: min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: min-height;
+  cursor: pointer;
 }
 
-.s-nonfinancial9__card:hover {
+.s-nonfinancial9__card:focus-visible {
+  outline: 2px solid rgba(170, 235, 232, 0.9);
+  outline-offset: 3px;
+}
+
+/* Click to expand, not hover — NonFinancialLayer toggles .is-open on
+   the clicked card (one open at a time). VJ 2026-09-03. */
+.s-nonfinancial9__card.is-open {
   min-height: min(430px, 48svh);
   z-index: 2;
 }
@@ -3580,10 +3596,56 @@ html.lab-menu-open body {
   transition: max-height 0.45s ease, opacity 0.45s ease, margin 0.45s ease;
 }
 
-.s-nonfinancial9__card:hover .s-nonfinancial9__content p {
+.s-nonfinancial9__card.is-open .s-nonfinancial9__content p {
   max-height: 220px;
   margin-top: 12px;
   opacity: 1;
+}
+
+/* =========================================================
+   Section 16 park-reveal — a normal time-based fade, NOT a
+   scroll-scrubbed one. NonFinancialLayer sets data-revealed="true"
+   on the root while the section sits on its 60-frame virtual hold at
+   frame 845 (see timeline.ts / NonFinancialLayer.tsx); the intro
+   and the four cards fade + rise in with a short stagger, and
+   reverse the moment it starts leaving.
+
+   Self-contained: this block re-declares the card's min-height
+   hover transition alongside opacity/transform so nothing here
+   depends on the base .s-nonfinancial9__card rule staying put.
+   ========================================================= */
+.s-nonfinancial9__intro,
+.s-nonfinancial9__card {
+  opacity: 0;
+  transform: translateY(26px);
+}
+.s-nonfinancial9__intro {
+  transition: opacity 0.5s var(--ease-out, ease),
+    transform 0.5s var(--ease-out, ease);
+}
+.s-nonfinancial9__card {
+  transition: min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.5s var(--ease-out, ease),
+    transform 0.5s var(--ease-out, ease);
+}
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__intro,
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card {
+  opacity: 1;
+  transform: none;
+}
+/* Delay list maps to the transition list (min-height, opacity,
+   transform) — 0s on min-height so the hover growth stays instant,
+   the stagger only on the fade-in. */
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(1) { transition-delay: 0s, 0.14s, 0.14s; }
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(2) { transition-delay: 0s, 0.24s, 0.24s; }
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(3) { transition-delay: 0s, 0.34s, 0.34s; }
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(4) { transition-delay: 0s, 0.44s, 0.44s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .s-nonfinancial9__intro,
+  .s-nonfinancial9__card {
+    transition: none;
+  }
 }
 
 @media (max-width: 900px) {
@@ -5291,7 +5353,8 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 50%;
   color: #ffffff;
-  background: rgba(3, 24, 34, 0.28);
+  /* Green -> blue gradient, VJ 2026-09-03 (was a flat dark wash). */
+  background: linear-gradient(135deg, #4caf78 0%, #16869a 100%);
 }
 
 .s-community__play svg { width: 14px; height: 14px; fill: currentColor; }
@@ -5371,14 +5434,16 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .s-community__card-body,
 .s-community__card-stat { margin: 0; }
 
+/* Card text bumped ~+4px with a 16px floor, VJ 2026-09-03 — the old
+   clamps bottomed out at 10-13px, too small over the photos. */
 .s-community__card-eyebrow {
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
-  font-size: clamp(10px, 1.3svh, 14px);
+  font-size: clamp(16px, 1.7svh, 18px);
 }
 
 .s-community__card-title {
   margin-top: 2px;
-  font-size: clamp(18px, 2.5svh, 28px);
+  font-size: clamp(22px, 2.9svh, 32px);
   font-weight: 400;
   line-height: 1.05;
 }
@@ -5386,7 +5451,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 .s-community__card-body {
   margin-top: var(--sp-2);
   color: var(--on-dark-muted);
-  font-size: clamp(11px, 1.35svh, 14px);
+  font-size: clamp(16px, 1.75svh, 18px);
   line-height: 1.3;
 }
 
@@ -5398,7 +5463,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 }
 
 .s-community__card-stat {
-  font-size: clamp(13px, 1.7svh, 18px);
+  font-size: clamp(17px, 2.1svh, 22px);
   font-weight: 300;
 }
 
