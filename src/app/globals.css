@@ -158,7 +158,6 @@ html.intro-seen .lab-intro {
 
 @media (max-width: 700px) {
   .s-approach2__stage,
-  .s-digital2__stage,
   .s-glance2__stage,
   .s-financial2__stage,
   .s-govcards__content,
@@ -176,12 +175,20 @@ html.intro-seen .lab-intro {
   }
 
   .s-approach2__title,
-  .s-digital2__title,
   .s-glance2__title,
   .s-financial2__title,
   .s-govcards__title,
   .s-community__heading {
     max-width: 100%;
     overflow-wrap: anywhere;
+  }
+
+  /* digital2 is an absolute two-block layout (glass panel pinned near
+     the top, quicklinks pinned near the bottom) — not a flow section,
+     so the rule above can't help it. Drop the panel below the sticky
+     bar directly. `.lab` prefix out-specifies lab.css's own
+     `.s-digital2__panel { top: ... }` without !important. */
+  .lab .s-digital2__panel {
+    top: calc(60px + env(safe-area-inset-top, 0px) + 12px);
   }
 }
