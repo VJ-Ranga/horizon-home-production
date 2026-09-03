@@ -43,12 +43,14 @@ import {
   HERO_SETTLED_FRAME,
   frameForScrollPx,
   readPxPerFrame,
+  scrollPxForFrame,
   totalScrollPx,
   partById,
   partStateAt,
   sectionLayerStateAt,
   type SectionTimeline,
 } from "./timeline";
+import { limitMobileFrame } from "./mobileFrameGuard";
 
 export type Phase = "entry" | "scroll";
 
@@ -136,6 +138,7 @@ export function useFrameDriver(skipEntry: boolean, ready: boolean): FrameDriver 
     // own useState(readPxPerFrame) — both must agree or the spacer
     // height and the frame this loop computes fall out of sync.
     const pxPerFrame = readPxPerFrame();
+    const isMobile = window.matchMedia("(max-width: 700px)").matches;
 
     const tick = (now: number) => {
       rafId = requestAnimationFrame(tick);
@@ -174,6 +177,18 @@ export function useFrameDriver(skipEntry: boolean, ready: boolean): FrameDriver 
             : 0;
         scrollPx = progress * totalScrollPx(pxPerFrame);
         frame = frameForScrollPx(scrollPx, pxPerFrame);
+
+        // A mobile touch flick can move the page across several short
+        // section windows between rAF samples. Limit only the emitted
+        // frame so every section gets a chance to settle; the browser's
+        // actual scroll position and the visual progress bar stay native.
+        if (isMobile && phase === lastPhase && Number.isFinite(lastFrame)) {
+          const limitedFrame = limitMobileFrame(lastFrame, frame);
+          if (limitedFrame !== frame) {
+            frame = limitedFrame;
+            scrollPx = scrollPxForFrame(frame, pxPerFrame);
+          }
+        }
       }
 
       // Sub-hundredth-of-a-frame changes are below anything the eye
