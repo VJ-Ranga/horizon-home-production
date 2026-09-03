@@ -318,7 +318,7 @@ export default function FinancialLayer() {
       data-initial-hidden="true"
       aria-labelledby="financial2-title"
     >
-      <div className="s-financial2__stage" data-lenis-prevent>
+      <div className="s-financial2__stage">
         <header className="s-financial2__head" data-reveal="0">
           <h1 className="s-financial2__title" id="financial2-title" ref={titleRef}>
             Financial Highlights

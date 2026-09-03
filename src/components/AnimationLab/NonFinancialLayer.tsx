@@ -43,7 +43,7 @@ export default function NonFinancialLayer() {
     if (!element) return;
 
     const scrollUnlocked = frame >= NONFINANCIAL.settledFrame &&
-      frame <= (NONFINANCIAL.exit?.frames[0] ?? NONFINANCIAL.settledFrame);
+      frame <= (NONFINANCIAL.exit?.frames[1] ?? NONFINANCIAL.settledFrame);
     element.classList.toggle("is-scrollable", scrollUnlocked);
     if (!scrollUnlocked) element.scrollTop = 0;
   });
@@ -58,7 +58,6 @@ export default function NonFinancialLayer() {
       ref={ref}
       data-section={NONFINANCIAL.id}
       data-initial-hidden="true"
-      data-lenis-prevent
       aria-labelledby="nonfinancial9-title"
     >
       <header className="s-nonfinancial9__intro">

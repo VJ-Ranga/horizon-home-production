@@ -136,6 +136,30 @@
   }
 }
 
+/* AnimationLab mobile overflow handoff. These are inner scroll surfaces;
+   the layer roots keep their existing absolute stack behavior. */
+@media (max-width: 700px) {
+  .s-approach2__stage,
+  .s-digital2__stage,
+  .s-glance2__stage,
+  .s-financial2__stage,
+  .s-govcards__content,
+  .s-fincap__stage,
+  .s-community__stage,
+  .s-leadership5,
+  .s-nonfinancial9 {
+    box-sizing: border-box;
+    max-height: 100dvh;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .s-community__story-viewport {
+    overflow: visible !important;
+  }
+}
+
 /* Set by the blocking script in layout.tsx when this browsing session has
    already seen the intro. The overlay is still rendered (so hydration
    matches the server) and dropped on mount; this keeps it invisible in
@@ -180,5 +204,13 @@ html.intro-seen .lab-intro {
     font-size: clamp(26px, 8.5vw, 36px) !important;
     line-height: 1.08 !important;
     overflow-wrap: anywhere;
+  }
+
+  .s-digital2__title {
+    transform: translateY(30px);
+  }
+
+  .s-fincap__intro {
+    top: var(--mobile-topbar-clear) !important;
   }
 }

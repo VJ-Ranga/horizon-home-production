@@ -167,7 +167,7 @@ export default function GovernanceCardsLayer() {
     if (!element) return;
 
     const scrollUnlocked = frame >= GOVERNANCE_CARDS.settledFrame &&
-      frame <= (GOVERNANCE_CARDS.exit?.frames[0] ?? GOVERNANCE_CARDS.settledFrame);
+      frame <= (GOVERNANCE_CARDS.exit?.frames[1] ?? GOVERNANCE_CARDS.settledFrame);
     element.classList.toggle("is-scrollable", scrollUnlocked);
     if (!scrollUnlocked) element.scrollTop = 0;
   });
@@ -184,7 +184,6 @@ export default function GovernanceCardsLayer() {
       ref={ref}
       data-section={GOVERNANCE_CARDS.id}
       data-initial-hidden="true"
-      data-lenis-prevent
       aria-hidden="true"
     >
       <div className="s-govcards__content">
