@@ -136,30 +136,6 @@
   }
 }
 
-/* AnimationLab mobile overflow handoff. These are inner scroll surfaces;
-   the layer roots keep their existing absolute stack behavior. */
-@media (max-width: 700px) {
-  .s-approach2__stage,
-  .s-digital2__stage,
-  .s-glance2__stage,
-  .s-financial2__stage,
-  .s-govcards__content,
-  .s-fincap__stage,
-  .s-community__stage,
-  .s-leadership5,
-  .s-nonfinancial9 {
-    box-sizing: border-box;
-    max-height: 100dvh;
-    overflow-y: auto !important;
-    overscroll-behavior-y: contain !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .s-community__story-viewport {
-    overflow: visible !important;
-  }
-}
-
 /* Set by the blocking script in layout.tsx when this browsing session has
    already seen the intro. The overlay is still rendered (so hydration
    matches the server) and dropped on mount; this keeps it invisible in
@@ -168,49 +144,37 @@ html.intro-seen .lab-intro {
   display: none !important;
 }
 
-/* AnimationLab phone clearance. Keep this override in globals.css so the
-   active lab.css worktree remains untouched; every declaration is scoped to
-   the phone breakpoint and uses !important only to win against section-local
-   mobile blocks loaded by the lab component. */
+/* ---- AnimationLab mobile: section scrolling + sticky-bar clearance ----
+   Kept in globals.css (not lab.css) so it doesn't collide with the lab.css
+   worktree another editor holds. Scoped to the phone breakpoint. Only the
+   flow-layout sections that can grow past the viewport are listed — the
+   abs-positioned card sections (digital2, fincap) and the JS-scroll-gated
+   ones (leadership5, nonfinancial9, govcards' frame gate) are left to
+   their own layout. `padding-top` needs !important to beat each section's
+   own <=620px padding shorthand in lab.css; nothing else does. */
 :root {
   --mobile-topbar-clear: calc(60px + env(safe-area-inset-top, 0px) + 30px);
 }
 
 @media (max-width: 700px) {
   .s-approach2__stage,
-  .s-digital2__stage,
   .s-glance2__stage,
   .s-financial2__stage,
-  .s-govcards__content,
-  .s-leadership5__head,
-  .s-fincap__stage,
-  .s-nonfinancial9__intro,
-  .s-strategy__panel,
-  .s-community__stage {
+  .s-govcards__content {
+    justify-content: flex-start; /* centring clips content taller than the screen */
+    max-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
     padding-top: var(--mobile-topbar-clear) !important;
+    padding-bottom: 48px;
   }
 
   .s-approach2__title,
-  .s-digital2__title,
   .s-glance2__title,
   .s-financial2__title,
-  .s-govcards__title,
-  .s-leadership5__head h1,
-  .s-fincap__title,
-  .s-nonfinancial9__intro h1,
-  .s-strategy__title,
-  .s-community__heading {
-    max-width: 100% !important;
-    font-size: clamp(26px, 8.5vw, 36px) !important;
-    line-height: 1.08 !important;
+  .s-govcards__title {
+    max-width: 100%;
     overflow-wrap: anywhere;
-  }
-
-  .s-digital2__title {
-    transform: translateY(30px);
-  }
-
-  .s-fincap__intro {
-    top: var(--mobile-topbar-clear) !important;
   }
 }
