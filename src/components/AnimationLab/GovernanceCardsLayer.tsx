@@ -169,11 +169,24 @@ export default function GovernanceCardsLayer() {
     const scrollUnlocked = frame >= GOVERNANCE_CARDS.settledFrame &&
       frame <= (GOVERNANCE_CARDS.exit?.frames[1] ?? GOVERNANCE_CARDS.settledFrame);
     element.classList.toggle("is-scrollable", scrollUnlocked);
-    if (!scrollUnlocked) element.scrollTop = 0;
+    // Only fence Lenis off while the section is actually holding and its
+    // content is scrollable — otherwise the enter/exit swipe has nowhere
+    // to go (Lenis ignored, root not yet overflow:auto) and the page
+    // stalls on this section. `contain` on the child lets a swipe past
+    // the inner top/bottom edge fall through to advance the timeline.
+    if (scrollUnlocked && element.scrollHeight > element.clientHeight) {
+      element.setAttribute("data-lenis-prevent", "");
+    } else {
+      element.removeAttribute("data-lenis-prevent");
+      element.scrollTop = 0;
+    }
   });
 
   useEffect(() => () => {
-    ref.current?.classList.remove("is-scrollable");
+    const el = ref.current;
+    if (!el) return;
+    el.classList.remove("is-scrollable");
+    el.removeAttribute("data-lenis-prevent");
   }, [ref]);
 
   let titleWordIndex = -1;
@@ -184,7 +197,6 @@ export default function GovernanceCardsLayer() {
       ref={ref}
       data-section={GOVERNANCE_CARDS.id}
       data-initial-hidden="true"
-      data-lenis-prevent
       aria-hidden="true"
     >
       <div className="s-govcards__content">

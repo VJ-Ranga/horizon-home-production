@@ -131,21 +131,34 @@ export default function LeadershipLayer() {
 
     if (!isCompact) {
       element.classList.remove("is-scrollable");
+      element.removeAttribute("data-lenis-prevent");
       return;
     }
 
     const scrollUnlocked = frame >= LEADERSHIP.settledFrame &&
       frame <= (LEADERSHIP.exit?.frames[1] ?? LEADERSHIP.settledFrame);
     element.classList.toggle("is-scrollable", scrollUnlocked);
-    if (!scrollUnlocked) element.scrollTop = 0;
+    // Fence Lenis off only while the section is holding and its content
+    // actually overflows — otherwise the enter/exit swipe stalls here
+    // (Lenis ignored, root not yet scrollable). `contain` on the child
+    // lets a swipe past the inner edge fall through to the timeline.
+    if (scrollUnlocked && element.scrollHeight > element.clientHeight) {
+      element.setAttribute("data-lenis-prevent", "");
+    } else {
+      element.removeAttribute("data-lenis-prevent");
+      element.scrollTop = 0;
+    }
   });
 
   useEffect(() => () => {
-    ref.current?.classList.remove("is-scrollable");
+    const el = ref.current;
+    if (!el) return;
+    el.classList.remove("is-scrollable");
+    el.removeAttribute("data-lenis-prevent");
   }, [ref]);
 
   return (
-    <div className="lab-layer s-leadership5" ref={ref} data-section={LEADERSHIP.id} data-initial-hidden="true" data-lenis-prevent={isCompact ? "" : undefined} aria-labelledby="leadership5-title">
+    <div className="lab-layer s-leadership5" ref={ref} data-section={LEADERSHIP.id} data-initial-hidden="true" aria-labelledby="leadership5-title">
       <header className="s-leadership5__head">
         <h1 id="leadership5-title">Leadership at Haycarb</h1>
         <p className="s-leadership5__intro">Our leadership team steers Haycarb with vision, integrity, and a long-term commitment to innovation<br />and sustainability. Shaped by experience and guided by purpose, they drive strategic<br />growth, empower people, and ensure we deliver value to stakeholders.</p>
