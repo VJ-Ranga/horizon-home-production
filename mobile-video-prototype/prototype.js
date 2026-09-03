@@ -1,10 +1,12 @@
 (() => {
   const sections = [...document.querySelectorAll(".media-section")];
-  const frameCount = 1125;
-  const durationSeconds = 247.233333;
+  // The full mobile video contains the intro before Set-C. In the real
+  // timeline, Set-C frame 1 hands off at 22.700s and runs at 5.1922fps.
+  const handoffVideoSeconds = 22.7;
+  const setCFps = 5.1922;
   let activeIndex = -1;
   let replayToken = 0;
-  const frameToTime = (frame) => (frame / frameCount) * durationSeconds;
+  const frameToTime = (frame) => handoffVideoSeconds + (frame - 1) / setCFps;
 
   function playSectionMotion(index) {
     const section = sections[index];
