@@ -184,6 +184,7 @@ export default function GovernanceCardsLayer() {
       ref={ref}
       data-section={GOVERNANCE_CARDS.id}
       data-initial-hidden="true"
+      data-lenis-prevent
       aria-hidden="true"
     >
       <div className="s-govcards__content">

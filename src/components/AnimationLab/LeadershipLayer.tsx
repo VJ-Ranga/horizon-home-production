@@ -145,7 +145,7 @@ export default function LeadershipLayer() {
   }, [ref]);
 
   return (
-    <div className="lab-layer s-leadership5" ref={ref} data-section={LEADERSHIP.id} data-initial-hidden="true" aria-labelledby="leadership5-title">
+    <div className="lab-layer s-leadership5" ref={ref} data-section={LEADERSHIP.id} data-initial-hidden="true" data-lenis-prevent={isCompact ? "" : undefined} aria-labelledby="leadership5-title">
       <header className="s-leadership5__head">
         <h1 id="leadership5-title">Leadership at Haycarb</h1>
         <p className="s-leadership5__intro">Our leadership team steers Haycarb with vision, integrity, and a long-term commitment to innovation<br />and sustainability. Shaped by experience and guided by purpose, they drive strategic<br />growth, empower people, and ensure we deliver value to stakeholders.</p>
