@@ -40,6 +40,7 @@ import {
   backgroundFrameForFrame,
   backgroundTransitionAtFrame,
 } from "./timeline";
+import { FRAME_DIR_MOBILE, isPhoneViewport } from "./frameDirMobile";
 
 /* Haycarb at a Glance is the one section built light-themed — dark
    ink on light stat tiles, no background of its own (VJ, 2026-08-21,
@@ -72,7 +73,9 @@ function resolveFrameDir(
   if (densify === 4) return FRAME_DIR_4X;
   if (densify === 2) return hq ? FRAME_DIR_2X_HQ : FRAME_DIR_2X;
   if (fourK) return FRAME_DIR_4K;
-  return hq ? FRAME_DIR_HQ : FRAME_DIR_DEV;
+  if (hq) return FRAME_DIR_HQ;
+  // Phones read the small set — same 1125 files, ~7x less bitmap.
+  return isPhoneViewport() ? FRAME_DIR_MOBILE : FRAME_DIR_DEV;
 }
 
 const LOAD_CONCURRENCY = 6;

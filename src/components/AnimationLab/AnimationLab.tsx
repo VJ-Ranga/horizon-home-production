@@ -102,11 +102,15 @@ import {
   type SectionTimeline,
 } from "./timeline";
 import "./lab.css";
+import { FRAME_DIR_MOBILE, isPhoneViewport } from "./frameDirMobile";
 
 /** Which frame folder a given density/quality combination reads.
     densify 1 is the plain 840 sets and is byte-for-byte the original
     behaviour; every other value is a 1080p-only dense set except 2x,
-    which also has an HQ variant. */
+    which also has an HQ variant. Phones read a 720px re-encode of the
+    plain set so the entry-frame preload below (frames 1-50) doesn't
+    spike memory before the page is even scrollable — see
+    frameDirMobile.ts. */
 function resolveFrameDir(
   densify: number,
   hq: boolean,
@@ -115,7 +119,8 @@ function resolveFrameDir(
   if (densify === 4) return FRAME_DIR_4X;
   if (densify === 2) return hq ? FRAME_DIR_2X_HQ : FRAME_DIR_2X;
   if (fourK) return FRAME_DIR_4K;
-  return hq ? FRAME_DIR_HQ : FRAME_DIR_DEV;
+  if (hq) return FRAME_DIR_HQ;
+  return isPhoneViewport() ? FRAME_DIR_MOBILE : FRAME_DIR_DEV;
 }
 
 /** HeroLogo.tsx no longer docks to a sticky spot — it fades out with
