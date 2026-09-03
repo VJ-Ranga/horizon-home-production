@@ -2,13 +2,13 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: auto; }
 body { margin: 0; background: #082f3d; }
-main { position: relative; overflow: clip; }
-#section-motion { position: fixed; z-index: 2; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; transition: opacity .22s ease; }
-#section-motion.is-playing { opacity: 1; }
+main { position: relative; overflow: clip; scroll-snap-type: y proximity; }
 .prototype-label { position: fixed; z-index: 4; top: max(12px, env(safe-area-inset-top)); left: 50%; margin: 0; padding: 7px 10px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; background: rgba(0,30,40,.55); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; transform: translateX(-50%); backdrop-filter: blur(8px); }
-.video-section { position: relative; z-index: 1; display: flex; align-items: flex-start; min-height: 100svh; padding: calc(90px + env(safe-area-inset-top)) 7vw 70px; background: linear-gradient(180deg, rgba(6,41,53,.18), rgba(5,43,55,.58)), var(--poster) center / cover; isolation: isolate; }
-.video-section::after { position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, rgba(4,34,43,.12), rgba(4,34,43,.68)); content: ""; }
-.section-content { width: min(100%, 520px); margin: 0 auto; text-align: center; }
+.video-section { position: relative; z-index: 1; display: flex; align-items: flex-start; min-height: 100svh; padding: calc(90px + env(safe-area-inset-top)) 7vw 70px; background: linear-gradient(180deg, rgba(6,41,53,.18), rgba(5,43,55,.58)), var(--poster) center / cover; isolation: isolate; scroll-snap-align: start; }
+.section-motion { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; transition: opacity .22s ease; }
+.video-section.is-playing .section-motion { opacity: 1; }
+.video-section::after { position: absolute; z-index: 1; inset: 0; background: linear-gradient(180deg, rgba(4,34,43,.12), rgba(4,34,43,.68)); content: ""; }
+.section-content { position: relative; z-index: 2; width: min(100%, 520px); margin: 0 auto; text-align: center; }
 .eyebrow { margin: 0 0 12px; color: #b8e6ec; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
 h1 { margin: 0 auto 16px; font-family: Georgia, serif; font-size: clamp(30px, 8vw, 48px); line-height: 1.08; }
 .section-content > p:not(.eyebrow) { margin: 0 auto; max-width: 38em; color: rgba(255,255,255,.9); font-size: 16px; line-height: 1.5; }

@@ -1,5 +1,4 @@
 (() => {
-  const video = document.querySelector("#section-motion");
   const sections = [...document.querySelectorAll(".video-section")];
   const frameCount = 1125;
   const durationSeconds = 247.233333;
@@ -9,18 +8,19 @@
 
   function playSectionMotion(index) {
     const section = sections[index];
+    const video = section.querySelector(".section-motion");
     const start = frameToTime(Number(section.dataset.startFrame));
     const end = frameToTime(Number(section.dataset.endFrame));
     const token = ++replayToken;
     video.currentTime = start;
-    video.classList.add("is-playing");
+    section.classList.add("is-playing");
     void video.play().catch(() => {});
     const onTimeUpdate = () => {
       if (token !== replayToken) return;
       if (video.currentTime >= end) {
         video.pause();
         video.currentTime = end;
-        video.classList.remove("is-playing");
+        section.classList.remove("is-playing");
         video.removeEventListener("timeupdate", onTimeUpdate);
       }
     };
