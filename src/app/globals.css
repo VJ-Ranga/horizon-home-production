@@ -179,7 +179,7 @@ html.intro-seen .lab-intro {
      heading stays in view instead of scrolling away; centre the lone
      5th card; keep the last row clear of the AI fab. */
   .lab .s-govcards__content {
-    padding-top: calc(60px + env(safe-area-inset-top, 0px) + 8px) !important;
+    padding-top: var(--mobile-topbar-clear) !important;
     padding-bottom: 92px;
   }
   .lab .s-govcards__title {
@@ -220,18 +220,58 @@ html.intro-seen .lab-intro {
   .lab .s-leadership5__head {
     padding-top: var(--mobile-topbar-clear);
   }
+  /* Community: minimal top gap (just clear the bar), smaller heading,
+     and taller cards so the overlaid story text reads easily. */
   .lab .s-community__head {
+    padding-top: calc(60px + env(safe-area-inset-top, 0px));
+  }
+  .lab .s-community__heading {
+    font-size: clamp(23px, 6.8vw, 30px);
+  }
+  .lab .s-community__intro {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+  .lab .s-community__stories {
+    gap: 14px;
+  }
+  .lab .s-community__card {
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 1 / 1.04;
+  }
+  .lab .s-nonfinancial9__intro {
     padding-top: var(--mobile-topbar-clear);
   }
+  /* Strategy heading is clamp(40px, 6svh, 70px) in lab.css — far too big
+     on a phone (4 lines, ~40% of the screen) with a 100px top margin.
+     !important because lab.css's rule has the same specificity and loads
+     after this file. */
+  .lab .s-strategy__title {
+    margin-top: var(--mobile-topbar-clear) !important;
+    font-size: clamp(25px, 7.6vw, 33px) !important;
+    line-height: 1.12 !important;
+  }
+  .lab .s-strategy__section-title {
+    font-size: clamp(21px, 6vw, 28px) !important;
+  }
   .lab .s-fincap__intro {
-    /* Just clear the bar — going the full bar+30 pushed the lede down
-       onto the active card. */
-    top: calc(60px + env(safe-area-inset-top, 0px));
+    top: var(--mobile-topbar-clear);
   }
   /* Tighter intro copy so it ends above the active card rather than
-     overrunning its top edge. */
+     overrunning its top edge (the card is pushed down to match in
+     FinancialCapitalLayer.tsx's activeC). */
   .lab .s-fincap__lede {
     margin-top: 6px;
     line-height: 1.32;
+  }
+  /* "Explore More" — a compact text link on phones, not a big control. */
+  .lab .s-fincap__cta {
+    margin: 8px clamp(16px, 5vw, 22px) 6px;
+    font-size: clamp(12.5px, 3.4vw, 14px);
+    gap: 6px;
+  }
+  .lab .s-fincap__cta::after {
+    font-size: 0.9em;
   }
 }
