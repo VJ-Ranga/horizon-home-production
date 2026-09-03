@@ -204,6 +204,14 @@ html.intro-seen .lab-intro {
     padding-top: var(--mobile-topbar-clear);
   }
   .lab .s-fincap__intro {
-    top: var(--mobile-topbar-clear);
+    /* Just clear the bar — going the full bar+30 pushed the lede down
+       onto the active card. */
+    top: calc(60px + env(safe-area-inset-top, 0px));
+  }
+  /* Tighter intro copy so it ends above the active card rather than
+     overrunning its top edge. */
+  .lab .s-fincap__lede {
+    margin-top: 6px;
+    line-height: 1.32;
   }
 }

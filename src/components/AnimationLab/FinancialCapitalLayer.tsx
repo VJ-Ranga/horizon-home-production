@@ -270,14 +270,14 @@ export default function FinancialCapitalLayer() {
       const w = window.innerWidth;
       // Mobile: lift the active card up toward the intro copy above it
       // (removes the big dead band between the two).
-      const activeC = w <= 700 ? 0.44 : ACTIVE_C;
+      const activeC = w <= 700 ? 0.49 : ACTIVE_C;
       // Desktop keeps the original spacing (0.489V - cardHeight, which
       // reduces to PREVIEW_C exactly). Below 1100px the natural gap is a
       // third of the screen, so cap it: ~52px on phones (VJ wants a
       // little breathing room), a tight ~20px on tablets. Math.max(…, 0)
       // keeps it from ever letting the parked card overlap the active one.
       const naturalGap = V * (PREVIEW_C - ACTIVE_C) - refH;
-      const gapCap = w <= 700 ? 52 : 20;
+      const gapCap = w <= 700 ? 72 : 20;
       const previewC =
         w <= 1100
           ? activeC + (refH + Math.max(Math.min(gapCap, naturalGap), 0)) / V
