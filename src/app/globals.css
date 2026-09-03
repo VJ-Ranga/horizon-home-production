@@ -158,22 +158,29 @@ html.intro-seen .lab-intro {
 
 @media (max-width: 700px) {
   .s-approach2__stage,
+  .s-digital2__stage,
   .s-glance2__stage,
   .s-financial2__stage,
-  .s-govcards__content {
-    justify-content: flex-start; /* centring clips content taller than the screen */
+  .s-govcards__content,
+  .s-community__stage {
+    /* `safe center` keeps content vertically centred when it fits and
+       falls back to top-aligned the moment it doesn't — so a tall
+       section scrolls from its first line instead of clipping it. */
+    justify-content: safe center;
     max-height: 100dvh;
     overflow-y: auto;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     padding-top: var(--mobile-topbar-clear) !important;
-    padding-bottom: 48px;
+    padding-bottom: 40px;
   }
 
   .s-approach2__title,
+  .s-digital2__title,
   .s-glance2__title,
   .s-financial2__title,
-  .s-govcards__title {
+  .s-govcards__title,
+  .s-community__heading {
     max-width: 100%;
     overflow-wrap: anywhere;
   }
