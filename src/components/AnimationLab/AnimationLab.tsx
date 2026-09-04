@@ -501,16 +501,6 @@ export default function AnimationLab({
     if (phase !== "scroll") return;
     if (skipEntry) return;
     if (loopTransitionRef.current) return;
-    // No end-of-page loop on touch / phones / narrow viewports — it
-    // never triggered reliably there (no wheel events, bottom trigger
-    // fragile with mobile URL-bar resize). The page just ends. Wide
-    // mouse-driven desktop keeps the wheel loop unchanged.
-    const noLoop =
-      window.matchMedia("(pointer: coarse)").matches ||
-      "ontouchstart" in window ||
-      (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0) ||
-      window.innerWidth <= 900;
-    if (noLoop) return;
 
     let lastScrollY = window.scrollY;
     let recentering = false;
