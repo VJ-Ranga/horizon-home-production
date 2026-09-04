@@ -125,58 +125,57 @@ export default function GlanceLayer() {
   }, []);
 
   // The stage scrolls internally on <=1100px. `data-lenis-prevent` stops
-  // Lenis scrubbing the timeline while you read it — but left on
-  // unconditionally it also swallows the touch that should hand back to
-  // the page once you reach the bottom, or when the content fits and
-  // there is nothing to scroll (the "sometimes I can't move it" bug on
-  // real phones). Gate it: prevent only while the reader is actually
-  // overflowing AND not yet scrolled to its bottom edge. At the bottom,
-  // release so the next swipe advances to the next section. Desktop
-  // keeps the attribute exactly as before.
+  // Lenis scrubbing the timeline while you read it — but hardcoded on it
+  // also swallows the gesture that should hand back to the page at the
+  // reader's edges (the "can't scroll up after coming back" / "sometimes
+  // won't move" bug on real phones). Instead decide per gesture: prevent
+  // ONLY when the reader can actually consume the scroll in the
+  // direction the finger is going. At either edge, in the direction that
+  // would leave the reader, let it through so the timeline moves.
+  // Desktop (>1100) keeps the attribute always on, exactly as before.
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
     const compact = window.matchMedia("(max-width: 1100px)");
 
-    const sync = () => {
+    const readerConsumes = (dir: number) => {
+      const max = stage.scrollHeight - stage.clientHeight;
+      if (max <= 4) return false;
+      if (dir > 0) return stage.scrollTop < max - 1; // scrolling down
+      if (dir < 0) return stage.scrollTop > 1; // scrolling up
+      return false;
+    };
+    const apply = (dir: number) => {
       if (!compact.matches) {
         stage.setAttribute("data-lenis-prevent", "");
         return;
       }
-      const overflow = stage.scrollHeight - stage.clientHeight;
-      const atBottom = stage.scrollTop >= overflow - 2;
-      if (overflow > 4 && !atBottom) {
-        stage.setAttribute("data-lenis-prevent", "");
-      } else {
-        stage.removeAttribute("data-lenis-prevent");
-      }
+      if (readerConsumes(dir)) stage.setAttribute("data-lenis-prevent", "");
+      else stage.removeAttribute("data-lenis-prevent");
     };
 
-    sync();
-    stage.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("resize", sync);
-    compact.addEventListener("change", sync);
+    let touchY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0]?.clientY ?? 0;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY ?? touchY;
+      apply(touchY - y); // finger up = positive = scrolling content down
+      touchY = y;
+    };
+    const onWheel = (e: WheelEvent) => apply(e.deltaY);
+
+    apply(0);
+    stage.addEventListener("touchstart", onTouchStart, { passive: true });
+    stage.addEventListener("touchmove", onTouchMove, { passive: true });
+    stage.addEventListener("wheel", onWheel, { passive: true });
+    compact.addEventListener("change", () => apply(0));
     return () => {
-      stage.removeEventListener("scroll", sync);
-      window.removeEventListener("resize", sync);
-      compact.removeEventListener("change", sync);
+      stage.removeEventListener("touchstart", onTouchStart);
+      stage.removeEventListener("touchmove", onTouchMove);
+      stage.removeEventListener("wheel", onWheel);
     };
   }, []);
-
-  // Content height can change after fonts/images settle or when the
-  // section re-enters — re-evaluate the prevent gate each frame too.
-  useFrameEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    if (!window.matchMedia("(max-width: 1100px)").matches) return;
-    const overflow = stage.scrollHeight - stage.clientHeight;
-    const atBottom = stage.scrollTop >= overflow - 2;
-    if (overflow > 4 && !atBottom) {
-      stage.setAttribute("data-lenis-prevent", "");
-    } else {
-      stage.removeAttribute("data-lenis-prevent");
-    }
-  });
 
   useFrameEffect((frame) => {
     currentFrameRef.current = frame;
