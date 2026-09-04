@@ -557,11 +557,45 @@ export default function AnimationLab({
       lastScrollY = currentScrollY;
     };
 
+    /* Touch equivalent of onWheel. Touch devices never fire `wheel`, so
+       at the end of the page — where scrollY is pinned at max and no
+       more `scroll` events come — the one-way loop could never start on
+       a phone; you'd just scroll back up through everything. A continued
+       upward swipe there (= scroll-down intent, same as deltaY > 0)
+       kicks off the same cover -> reveal loop. Coarse-pointer only, so
+       the desktop mouse path is untouched. */
+    let lastTouchY: number | null = null;
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    const onTouchStart = (event: TouchEvent) => {
+      lastTouchY = event.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      if (loopTransitionRef.current || recentering) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const y = event.touches[0]?.clientY ?? null;
+      if (y === null || lastTouchY === null) {
+        lastTouchY = y;
+        return;
+      }
+      const deltaY = lastTouchY - y; // >0 = finger moving up = scrolling down
+      lastTouchY = y;
+      if (deltaY <= 0) return;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
+      if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: true });
+    if (isTouch) {
+      window.addEventListener("touchstart", onTouchStart, { passive: true });
+      window.addEventListener("touchmove", onTouchMove, { passive: true });
+    }
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, [phase, skipEntry]);
 
