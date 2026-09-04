@@ -5176,14 +5176,27 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
 }
 
 @media (max-width: 640px) {
-  .s-leadership5__head { padding-top: 52px; }
-  .s-leadership5__people { gap: 112px; margin-top: 122px; }
-  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md { padding-top: 196px; border-radius: 0; background: transparent; backdrop-filter: none; isolation: isolate; }
-  .s-leadership5__person::before { position: absolute; z-index: 0; top: 166px; right: 0; bottom: 0; left: 0; border-radius: 16px; background: rgba(21,106,109,.9); box-shadow: 0 10px 24px rgba(0, 38, 47, .16); content: ""; }
+  .s-leadership5__head { padding-top: 44px; }
+  .s-leadership5__people { gap: 72px; margin-top: 84px; }
+  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md { padding-top: 168px; border-radius: 0; background: transparent; backdrop-filter: none; isolation: isolate; }
+  .s-leadership5__person::before { position: absolute; z-index: 0; top: 140px; right: 0; bottom: 0; left: 0; border-radius: 16px; background: rgba(21,106,109,.9); box-shadow: 0 10px 24px rgba(0, 38, 47, .16); content: ""; }
   .s-leadership5__person > :not(.s-leadership5__portrait-mobile) { position: relative; z-index: 1; }
-  .s-leadership5__portrait-mobile { top: -109px; width: 220px; transform: none; }
+  .s-leadership5__portrait-mobile { top: -92px; width: 196px; transform: none; }
   .s-leadership5__portrait-mobile--chairman { right: auto; left: 18px; }
   .s-leadership5__portrait-mobile--md { right: 18px; left: auto; }
+}
+
+/* Phones only: trim the vertical air so the whole content block is
+   short enough that its scroll-through glide (LeadershipLayer.tsx)
+   runs ~1:1 within the pinned budget and still leaves a dwell at the
+   footer before the section fades. Spacing only. */
+@media (max-width: 700px) {
+  .s-leadership5__intro { margin-top: 12px; }
+  .s-leadership5__statement,
+  .s-leadership5__person--chairman .s-leadership5__statement { font-size: 14px; line-height: 20px; margin-top: 12px; }
+  .s-leadership5__name { font-size: 24px; }
+  .s-leadership5__actions { margin-top: 26px; padding-bottom: 28px; gap: 12px; }
+  .s-leadership5__pill { height: 46px; }
 }
 
 /* Final Strategy cascade from 15 Horizon of Progress: this must remain after

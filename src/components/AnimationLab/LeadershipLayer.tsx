@@ -149,6 +149,18 @@ export default function LeadershipLayer() {
       pxPerFrame;
     const EASE = 0.16;
     const BOTTOM_PAD = 40;
+    // Dwell zones carved out of the pinned budget. The first START_HOLD_PX
+    // of scroll past the settle just holds the content still at its top;
+    // the last END_HOLD_PX holds it still, fully glided, at the footer.
+    // Without them the glide consumes the whole budget and is still
+    // finishing as the section starts to fade — the footer never gets a
+    // still beat and a small flick slips the whole section away.
+    // END_HOLD_PX must exceed the ~280px exit-fade so the glide is done
+    // before the fade begins. The glide itself stays 1:1 with scroll;
+    // it only compresses if the content is taller than the room left.
+    const START_HOLD_PX = 70;
+    const END_HOLD_PX = 350;
+    const glideRoomPx = Math.max(budgetPx - START_HOLD_PX - END_HOLD_PX, 1);
 
     const tick = () => {
       rafId = requestAnimationFrame(tick);
@@ -158,17 +170,12 @@ export default function LeadershipLayer() {
         body.scrollHeight - window.innerHeight + BOTTOM_PAD,
         0,
       );
-      // Track scroll 1:1 where the content fits the budget; never
-      // consume more than the pinned budget, so the glide always
-      // finishes before the section exits.
-      const sweep = overflow > 0 ? Math.min(budgetPx, overflow) : budgetPx;
-      const target =
-        sweep > 0
-          ? Math.min(Math.max((window.scrollY - startPx) / sweep, 0), 1)
-          : 0;
-      current += (target - current) * EASE;
-      if (Math.abs(target - current) < 0.0004) current = target;
-      body.style.transform = `translate3d(0, ${(-current * overflow).toFixed(2)}px, 0)`;
+      const scale = overflow > glideRoomPx ? glideRoomPx / overflow : 1;
+      const raw = (window.scrollY - startPx - START_HOLD_PX) * scale;
+      const targetPx = Math.min(Math.max(raw, 0), overflow);
+      current += (targetPx - current) * EASE;
+      if (Math.abs(targetPx - current) < 0.4) current = targetPx;
+      body.style.transform = `translate3d(0, ${(-current).toFixed(2)}px, 0)`;
     };
 
     rafId = requestAnimationFrame(tick);
