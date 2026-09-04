@@ -130,9 +130,14 @@ export default function StrategyLayer() {
     // Phones: the panel is much taller than the pinned budget, so a glide
     // that only uses the 60-frame virtual span races the finger (~3.7x).
     // Design is fixed, so widen the runway instead — begin the glide at
-    // the settle (adding the pre-pin lead) rather than at the pin. The
-    // exit span is still held back so the glide finishes before the fade.
-    // Desktop keeps the original pin-to-virtual-span mapping exactly.
+    // the settle (adding the pre-pin lead) rather than at the pin, and
+    // stretch the sweep by MOBILE_SLOWDOWN so the panel tracks the finger
+    // roughly 1:1 instead of racing. The section's own scrollThrough
+    // slowdown (2) means its real-scroll footprint is wide enough to
+    // absorb this; the glide still finishes before the layer fades, with
+    // the remainder as an end dwell. Desktop keeps the original
+    // pin-to-virtual-span mapping exactly.
+    const MOBILE_SLOWDOWN = 2;
     const mobile =
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 700px)").matches;
@@ -141,7 +146,7 @@ export default function StrategyLayer() {
       pxPerFrame,
     );
     const sweepPx = mobile
-      ? STRATEGY.scrollThrough!.scrollPx - exitPx
+      ? (STRATEGY.scrollThrough!.scrollPx - exitPx) * MOBILE_SLOWDOWN
       : STRATEGY.scrollThrough!.scrollPx - leadPx - exitPx;
     const reduceMotion =
       typeof window !== "undefined" &&
