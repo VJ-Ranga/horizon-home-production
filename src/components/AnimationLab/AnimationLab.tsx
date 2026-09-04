@@ -504,6 +504,15 @@ export default function AnimationLab({
 
     let lastScrollY = window.scrollY;
     let recentering = false;
+    // Coarse pointer -> phone/tablet: no wheel events, and at the very
+    // bottom no scroll events either. Track the last time the reader was
+    // moving downward so a flick that ends with a 1px momentum bounce
+    // still counts as "wanted to keep going".
+    const isTouch =
+      window.matchMedia("(pointer: coarse)").matches ||
+      "ontouchstart" in window ||
+      (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0);
+    let lastDownAt = 0;
 
     const startLoopTransition = () => {
       if (loopTransitionRef.current) return;
@@ -534,6 +543,8 @@ export default function AnimationLab({
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
       const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
 
+      if (currentScrollY > lastScrollY) lastDownAt = performance.now();
+
       const targetFrame = loopTargetForBoundary(
         direction as -1 | 1,
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -543,6 +554,21 @@ export default function AnimationLab({
         : null;
 
       if (direction > 0 && scrollable > 0 && currentScrollY >= coverY) {
+        startLoopTransition();
+        return;
+      }
+
+      // Touch: coverY can be past the reachable bottom (URL-bar resize),
+      // and a flick's last event is often a tiny reverse. Fire when the
+      // reader is basically at the bottom and was moving down within the
+      // last 500ms — this is the mobile stand-in for desktop's wheel.
+      if (
+        isTouch &&
+        scrollable > 0 &&
+        currentScrollY >= scrollable - 8 &&
+        performance.now() - lastDownAt < 500 &&
+        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
         startLoopTransition();
         return;
       }
