@@ -591,10 +591,6 @@ export default function AnimationLab({
        off the same cover -> reveal loop desktop's wheel path uses.
        Touch-only, so the desktop mouse path is untouched. */
     let lastTouchY: number | null = null;
-    const isTouch =
-      window.matchMedia("(pointer: coarse)").matches ||
-      "ontouchstart" in window ||
-      (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0);
 
     const maybeLoopFromTouch = (deltaY: number) => {
       if (deltaY <= 1) return; // finger not moving up enough
