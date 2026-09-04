@@ -2,12 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useFrameEffect } from "./useFrameTimeline";
-import {
-  HERO_SETTLED_FRAME,
-  LAB_LAST_FRAME,
-  LOOP_COVER_START_FRAME,
-  LOOP_REVEAL_START_FRAME,
-} from "./timeline";
+import { HERO_SETTLED_FRAME, LOOP_REVEAL_START_FRAME } from "./timeline";
 
 /** A simple single-pass white shade. It covers the final scene, stays white
     while the incoming frames play underneath, then fades away at frame 50. */
@@ -22,13 +17,20 @@ export default function LoopTransitionOverlay({
     const shade = shadeRef.current;
     if (!shade || stage === null) return;
 
-    const progress = stage === "cover"
-      ? (frame - LOOP_COVER_START_FRAME) /
-        (LAB_LAST_FRAME - LOOP_COVER_START_FRAME)
-      : (frame - LOOP_REVEAL_START_FRAME) /
-        (HERO_SETTLED_FRAME - LOOP_REVEAL_START_FRAME);
+    // "cover" is a full mask while the scroll hard-jumps underneath —
+    // it must be opaque the instant the loop starts, wherever the
+    // trigger fired (on touch that's mid-scroll, not at the last
+    // frame). "shade" fades the mask away as the reveal scroll eases
+    // frame 32 -> 50.
+    if (stage === "cover") {
+      shade.style.opacity = "1";
+      return;
+    }
+    const progress =
+      (frame - LOOP_REVEAL_START_FRAME) /
+      (HERO_SETTLED_FRAME - LOOP_REVEAL_START_FRAME);
     const clamped = Math.min(1, Math.max(0, progress));
-    shade.style.opacity = String(stage === "cover" ? clamped : 1 - clamped);
+    shade.style.opacity = String(1 - clamped);
   });
 
   useEffect(() => {
