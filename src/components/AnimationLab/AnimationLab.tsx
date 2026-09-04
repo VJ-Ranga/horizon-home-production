@@ -501,18 +501,18 @@ export default function AnimationLab({
     if (phase !== "scroll") return;
     if (skipEntry) return;
     if (loopTransitionRef.current) return;
-
-    let lastScrollY = window.scrollY;
-    let recentering = false;
-    // Coarse pointer -> phone/tablet: no wheel events, and at the very
-    // bottom no scroll events either. Track the last time the reader was
-    // moving downward so a flick that ends with a 1px momentum bounce
-    // still counts as "wanted to keep going".
+    // No end-of-page loop on touch / phones — it never triggered
+    // reliably there (no wheel events, and the bottom trigger is
+    // fragile with mobile URL-bar resize). The page just ends. Desktop
+    // (fine pointer) keeps the wheel-driven loop unchanged.
     const isTouch =
       window.matchMedia("(pointer: coarse)").matches ||
       "ontouchstart" in window ||
       (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0);
-    let lastDownAt = 0;
+    if (isTouch) return;
+
+    let lastScrollY = window.scrollY;
+    let recentering = false;
 
     const startLoopTransition = () => {
       if (loopTransitionRef.current) return;
@@ -543,8 +543,6 @@ export default function AnimationLab({
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
       const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
 
-      if (currentScrollY > lastScrollY) lastDownAt = performance.now();
-
       const targetFrame = loopTargetForBoundary(
         direction as -1 | 1,
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -554,21 +552,6 @@ export default function AnimationLab({
         : null;
 
       if (direction > 0 && scrollable > 0 && currentScrollY >= coverY) {
-        startLoopTransition();
-        return;
-      }
-
-      // Touch: coverY can be past the reachable bottom (URL-bar resize),
-      // and a flick's last event is often a tiny reverse. Fire when the
-      // reader is basically at the bottom and was moving down within the
-      // last 500ms — this is the mobile stand-in for desktop's wheel.
-      if (
-        isTouch &&
-        scrollable > 0 &&
-        currentScrollY >= scrollable - 8 &&
-        performance.now() - lastDownAt < 500 &&
-        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ) {
         startLoopTransition();
         return;
       }
@@ -583,92 +566,11 @@ export default function AnimationLab({
       lastScrollY = currentScrollY;
     };
 
-    /* Touch equivalent of onWheel. Touch devices never fire `wheel`, so
-       at the end of the page — where scrollY is pinned at max and no
-       more `scroll` events come — the one-way loop could never start on
-       a phone; you'd just scroll back up through everything. Any upward
-       swipe (= scroll-down intent) while at/near the very bottom kicks
-       off the same cover -> reveal loop desktop's wheel path uses.
-       Touch-only, so the desktop mouse path is untouched. */
-    let lastTouchY: number | null = null;
-
-    const maybeLoopFromTouch = (deltaY: number) => {
-      if (deltaY <= 1) return; // finger not moving up enough
-      if (loopTransitionRef.current || recentering) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const scrollable =
-        document.documentElement.scrollHeight - window.innerHeight;
-      if (scrollable <= 0) return;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
-      // Near the loop-cover frame, OR literally pinned at the bottom
-      // (mobile URL-bar resize can throw the coverY frame math off, so
-      // the raw bottom is the reliable trigger).
-      if (window.scrollY >= coverY || window.scrollY >= scrollable - 6) {
-        startLoopTransition();
-      }
-    };
-
-    const onTouchStart = (event: TouchEvent) => {
-      lastTouchY = event.touches[0]?.clientY ?? null;
-    };
-    const onTouchMove = (event: TouchEvent) => {
-      const y = event.touches[0]?.clientY ?? null;
-      if (y === null) return;
-      if (lastTouchY !== null) maybeLoopFromTouch(lastTouchY - y);
-      lastTouchY = y;
-    };
-    const onTouchEnd = () => {
-      lastTouchY = null;
-    };
-
-    /* Temporary: `?loopdbg=1` shows a live readout of every value the
-       end-of-page loop checks, so a failing trigger on a real phone is
-       visible instead of guessed. No panel, no cost without the param. */
-    const dbg =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).has("loopdbg")
-        ? Object.assign(document.createElement("div"), {
-            style:
-              "position:fixed;left:6px;bottom:6px;z-index:2147483647;max-width:60vw;" +
-              "font:11px/1.35 monospace;color:#0f0;background:rgba(0,0,0,.82);" +
-              "padding:6px 8px;border-radius:6px;white-space:pre;pointer-events:none",
-          })
-        : null;
-    if (dbg) document.body.appendChild(dbg);
-    const paintDbg = () => {
-      if (!dbg) return;
-      const sc = document.documentElement.scrollHeight - window.innerHeight;
-      const cy = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
-      dbg.textContent =
-        `phase=${phase} skipEntry=${skipEntry}\n` +
-        `reduced=${window.matchMedia("(prefers-reduced-motion: reduce)").matches}\n` +
-        `isTouch=${isTouch}\n` +
-        `scrollY=${Math.round(window.scrollY)} scrollable=${Math.round(sc)}\n` +
-        `atBottom(-8)=${window.scrollY >= sc - 8}\n` +
-        `coverY=${Math.round(cy)} scrollY>=coverY=${window.scrollY >= cy}\n` +
-        `sinceDown=${Math.round(performance.now() - lastDownAt)}ms\n` +
-        `loopRef=${loopTransitionRef.current}`;
-    };
-    const dbgRaf = () => {
-      paintDbg();
-      if (dbg) requestAnimationFrame(dbgRaf);
-    };
-    if (dbg) requestAnimationFrame(dbgRaf);
-
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: true });
-    if (isTouch) {
-      window.addEventListener("touchstart", onTouchStart, { passive: true });
-      window.addEventListener("touchmove", onTouchMove, { passive: true });
-      window.addEventListener("touchend", onTouchEnd, { passive: true });
-    }
     return () => {
-      dbg?.remove();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
     };
   }, [phase, skipEntry]);
 
