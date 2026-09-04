@@ -124,11 +124,25 @@ export default function StrategyLayer() {
     const pxPerFrame = readPxPerFrame();
     // The px position where the virtual pinned panel movement begins.
     const pinFrame = STRATEGY.scrollThrough!.pinFrame ?? STRATEGY.settledFrame;
-    const startPx = scrollPxForFrame(pinFrame, pxPerFrame);
-    const sweepPx =
-      STRATEGY.scrollThrough!.scrollPx -
-      (pinFrame - STRATEGY.settledFrame) * pxPerFrame -
+    const leadPx = (pinFrame - STRATEGY.settledFrame) * pxPerFrame;
+    const exitPx =
       (STRATEGY.scrollThrough!.virtualExitFrames ?? 0) * pxPerFrame;
+    // Phones: the panel is much taller than the pinned budget, so a glide
+    // that only uses the 60-frame virtual span races the finger (~3.7x).
+    // Design is fixed, so widen the runway instead — begin the glide at
+    // the settle (adding the pre-pin lead) rather than at the pin. The
+    // exit span is still held back so the glide finishes before the fade.
+    // Desktop keeps the original pin-to-virtual-span mapping exactly.
+    const mobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 700px)").matches;
+    const startPx = scrollPxForFrame(
+      mobile ? STRATEGY.settledFrame : pinFrame,
+      pxPerFrame,
+    );
+    const sweepPx = mobile
+      ? STRATEGY.scrollThrough!.scrollPx - exitPx
+      : STRATEGY.scrollThrough!.scrollPx - leadPx - exitPx;
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
