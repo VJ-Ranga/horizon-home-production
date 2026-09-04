@@ -270,6 +270,15 @@ html.intro-seen .lab-intro {
     max-width: 400px;
     aspect-ratio: 1 / 1.04;
   }
+  /* Phones show the 7 stories as a plain vertical list that the section's
+     scroll budget pans through (CommunityLayer mobileRail branch). Pin the
+     stage to the top and drop the leftover `safe center` inner scroller
+     from the grouped rule above so it doesn't fight the rail translate. */
+  .lab .s-community__stage {
+    justify-content: flex-start;
+    max-height: none;
+    overflow-y: hidden;
+  }
   .lab .s-nonfinancial9__intro {
     padding-top: var(--mobile-topbar-clear);
   }
