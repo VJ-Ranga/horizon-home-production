@@ -115,15 +115,23 @@ export default function CommunityLayer() {
 
     if (mobileRail) {
       // Phones: no card-by-card slider — the 7 cards are a plain vertical
-      // list and the section's scroll budget just pans the whole list up
-      // by one viewport-worth of overflow, linearly.
+      // list the section's scroll budget pans up as one block, same feel
+      // as the Leadership scroll-through. Dwell zones at both ends so the
+      // list holds still as the section arrives and again on the last
+      // card before it leaves — no hard cut in or out.
       const padStart = parseFloat(styles.paddingTop) || 0;
       const padEnd = parseFloat(styles.paddingBottom) || 0;
       const travel = Math.max(
         rail.scrollHeight - padStart - padEnd - viewport.clientHeight,
         0,
       );
-      const t = SWEEP_PX > 0 ? sweepPx / SWEEP_PX : 0;
+      const START_HOLD_PX = 200;
+      const END_HOLD_PX = 460;
+      const glideRoomPx = Math.max(SWEEP_PX - START_HOLD_PX - END_HOLD_PX, 1);
+      const t = Math.min(
+        Math.max((sweepPx - START_HOLD_PX) / glideRoomPx, 0),
+        1,
+      );
       rail.style.transform = `translate3d(0, ${(-t * travel).toFixed(2)}px, 0)`;
       return;
     }
