@@ -15,7 +15,7 @@ export const HORIZON_ROUTES = {
   aiAssistant: "/ai-assistant",
   userProfiles: "/user-profiles",
   crosswordPuzzle: "/crossword-puzzle",
-  dashboard: "/dashboard",
+  dashboard: "/sustainability-dashboard",
   tailorMade: "/tailor-made-for-you",
 } as const;
 

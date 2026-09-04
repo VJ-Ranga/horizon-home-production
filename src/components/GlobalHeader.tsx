@@ -17,7 +17,7 @@ const menuLinks = [
 ];
 
 const darkPages = ['/ai-assistant', '/user-profiles'];
-const whiteBarPages = ['/dashboard', '/tailor-made-for-you', '/crossword-puzzle', '/leaderboard'];
+const whiteBarPages = ['/sustainability-dashboard', '/tailor-made-for-you', '/crossword-puzzle', '/leaderboard'];
 const fixedPages = ['/user-profiles'];
 
 export default function GlobalHeader() {
