@@ -88,8 +88,32 @@ export default function GovernanceCardsLayer() {
   const ref = useSectionLayer(GOVERNANCE_CARDS);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  // Phones: no title/card stagger — force title words and all 5 cards
+  // solid, once (see GlanceLayer's mobileSolid).
+  const mobileSolidRef = useRef(false);
+  useEffect(() => {
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+  }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
+    if (mobileSolidRef.current) {
+      for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
+        const element = wordRefs.current[index];
+        if (element) {
+          element.style.opacity = "1";
+          element.style.transform = "none";
+        }
+      }
+      for (let index = 0; index < CARDS.length; index += 1) {
+        const element = cardRefs.current[index];
+        if (element) {
+          element.style.opacity = "1";
+          element.style.transform = "none";
+        }
+      }
+      return;
+    }
+
     const virtualEnter = virtualEnterProgressAtScrollPx(
       GOVERNANCE_CARDS,
       scrollPx,

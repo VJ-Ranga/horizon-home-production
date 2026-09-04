@@ -53,14 +53,28 @@ export default function MainStartLayer() {
   const ref = useSectionLayer(MAIN_START);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const reducedMotionRef = useRef(false);
+  // Phones: no per-word stagger — force every word solid, once.
+  const mobileSolidRef = useRef(false);
 
   useEffect(() => {
     reducedMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
   useFrameEffect((frame) => {
+    if (mobileSolidRef.current) {
+      for (let index = 0; index < WORD_COUNT; index += 1) {
+        const element = wordRefs.current[index];
+        if (element) {
+          element.style.opacity = "1";
+          element.style.transform = "none";
+        }
+      }
+      return;
+    }
+
     // Reduced motion: leave the CSS fallback (opacity:1, no transform)
     // alone rather than writing inline styles over it every tick.
     if (reducedMotionRef.current) return;

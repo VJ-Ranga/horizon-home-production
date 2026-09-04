@@ -93,14 +93,38 @@ export default function GovernanceLayer() {
   const statRefs = useRef<Array<HTMLElement | null>>([]);
   const counterRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const reducedMotionRef = useRef(false);
+  // Phones: no title/stat stagger and no counter count-up — every word
+  // and card solid, every number at its final value, once.
+  const mobileSolidRef = useRef(false);
 
   useEffect(() => {
     reducedMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
+    if (mobileSolidRef.current) {
+      for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
+        const element = wordRefs.current[index];
+        if (element) {
+          element.style.opacity = "1";
+          element.style.transform = "none";
+        }
+      }
+      for (let index = 0; index < STATS.length; index += 1) {
+        const stat = statRefs.current[index];
+        if (stat) {
+          stat.style.opacity = "1";
+          stat.style.transform = "none";
+        }
+        const counter = counterRefs.current[index];
+        if (counter) counter.textContent = String(STATS[index].target);
+      }
+      return;
+    }
+
     if (reducedMotionRef.current) return;
 
     const virtualEnter = virtualEnterProgressAtScrollPx(

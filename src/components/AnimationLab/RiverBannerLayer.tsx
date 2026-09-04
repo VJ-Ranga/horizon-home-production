@@ -3,7 +3,7 @@
 /* Artboard 8 foreground only. The template background is supplied by the
    shared scrubbed video canvas and is intentionally not rendered here. */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
@@ -57,8 +57,25 @@ const WORD_COUNT = WORD_GROUPS.reduce(
 export default function RiverBannerLayer() {
   const ref = useSectionLayer(RIVER);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  // Phones: skip the per-word opacity/translate stagger; the paragraph
+  // just rides the section's own fade (see GlanceLayer's mobileSolid).
+  const mobileSolidRef = useRef(false);
+  useEffect(() => {
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+  }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
+    if (mobileSolidRef.current) {
+      for (let index = 0; index < WORD_COUNT; index += 1) {
+        const word = wordRefs.current[index];
+        if (word) {
+          word.style.opacity = "1";
+          word.style.transform = "none";
+        }
+      }
+      return;
+    }
+
     const virtualEnter = virtualEnterProgressAtScrollPx(
       RIVER,
       scrollPx,

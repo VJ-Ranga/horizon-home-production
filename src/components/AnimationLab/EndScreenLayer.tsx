@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
@@ -24,8 +24,22 @@ const V_EXIT = END_SCREEN.virtualExitFrames ?? 0;
 export default function EndScreenLayer() {
   const ref = useSectionLayer(END_SCREEN);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  // Phones: skip the per-word opacity stagger; the closing line just
+  // rides the section's own fade (see GlanceLayer's mobileSolid).
+  const mobileSolidRef = useRef(false);
+  useEffect(() => {
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+  }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
+    if (mobileSolidRef.current) {
+      for (let index = 0; index < WORD_COUNT; index += 1) {
+        const word = wordRefs.current[index];
+        if (word) word.style.opacity = "1";
+      }
+      return;
+    }
+
     const pxPerFrame = readPxPerFrame();
     const virtualEnter = virtualEnterProgressAtScrollPx(END_SCREEN, scrollPx, pxPerFrame);
     const virtualExit = virtualExitProgressAtScrollPx(END_SCREEN, scrollPx, pxPerFrame);

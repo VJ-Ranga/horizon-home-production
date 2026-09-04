@@ -79,6 +79,8 @@ export default function ApproachLayer() {
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const groupRefs = useRef<Array<HTMLElement | null>>([]);
   const reducedMotionRef = useRef(false);
+  // Phones: no title/group stagger — force everything solid, once.
+  const mobileSolidRef = useRef(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const videoFrameRef = useRef<HTMLIFrameElement>(null);
   const currentFrameRef = useRef(APPROACH.settledFrame);
@@ -88,6 +90,7 @@ export default function ApproachLayer() {
     reducedMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
@@ -100,6 +103,24 @@ export default function ApproachLayer() {
     ) {
       dialogRef.current.close();
       dialogOpenedAtFrameRef.current = null;
+    }
+
+    if (mobileSolidRef.current) {
+      for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
+        const element = wordRefs.current[index];
+        if (element) {
+          element.style.opacity = "1";
+          element.style.transform = "none";
+        }
+      }
+      for (let index = 0; index < GROUP_COUNT; index += 1) {
+        const element = groupRefs.current[index];
+        if (element) {
+          element.style.opacity = "1";
+          element.style.transform = "none";
+        }
+      }
+      return;
     }
 
     if (reducedMotionRef.current) return;

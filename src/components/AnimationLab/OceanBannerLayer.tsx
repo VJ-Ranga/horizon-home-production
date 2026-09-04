@@ -41,7 +41,7 @@
    parent is already partly visible before the paragraph motion
    starts, giving a two-stage reveal that actually reads as motion. */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
@@ -79,8 +79,22 @@ const WORD_COUNT = WORD_GROUPS.reduce((total, words) => total + words.length, 0)
 export default function OceanBannerLayer() {
   const ref = useSectionLayer(OCEAN);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  // Phones: skip the per-word opacity stagger; the paragraph just rides
+  // the section's own fade (see GlanceLayer's mobileSolid).
+  const mobileSolidRef = useRef(false);
+  useEffect(() => {
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+  }, []);
 
   useFrameEffect((frame, _phase, scrollPx) => {
+    if (mobileSolidRef.current) {
+      for (let index = 0; index < WORD_COUNT; index += 1) {
+        const word = wordRefs.current[index];
+        if (word) word.style.opacity = "1";
+      }
+      return;
+    }
+
     const virtualEnter = virtualEnterProgressAtScrollPx(OCEAN, scrollPx, readPxPerFrame());
     const virtualExit = virtualExitProgressAtScrollPx(OCEAN, scrollPx, readPxPerFrame());
     const entering = virtualEnter !== null || frame < EXIT_START;
