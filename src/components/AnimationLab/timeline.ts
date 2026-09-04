@@ -320,6 +320,32 @@ export function resetTimelineCache(): void {
   desktopTimelineFlag = null;
 }
 
+/** The virtual enter/exit frame counts actually in effect for a section
+    on the current viewport: base values on mobile/tablet, merged with
+    `desktopPacing` on desktop (>1100px). A layer that animates its own
+    content THROUGH a pinned virtual span (word stagger, card reveal)
+    must read these, not the raw `section.virtualEnterFrames` fields, or
+    a desktop-only override adds pinned scroll with no animation on it.
+    Mirrors the merge `stops()` does for the scroll<->frame map. */
+export function effectiveVirtualEnterFrames(section: SectionTimeline): number {
+  return (
+    (isDesktopTimeline()
+      ? section.desktopPacing?.virtualEnterFrames
+      : undefined) ??
+    section.virtualEnterFrames ??
+    0
+  );
+}
+export function effectiveVirtualExitFrames(section: SectionTimeline): number {
+  return (
+    (isDesktopTimeline()
+      ? section.desktopPacing?.virtualExitFrames
+      : undefined) ??
+    section.virtualExitFrames ??
+    0
+  );
+}
+
 function stops(): Stop[] {
   if (!stopsCache) {
     const onDesktop = isDesktopTimeline();
@@ -1068,6 +1094,7 @@ export const SECTIONS: SectionTimeline[] = [
     // Keep the fully loaded hero on frame 50 for ten virtual frames
     // of scroll before its exit starts. No image files are duplicated.
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     holdCrawlFrames: 0,
   },
   {
@@ -1089,6 +1116,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [70, 90], from: { y: 4 } },
     exit: { frames: [91, 105], to: { y: -4 } },
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     // Half speed, not the shared 6x — a lighter touch is enough for a
     // short title card that is already fading out again 7 frames
     // after its settle, unlike a data-dense panel.
@@ -1109,6 +1137,7 @@ export const SECTIONS: SectionTimeline[] = [
       from: { y: 5 },
     },
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     virtualExitFrames: 10,
     exit: {
       // FRAME-MAP: window 118 -> 135, camera holds 123-128.
@@ -1130,6 +1159,7 @@ export const SECTIONS: SectionTimeline[] = [
       from: { y: 5 },
     },
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     exit: {
       // FRAME-MAP: composition intact to 166, animation window 150-170.
       frames: [161, 176],
@@ -1161,6 +1191,7 @@ export const SECTIONS: SectionTimeline[] = [
     exit: { frames: [255, 269], to: {} },
     virtualEnterFrames: 10,
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     virtualExitFrames: 14,
   },
   {
@@ -1199,6 +1230,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [263, 275], from: { y: 6 } },
     exit: { frames: [279, 302], to: { y: -6 } },
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     // VJ 2026-08-28: this section's reveal (238-247) went by too fast.
     // Its enter is 9 frames wide — well past the default +/-4 crawl
     // half-width (243-251), so most of the reveal was running at full
@@ -1220,6 +1252,7 @@ export const SECTIONS: SectionTimeline[] = [
     exit: { frames: [335, 371], to: { y: -4 } },
     virtualEnterFrames: 10,
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     virtualExitFrames: 10,
   },
   {
@@ -1278,6 +1311,7 @@ export const SECTIONS: SectionTimeline[] = [
     exit: { frames: [511, 520], to: { y: -4 } },
     virtualEnterFrames: 10,
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     virtualExitFrames: 20,
   },
   {
@@ -1397,6 +1431,7 @@ export const SECTIONS: SectionTimeline[] = [
     exit: { frames: [650, 665], to: { y: -4 } },
     virtualEnterFrames: 20,
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     virtualExitFrames: 20,
   },
   {
@@ -1606,6 +1641,7 @@ export const SECTIONS: SectionTimeline[] = [
     settledFrame: 1055,
     enter: { frames: [1035, 1055], from: { y: 4 } },
     holdFrames: 10,
+    desktopPacing: { holdFrames: 20 }, // desktop-only (>1100px): +10 pinned hold frames
     exit: { frames: [1055, 1080], to: { y: -4 } },
     // 20 crawl frames each side of settledFrame at half scroll speed,
     // instead of the shared 4-frame/6x default. The 20 after settledFrame
