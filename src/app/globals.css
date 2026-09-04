@@ -156,6 +156,20 @@ html.intro-seen .lab-intro {
   --mobile-topbar-clear: calc(60px + env(safe-area-inset-top, 0px) + 30px);
 }
 
+/* Leadership scroll-through wrapper (LeadershipLayer.tsx): generates no
+   box on desktop/tablet — the DOM and layout there are unchanged — and
+   becomes a plain block on phones, which the layer's rAF translates up
+   as the reader scrolls the section's pinned budget. */
+.lab .s-leadership5__scrollbody {
+  display: contents;
+}
+@media (max-width: 700px) {
+  .lab .s-leadership5__scrollbody {
+    display: block;
+    will-change: transform;
+  }
+}
+
 @media (max-width: 700px) {
   /* The lab paints a fixed teal canvas over the document. On iOS/Android,
      a root rubber-band past the spacer can otherwise expose the site's light

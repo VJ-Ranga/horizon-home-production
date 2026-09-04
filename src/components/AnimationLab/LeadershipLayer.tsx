@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SECTIONS } from "./timeline";
+import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 import { createVideoDialogController } from "./videoDialogController";
 
@@ -102,6 +102,12 @@ export default function LeadershipLayer() {
   // (killing page smooth-scroll once the section became interactive) and
   // toggled a no-op class on every frame near the settle point.
   const [isCompact, setIsCompact] = useState(false);
+  // Phones (<=700px): the flaky inner-scrollbox is replaced with a
+  // continuous scroll-through — the whole content block glides up 1:1
+  // with the page across this section's pinned budget, like Strategy.
+  // No freeze plateau, so a fast flick can't skip the section.
+  const [mobileThrough, setMobileThrough] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [videoDialog] = useState(() =>
     createVideoDialogController({
       closeAfterFrames: POPUP_CLOSE_AFTER_FRAMES,
@@ -120,6 +126,58 @@ export default function LeadershipLayer() {
     return () => query.removeEventListener("change", update);
   }, []);
 
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 700px)");
+    const update = () => setMobileThrough(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  // Mobile scroll-through glide (mirrors StrategyLayer). Only runs on
+  // phones; the >700px paths are untouched.
+  useEffect(() => {
+    if (!mobileThrough) return;
+    let rafId = 0;
+    let current = 0;
+    const pxPerFrame = readPxPerFrame();
+    const startPx = scrollPxForFrame(LEADERSHIP.settledFrame, pxPerFrame);
+    // The section's frame is pinned at settledFrame across holdFrames +
+    // virtualExitFrames of scroll — that stretch is the glide budget.
+    const budgetPx =
+      ((LEADERSHIP.holdFrames ?? 0) + (LEADERSHIP.virtualExitFrames ?? 0)) *
+      pxPerFrame;
+    const EASE = 0.16;
+    const BOTTOM_PAD = 40;
+
+    const tick = () => {
+      rafId = requestAnimationFrame(tick);
+      const body = bodyRef.current;
+      if (!body) return;
+      const overflow = Math.max(
+        body.scrollHeight - window.innerHeight + BOTTOM_PAD,
+        0,
+      );
+      // Track scroll 1:1 where the content fits the budget; never
+      // consume more than the pinned budget, so the glide always
+      // finishes before the section exits.
+      const sweep = overflow > 0 ? Math.min(budgetPx, overflow) : budgetPx;
+      const target =
+        sweep > 0
+          ? Math.min(Math.max((window.scrollY - startPx) / sweep, 0), 1)
+          : 0;
+      current += (target - current) * EASE;
+      if (Math.abs(target - current) < 0.0004) current = target;
+      body.style.transform = `translate3d(0, ${(-current * overflow).toFixed(2)}px, 0)`;
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (bodyRef.current) bodyRef.current.style.transform = "";
+    };
+  }, [mobileThrough]);
+
   useFrameEffect((frame) => {
     currentFrameRef.current = frame;
     videoDialog.sync(frame);
@@ -129,7 +187,10 @@ export default function LeadershipLayer() {
     const element = ref.current;
     if (!element) return;
 
-    if (!isCompact) {
+    // Desktop (>1100) and phones (<=700, which use the scroll-through
+    // glide instead) both skip the inner-scrollbox machinery. Only the
+    // 701-1100 tablet range keeps it.
+    if (!isCompact || mobileThrough) {
       element.classList.remove("is-scrollable");
       element.removeAttribute("data-lenis-prevent");
       return;
@@ -159,6 +220,10 @@ export default function LeadershipLayer() {
 
   return (
     <div className="lab-layer s-leadership5" ref={ref} data-section={LEADERSHIP.id} data-initial-hidden="true" aria-labelledby="leadership5-title">
+      {/* display:contents everywhere except <=700px, where it becomes a
+          block the scroll-through glide translates — so the desktop /
+          tablet DOM and layout are unchanged. */}
+      <div className="s-leadership5__scrollbody" ref={bodyRef}>
       <header className="s-leadership5__head">
         <h1 id="leadership5-title">Leadership at Haycarb</h1>
         <p className="s-leadership5__intro">Our leadership team steers Haycarb with vision, integrity, and a long-term commitment to innovation<br />and sustainability. Shaped by experience and guided by purpose, they drive strategic<br />growth, empower people, and ensure we deliver value to stakeholders.</p>
@@ -201,6 +266,7 @@ export default function LeadershipLayer() {
         <a className="s-leadership5__pill lab-shine" href="/pdf/home/12-leadership/Board%20of%20Directors.pdf" target="_blank" rel="noopener noreferrer"><AssetIcon file="Web Icons-17.svg" /><span>Board of Directors</span></a>
         <a className="s-leadership5__pill lab-shine" href="/pdf/home/12-leadership/Management%20Team.pdf" target="_blank" rel="noopener noreferrer"><AssetIcon file="Web Icons-18.svg" /><span>Management Team</span></a>
       </nav>
+      </div>
 
       <dialog
         ref={dialogRef}
