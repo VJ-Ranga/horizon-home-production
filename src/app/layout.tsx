@@ -47,6 +47,13 @@ export default function RootLayout({
         <GlobalHeader />
         <BackgroundMusic />
         {children}
+        {/* Accessibly (accessiblyapp.com) accessibility widget — loads
+            after hydration so it never blocks first paint. */}
+        <Script
+          id="accessibly-widget"
+          src="https://dash.accessibly.app/widget/0198cc9a-8a1c-7166-ae34-0700f160961f/autoload.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
