@@ -560,29 +560,43 @@ export default function AnimationLab({
     /* Touch equivalent of onWheel. Touch devices never fire `wheel`, so
        at the end of the page — where scrollY is pinned at max and no
        more `scroll` events come — the one-way loop could never start on
-       a phone; you'd just scroll back up through everything. A continued
-       upward swipe there (= scroll-down intent, same as deltaY > 0)
-       kicks off the same cover -> reveal loop. Coarse-pointer only, so
-       the desktop mouse path is untouched. */
+       a phone; you'd just scroll back up through everything. Any upward
+       swipe (= scroll-down intent) while at/near the very bottom kicks
+       off the same cover -> reveal loop desktop's wheel path uses.
+       Touch-only, so the desktop mouse path is untouched. */
     let lastTouchY: number | null = null;
-    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    const isTouch =
+      window.matchMedia("(pointer: coarse)").matches ||
+      "ontouchstart" in window ||
+      (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0);
+
+    const maybeLoopFromTouch = (deltaY: number) => {
+      if (deltaY <= 1) return; // finger not moving up enough
+      if (loopTransitionRef.current || recentering) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const scrollable =
+        document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollable <= 0) return;
+      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
+      // Near the loop-cover frame, OR literally pinned at the bottom
+      // (mobile URL-bar resize can throw the coverY frame math off, so
+      // the raw bottom is the reliable trigger).
+      if (window.scrollY >= coverY || window.scrollY >= scrollable - 6) {
+        startLoopTransition();
+      }
+    };
+
     const onTouchStart = (event: TouchEvent) => {
       lastTouchY = event.touches[0]?.clientY ?? null;
     };
     const onTouchMove = (event: TouchEvent) => {
-      if (loopTransitionRef.current || recentering) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const y = event.touches[0]?.clientY ?? null;
-      if (y === null || lastTouchY === null) {
-        lastTouchY = y;
-        return;
-      }
-      const deltaY = lastTouchY - y; // >0 = finger moving up = scrolling down
+      if (y === null) return;
+      if (lastTouchY !== null) maybeLoopFromTouch(lastTouchY - y);
       lastTouchY = y;
-      if (deltaY <= 0) return;
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
-      if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
+    };
+    const onTouchEnd = () => {
+      lastTouchY = null;
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -590,12 +604,14 @@ export default function AnimationLab({
     if (isTouch) {
       window.addEventListener("touchstart", onTouchStart, { passive: true });
       window.addEventListener("touchmove", onTouchMove, { passive: true });
+      window.addEventListener("touchend", onTouchEnd, { passive: true });
     }
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
     };
   }, [phase, skipEntry]);
 
