@@ -65,3 +65,7 @@ next-env.d.ts
 
 # Timestamped scratch backups made while editing — local only
 /.backups/
+
+# Standalone visual experiments — not production, not imported by src/
+/mobile-video-prototype/
+/public/frames-mobile-portrait/
