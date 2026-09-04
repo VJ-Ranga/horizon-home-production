@@ -290,4 +290,76 @@ html.intro-seen .lab-intro {
   .lab .s-fincap__cta::after {
     font-size: 0.9em;
   }
+
+  /* The first paint still waits for the intro asset/frames, but the loader
+     itself stays visually still on phones: no counter, spinner, or aurora
+     motion competing with the handoff. */
+  .lab-intro__loader,
+  .lab-intro__spinner {
+    display: none;
+  }
+  .lab-intro__fluid {
+    animation: none !important;
+  }
+
+  /* The intro statement's pale wash is intentionally lighter on phones so
+     the portrait frame remains visible behind the copy. */
+  .lab .s-intro__media {
+    background: linear-gradient(
+      180deg,
+      rgba(233, 245, 247, 0.685) 0%,
+      rgba(233, 245, 247, 0.66) 34%,
+      rgba(226, 242, 246, 0.5) 46%,
+      rgba(226, 242, 246, 0.38) 62%,
+      rgba(226, 242, 246, 0.3) 72%,
+      rgba(226, 242, 246, 0.22) 78%,
+      rgba(233, 245, 247, 0.55) 100%
+    );
+  }
+
+  /* Haycarb at a Glance has its own inner reader. Keep that scroll container
+     untouched, but remove the outer section's mobile arrival/departure fade
+     so a touch gesture cannot make the whole reader appear to disappear. */
+  .lab .s-glance2 {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .lab .s-glance2__stat,
+  .lab .s-glance2__pill {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* Flatten only frame-driven foreground reveals. The layer root remains
+     frame-driven, so each section still appears and disappears at its
+     existing timeline window; its internal words/cards no longer pop in
+     separately or get left behind by a touch flick. */
+  .s-approach2__word,
+  .s-approach2__kicker,
+  .s-approach2__lead,
+  .s-approach2__card,
+  .s-digital2__word,
+  .s-digital2__lead,
+  .s-digital2__feature,
+  .s-glance2__word,
+  .s-glance2__quote,
+  .s-glance2__stat,
+  .s-glance2__note,
+  .s-glance2__video,
+  .s-glance2__pills,
+  .s-intro__statement span,
+  .s-govintro__caption,
+  .s-governance2__word,
+  .s-governance2__stat,
+  .s-govcards__word,
+  .s-govcards__card,
+  .s-city__caption span,
+  .s-ocean__caption span,
+  .s-banner-river__word,
+  .s-end-screen__copy span,
+  .s-financial2 [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

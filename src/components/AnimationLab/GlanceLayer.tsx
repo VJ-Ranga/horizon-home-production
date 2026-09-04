@@ -40,7 +40,7 @@
    dialogRef and showModal(), loading a YouTube embed
    (SUMMARY_VIDEO_SRC below) — same as HeroLayer's popup now does. */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { SECTIONS, staggerProgressAt, progressBetween, easeOut } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
@@ -117,9 +117,15 @@ export default function GlanceLayer() {
   const noteRef = useRef<HTMLParagraphElement>(null);
   const videoRef = useRef<HTMLDivElement>(null);
   const pillRefs = useRef<Array<HTMLLIElement | null>>([]);
+  const mobileSolidRef = useRef(false);
+
+  useEffect(() => {
+    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+  }, []);
 
   useFrameEffect((frame) => {
     currentFrameRef.current = frame;
+    const mobileSolid = mobileSolidRef.current;
     const openedAt = dialogOpenedAtFrameRef.current;
     if (
       dialogRef.current?.open &&
@@ -135,7 +141,9 @@ export default function GlanceLayer() {
     for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
       const element = titleWordRefs.current[index];
       if (!element) continue;
-      const t = entering
+      const t = mobileSolid
+        ? 1
+        : entering
         ? staggerProgressAt(index, TITLE_WORD_COUNT, frame, TITLE_WINDOW)
         : 1 -
           staggerProgressAt(
@@ -149,7 +157,9 @@ export default function GlanceLayer() {
     }
 
     if (quoteRef.current) {
-      const t = fadeRiseAt(frame, entering, QUOTE_WINDOW, QUOTE_EXIT_WINDOW);
+      const t = mobileSolid
+        ? 1
+        : fadeRiseAt(frame, entering, QUOTE_WINDOW, QUOTE_EXIT_WINDOW);
       quoteRef.current.style.opacity = String(t);
       quoteRef.current.style.transform = `translateY(${10 * (1 - t)}px)`;
     }
@@ -157,7 +167,9 @@ export default function GlanceLayer() {
     for (let index = 0; index < STATS.length; index += 1) {
       const card = statRefs.current[index];
       const valueEl = statValueRefs.current[index];
-      const t = entering
+      const t = mobileSolid
+        ? 1
+        : entering
         ? staggerProgressAt(index, STATS.length, frame, STATS_WINDOW)
         : 1 - staggerProgressAt(STATS.length - 1 - index, STATS.length, frame, STATS_EXIT_WINDOW);
       if (card) {
@@ -165,18 +177,26 @@ export default function GlanceLayer() {
         card.style.transform = `translateY(${18 * (1 - t)}px)`;
       }
       if (valueEl) {
-        valueEl.textContent = String(Math.floor(STATS[index].target * Math.min(Math.max(t, 0), 1)));
+        valueEl.textContent = String(
+          mobileSolid
+            ? STATS[index].target
+            : Math.floor(STATS[index].target * Math.min(Math.max(t, 0), 1)),
+        );
       }
     }
 
     if (noteRef.current) {
-      const t = fadeRiseAt(frame, entering, NOTE_WINDOW, NOTE_EXIT_WINDOW);
+      const t = mobileSolid
+        ? 1
+        : fadeRiseAt(frame, entering, NOTE_WINDOW, NOTE_EXIT_WINDOW);
       noteRef.current.style.opacity = String(t);
       noteRef.current.style.transform = `translateY(${8 * (1 - t)}px)`;
     }
 
     if (videoRef.current) {
-      const t = fadeRiseAt(frame, entering, VIDEO_WINDOW, VIDEO_EXIT_WINDOW);
+      const t = mobileSolid
+        ? 1
+        : fadeRiseAt(frame, entering, VIDEO_WINDOW, VIDEO_EXIT_WINDOW);
       videoRef.current.style.opacity = String(t);
       videoRef.current.style.transform = `translateY(${20 * (1 - t)}px)`;
     }
@@ -184,7 +204,9 @@ export default function GlanceLayer() {
     for (let index = 0; index < PILLS.length; index += 1) {
       const element = pillRefs.current[index];
       if (!element) continue;
-      const t = entering
+      const t = mobileSolid
+        ? 1
+        : entering
         ? staggerProgressAt(index, PILLS.length, frame, PILLS_WINDOW)
         : 1 - staggerProgressAt(PILLS.length - 1 - index, PILLS.length, frame, PILLS_EXIT_WINDOW);
       element.style.opacity = String(t);
