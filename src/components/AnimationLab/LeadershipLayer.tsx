@@ -170,9 +170,16 @@ export default function LeadershipLayer() {
         body.scrollHeight - window.innerHeight + BOTTOM_PAD,
         0,
       );
-      const scale = overflow > glideRoomPx ? glideRoomPx / overflow : 1;
-      const raw = (window.scrollY - startPx - START_HOLD_PX) * scale;
-      const targetPx = Math.min(Math.max(raw, 0), overflow);
+      // Normalise the scroll travelled through the glide zone to 0..1,
+      // then map onto the full content overflow — so the content is
+      // ALWAYS fully glided by the end of the glide zone, whatever its
+      // height. Taller-than-room content just moves faster (here ~1.35x
+      // scroll) through the middle; the END_HOLD_PX tail is what it buys.
+      const t = Math.min(
+        Math.max((window.scrollY - startPx - START_HOLD_PX) / glideRoomPx, 0),
+        1,
+      );
+      const targetPx = t * overflow;
       current += (targetPx - current) * EASE;
       if (Math.abs(targetPx - current) < 0.4) current = targetPx;
       body.style.transform = `translate3d(0, ${(-current).toFixed(2)}px, 0)`;
