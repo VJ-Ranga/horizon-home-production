@@ -13,6 +13,45 @@
    change mid-session), and SSR-safe. */
 
 export const FRAME_DIR_MOBILE = "/frames-mobile";
+export const MOBILE_INTRO_VIDEO_SRC = "/video-mobile/intro-540x960.mp4";
+
+const FRAME_DIR_DESKTOP = "/frames";
+const DESKTOP_INTRO_VIDEO_SRC = "/hero/intro.mp4";
+const MOBILE_INTRO_PRELOAD_FRAME_COUNT = 50;
+const DESKTOP_INTRO_PRELOAD_FRACTION = 0.25;
+
+export type IntroAssetPlan = {
+  frameDir: string;
+  preloadFrameCount: number;
+  videoSrc: string;
+};
+
+/** Mobile loads only the portrait intro assets and the 50-frame hero entry.
+    Desktop keeps the existing quarter-timeline preload unchanged. */
+export function getIntroAssetPlan(
+  phone: boolean,
+  totalFrameCount: number,
+): IntroAssetPlan {
+  if (phone) {
+    return {
+      frameDir: FRAME_DIR_MOBILE,
+      preloadFrameCount: Math.min(
+        totalFrameCount,
+        MOBILE_INTRO_PRELOAD_FRAME_COUNT,
+      ),
+      videoSrc: MOBILE_INTRO_VIDEO_SRC,
+    };
+  }
+
+  return {
+    frameDir: FRAME_DIR_DESKTOP,
+    preloadFrameCount: Math.max(
+      1,
+      Math.round(totalFrameCount * DESKTOP_INTRO_PRELOAD_FRACTION),
+    ),
+    videoSrc: DESKTOP_INTRO_VIDEO_SRC,
+  };
+}
 
 /** The project's own phone breakpoint (max-width: 700px in lab.css). */
 export function isPhoneViewport(): boolean {

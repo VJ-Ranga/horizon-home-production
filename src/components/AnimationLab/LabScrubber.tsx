@@ -81,6 +81,16 @@ function resolveFrameDir(
 
 const LOAD_CONCURRENCY = 6;
 
+/* Phones cannot hold the whole decoded frame set. 1125 360x640 bitmaps
+   is ~1 GB of decoded RGBA (the .webp files are tiny, the decode is
+   not) and iOS Safari kills the tab for it — "A problem repeatedly
+   occurred". So on a phone the loader keeps only a sliding window
+   around the frame on screen and drops the rest. Desktop is unchanged:
+   it still loads and retains every frame. */
+const MOBILE_WINDOW_AHEAD = 45;
+const MOBILE_WINDOW_BACK = 20;
+const MOBILE_WINDOW_KEEP = 70;
+
 export default function LabScrubber({
   posterFrame,
   hq = false,
@@ -115,12 +125,8 @@ export default function LabScrubber({
   useEffect(() => {
     setMounted(true);
   }, []);
-  const frameDir = resolveFrameDir(
-    densify,
-    hq,
-    fourK,
-    mounted && isPhoneViewport()
-  );
+  const phone = mounted && isPhoneViewport();
+  const frameDir = resolveFrameDir(densify, hq, fourK, phone);
 
   /* THE ONLY THING `densify` CHANGES: which FILE a frame maps to.
      Frame numbers everywhere else stay in 840-space. `frame` is
@@ -141,6 +147,12 @@ export default function LabScrubber({
   const images = useRef<Array<HTMLImageElement | undefined>>([]);
   const loaded = useRef<boolean[]>([]);
   const painted = useRef(-1);
+  /* The frame offset the user is on RIGHT NOW, written every frame-tick
+     regardless of whether the paint succeeds. The phone loader centres
+     its sliding window on this; painted.current can't be used because
+     it only advances after a successful draw, which needs the frame
+     already loaded — a deadlock on the phone's partial cache. */
+  const wantedOffset = useRef(0);
 
   useMouseParallax(mediaRef);
 
@@ -224,12 +236,68 @@ export default function LabScrubber({
       }
     };
 
+    const evictOutsideWindow = (center: number) => {
+      for (let i = 0; i < fileCount; i += 1) {
+        if (!images.current[i]) continue;
+        if (
+          i < center - MOBILE_WINDOW_KEEP ||
+          i > center + MOBILE_WINDOW_KEEP
+        ) {
+          images.current[i] = undefined;
+          loaded.current[i] = false;
+        }
+      }
+    };
+
+    /* Phone loader: keep [center-BACK, center+AHEAD] decoded, nearest
+       first, and evict everything past KEEP on either side. `center`
+       follows painted.current — the frame the scrubber last drew, i.e.
+       where the user is. onFrameLoaded still fires the first time each
+       frame decodes, so AnimationLab's scroll gate (a Set that only
+       grows) still opens section by section and eviction never
+       re-closes it. Re-entering an evicted stretch keeps the last drawn
+       frame on the canvas for ~one tick until the window refills. */
+    const runPhoneLoader = async () => {
+      while (!disposed) {
+        const center = wantedOffset.current;
+        evictOutsideWindow(center);
+        const lo = Math.max(0, center - MOBILE_WINDOW_BACK);
+        const hi = Math.min(fileCount - 1, center + MOBILE_WINDOW_AHEAD);
+        const missing: number[] = [];
+        for (let i = lo; i <= hi; i += 1) {
+          if (!images.current[i]) missing.push(i);
+        }
+        missing.sort((a, b) => Math.abs(a - center) - Math.abs(b - center));
+        for (
+          let i = 0;
+          i < missing.length && !disposed;
+          i += LOAD_CONCURRENCY
+        ) {
+          const here = wantedOffset.current;
+          // Moved far while filling — abandon this pass and rebuild the
+          // window around the new position on the next loop.
+          if (Math.abs(here - center) > MOBILE_WINDOW_AHEAD) break;
+          await Promise.all(
+            missing
+              .slice(i, i + LOAD_CONCURRENCY)
+              .map((off) => loadFrame(off))
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 90));
+      }
+    };
+
     const start = async () => {
       await loadFrame(0); // frame 1 — the intro handoff, what you see first
       if (disposed) return;
 
       resize();
       setReady(true);
+
+      if (phone) {
+        await runPhoneLoader();
+        return;
+      }
 
       let next = 1;
       const worker = async () => {
@@ -254,7 +322,7 @@ export default function LabScrubber({
     /* hq / frameDir are fixed for the life of the page — they come
        from the server-read query string, so this never actually
        re-runs. Listed so the dependency is honest. */
-  }, [mounted, hq, fourK, densify, frameDir, denseScale, fileCount]);
+  }, [mounted, phone, hq, fourK, densify, frameDir, denseScale, fileCount]);
 
   useFrameEffect((frame) => {
     /* ---- the carve ---- */
@@ -300,6 +368,10 @@ export default function LabScrubber({
 
     const transition = backgroundTransitionAtFrame(frame);
     const backgroundFrame = backgroundFrameForFrame(frame);
+    wantedOffset.current = Math.min(
+      Math.max(frameToFile(backgroundFrame) - LAB_FIRST_FRAME, 0),
+      fileCount - 1
+    );
     const resolveOffset = (logicalFrame: number) => {
       const clamped = Math.min(
         Math.max(frameToFile(logicalFrame), LAB_FIRST_FRAME),
@@ -357,14 +429,19 @@ export default function LabScrubber({
           eslint's next/image rule is off here for the same reason as
           the hero art: these are exact-size assets addressed by
           frame number, not responsive images. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        className="lab-media__poster"
-        src={frameSrc(frameToFile(posterFrame), frameDir)}
-        alt=""
-        fetchPriority="high"
-        decoding="async"
-      />
+      <picture>
+        <source
+          media="(max-width: 700px)"
+          srcSet={frameSrc(frameToFile(posterFrame), FRAME_DIR_MOBILE)}
+        />
+        <img
+          className="lab-media__poster"
+          src={frameSrc(frameToFile(posterFrame), frameDir)}
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+        />
+      </picture>
       <canvas
         ref={canvasRef}
         className="lab-media__canvas"

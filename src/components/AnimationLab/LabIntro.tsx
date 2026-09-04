@@ -39,28 +39,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  FRAME_DIR_DEV,
   LAB_FIRST_FRAME,
   LAB_FRAME_COUNT,
   frameSrc,
 } from "./timeline";
+import {
+  getIntroAssetPlan,
+  type IntroAssetPlan,
+} from "./frameDirMobile";
 
 type Stage = "loading" | "playing" | "leaving";
-
-const INTRO_VIDEO_SRC = "/hero/intro.mp4";
-const MOBILE_INTRO_VIDEO_SRC = "/video-mobile/intro-540x960.mp4";
-
-/* The load screen buffers the first quarter of the MAIN animation frames —
-   enough that the hero and its opening beats are already decoded when the
-   lab takes over. 0 -> 100 tracks THIS batch and the screen finishes the
-   moment it is in; LabScrubber then keeps loading from where this left off,
-   every frame warm in the browser cache. The intro video loads alongside
-   (see INTRO_VIDEO_SRC below) but never counts toward the visible %. */
-const PRELOAD_FRACTION = 0.25;
-const PRELOAD_FRAME_COUNT = Math.max(
-  1,
-  Math.round(LAB_FRAME_COUNT * PRELOAD_FRACTION),
-);
 
 export default function LabIntro({
   loaderOnly = false,
@@ -82,16 +70,15 @@ export default function LabIntro({
   const fullAtRef = useRef(0); // when the bar first reached 100
   const introReadyRef = useRef(false); // intro video can play through
 
-  // Keep the server/client render deterministic, then select the portrait
-  // derivative for phones once the browser can evaluate the viewport.
-  const [introVideoSrc, setIntroVideoSrc] = useState(INTRO_VIDEO_SRC);
+  // No src is rendered until the client knows the viewport. This prevents a
+  // phone from starting either the desktop video or desktop-frame preload
+  // during hydration and replacing them a moment later.
+  const [assetPlan, setAssetPlan] = useState<IntroAssetPlan | null>(null);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 700px)");
     const updateSource = () => {
-      setIntroVideoSrc(
-        query.matches ? MOBILE_INTRO_VIDEO_SRC : INTRO_VIDEO_SRC,
-      );
+      setAssetPlan(getIntroAssetPlan(query.matches, LAB_FRAME_COUNT));
     };
 
     updateSource();
@@ -109,18 +96,23 @@ export default function LabIntro({
     }, 650);
   }, [onDone]);
 
-  /* ---- preload the first 25% of the main frames. targetRef tracks REAL
-         progress (frames decoded / batch); a wave of already-downloaded
-         frames can decode almost together, so the raw number lurches. The
-         displayed % is eased toward targetRef in the effect below so it
-         climbs steadily. Intro frames load alongside and never move it. ---- */
+  /* ---- preload the asset plan's opening main frames. Desktop keeps its
+         original 25% batch; phones use only the 50 mobile hero-entry frames.
+         targetRef tracks REAL progress (frames decoded / batch); a wave of
+         already-downloaded frames can decode almost together, so the raw
+         number lurches. The displayed % is eased toward targetRef below. ---- */
   useEffect(() => {
+    if (!assetPlan) return;
+
     let disposed = false;
     let loaded = 0;
 
     const bump = () => {
       loaded += 1;
-      targetRef.current = Math.min(100, (loaded / PRELOAD_FRAME_COUNT) * 100);
+      targetRef.current = Math.min(
+        100,
+        (loaded / assetPlan.preloadFrameCount) * 100,
+      );
     };
 
     // the batch the % is tied to: main frames 1 .. 25%. Progress is counted
@@ -128,28 +120,31 @@ export default function LabIntro({
     // is kicked off best-effort. Gating the count on decode() would freeze
     // the whole screen if the tab is ever backgrounded, since browsers pause
     // image decoding for a hidden document.
-    const mainJobs = Array.from({ length: PRELOAD_FRAME_COUNT }, (_, i) => {
-      const img = new Image();
-      img.decoding = "async";
-      return new Promise<void>((resolve) => {
-        let settled = false;
-        const settle = () => {
-          if (settled) return;
-          settled = true;
-          bump();
-          resolve();
-        };
-        img.onload = () => {
-          void img.decode().catch(() => {});
-          settle();
-        };
-        img.onerror = settle; // a missing frame must not stall the screen
-        img.src = frameSrc(LAB_FIRST_FRAME + i, FRAME_DIR_DEV);
-      });
-    });
+    const mainJobs = Array.from(
+      { length: assetPlan.preloadFrameCount },
+      (_, i) => {
+        const img = new Image();
+        img.decoding = "async";
+        return new Promise<void>((resolve) => {
+          let settled = false;
+          const settle = () => {
+            if (settled) return;
+            settled = true;
+            bump();
+            resolve();
+          };
+          img.onload = () => {
+            void img.decode().catch(() => {});
+            settle();
+          };
+          img.onerror = settle; // a missing frame must not stall the screen
+          img.src = frameSrc(LAB_FIRST_FRAME + i, assetPlan.frameDir);
+        });
+      },
+    );
 
     // The intro video — needed for the "playing" stage, but it loads in
-    // the background (the <video> below has preload="auto" from mount)
+    // the background once the viewport-safe src has been selected
     // and never touches the visible %. introReadyRef flips once it can
     // play through without stalling; the gate below falls back to a
     // grace period if that never fires (e.g. a very slow connection).
@@ -172,7 +167,7 @@ export default function LabIntro({
     return () => {
       disposed = true;
     };
-  }, [loaderOnly]);
+  }, [loaderOnly, assetPlan]);
 
   /* ---- ease the displayed % toward the real one, so it never lurches,
          then hand over to the intro on a smooth, unhurried beat ---- */
@@ -190,7 +185,7 @@ export default function LabIntro({
     // it nears 25 (exp curve, never quite reaches it) and real frame
     // progress takes over the moment it overtakes this floor. The floor is
     // capped at the preload fraction — real loading still carries 25→100.
-    const CREEP_CEIL = PRELOAD_FRACTION * 100; // 25
+    const CREEP_CEIL = 25;
     const CREEP_TAU = 3200; // ms; ~16% by 3.2s, ~22% by 6.4s, asymptotic to 25
 
     const id = window.setInterval(() => {
@@ -278,10 +273,9 @@ export default function LabIntro({
       data-variant={minimal ? "minimal" : "full"}
       role="presentation"
     >
-      {/* Mounted from first render, not stage-gated, so preload="auto"
-          gets the whole "loading" stage to warm the video before
-          "playing" needs it — same reasoning the old per-frame preload
-          had, just one asset instead of 240. Sits under the load
+      {/* Mounted from first render without a src; after mount, preload="auto"
+          warms only the viewport-safe video before "playing" needs it.
+          Sits under the load
           overlay (z-index) until that stage ends, so nothing needs an
           extra visibility toggle. loaderOnly never needs it at all. */}
       {!loaderOnly ? (
@@ -292,7 +286,7 @@ export default function LabIntro({
           muted
           playsInline
           preload="auto"
-          src={introVideoSrc}
+          src={assetPlan?.videoSrc}
           onEnded={finish}
         />
       ) : null}
