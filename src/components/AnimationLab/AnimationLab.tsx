@@ -621,6 +621,40 @@ export default function AnimationLab({
       lastTouchY = null;
     };
 
+    /* Temporary: `?loopdbg=1` shows a live readout of every value the
+       end-of-page loop checks, so a failing trigger on a real phone is
+       visible instead of guessed. No panel, no cost without the param. */
+    const dbg =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).has("loopdbg")
+        ? Object.assign(document.createElement("div"), {
+            style:
+              "position:fixed;left:6px;bottom:6px;z-index:2147483647;max-width:60vw;" +
+              "font:11px/1.35 monospace;color:#0f0;background:rgba(0,0,0,.82);" +
+              "padding:6px 8px;border-radius:6px;white-space:pre;pointer-events:none",
+          })
+        : null;
+    if (dbg) document.body.appendChild(dbg);
+    const paintDbg = () => {
+      if (!dbg) return;
+      const sc = document.documentElement.scrollHeight - window.innerHeight;
+      const cy = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
+      dbg.textContent =
+        `phase=${phase} skipEntry=${skipEntry}\n` +
+        `reduced=${window.matchMedia("(prefers-reduced-motion: reduce)").matches}\n` +
+        `isTouch=${isTouch}\n` +
+        `scrollY=${Math.round(window.scrollY)} scrollable=${Math.round(sc)}\n` +
+        `atBottom(-8)=${window.scrollY >= sc - 8}\n` +
+        `coverY=${Math.round(cy)} scrollY>=coverY=${window.scrollY >= cy}\n` +
+        `sinceDown=${Math.round(performance.now() - lastDownAt)}ms\n` +
+        `loopRef=${loopTransitionRef.current}`;
+    };
+    const dbgRaf = () => {
+      paintDbg();
+      if (dbg) requestAnimationFrame(dbgRaf);
+    };
+    if (dbg) requestAnimationFrame(dbgRaf);
+
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: true });
     if (isTouch) {
@@ -629,6 +663,7 @@ export default function AnimationLab({
       window.addEventListener("touchend", onTouchEnd, { passive: true });
     }
     return () => {
+      dbg?.remove();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
