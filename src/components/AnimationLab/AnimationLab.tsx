@@ -64,6 +64,7 @@ import StrategyLayer from "./StrategyLayer";
 import CommunityLayer from "./CommunityLayer";
 import EndScreenLayer from "./EndScreenLayer";
 import LoopTransitionOverlay from "./LoopTransitionOverlay";
+import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
 import LabScrubber from "./LabScrubber";
 import LabIntro from "./LabIntro";
 import {
@@ -455,15 +456,11 @@ export default function AnimationLab({
     if (phase !== "scroll") return;
     if (skipEntry) return; // reduced motion: leave native scrolling alone
 
-    const isMobile = window.matchMedia("(max-width: 700px)").matches;
     const lenis = new Lenis({
       lerp: 0.1,
       smoothWheel: true,
-      // Native touch momentum is abrupt when the frame timeline is driven
-      // directly by scrollY. Let Lenis smooth the page-level touch gesture;
-      // nested panels opt out with data-lenis-prevent and remain native.
-      syncTouch: isMobile,
-      syncTouchLerp: 0.075,
+      // Keep page-level touch scrolling native. Lenis touch inertia can
+      // continue through the loop's reset and expose its return to the hero.
     });
     lenisRef.current = lenis;
     let rafId = 0;
@@ -524,6 +521,30 @@ export default function AnimationLab({
       if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
     };
 
+    // Phones do not dispatch wheel events. Trigger the identical cover
+    // transition from an upward finger movement once it reaches the same
+    // cover frame, so the reset remains behind the mask instead of becoming
+    // visible at the very bottom of the page.
+    let lastTouchY: number | null = null;
+    const onTouchStart = (event: TouchEvent) => {
+      lastTouchY = event.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const touchY = event.touches[0]?.clientY ?? null;
+      if (touchY === null || lastTouchY === null) return;
+      const movingDownPage = lastTouchY - touchY > 1;
+      lastTouchY = touchY;
+      if (!movingDownPage) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
+      if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
+    };
+    const onTouchEnd = () => {
+      lastTouchY = null;
+    };
+
     const onScroll = () => {
       if (recentering) return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -559,9 +580,16 @@ export default function AnimationLab({
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      endFrameJump();
     };
   }, [phase, skipEntry]);
 
@@ -571,6 +599,12 @@ export default function AnimationLab({
     const timer = window.setTimeout(() => {
       if (loopTransition.stage === "cover") {
         lenisRef.current?.stop();
+        // The frame driver slew-limits mobile frame steps to 2 a tick so a
+        // flick cannot skip a short section. This reset is a ~1090-frame
+        // move, so under that limit the phone replays the entire page
+        // backwards instead of cutting to the hero. Suspend it until the
+        // loop finishes; the scroll below is programmatic, not a gesture.
+        beginFrameJump();
         const revealY = scrollYForFrame(LOOP_REVEAL_START_FRAME, pxPerFrame);
         window.scrollTo(0, revealY);
         document.documentElement.scrollTop = revealY;
@@ -580,6 +614,7 @@ export default function AnimationLab({
         return;
       }
 
+      endFrameJump();
       loopTransitionRef.current = false;
       setLoopTransition(null);
       lenisRef.current?.start();

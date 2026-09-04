@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useFrameEffect } from "./useFrameTimeline";
 import { HERO_SETTLED_FRAME, LOOP_REVEAL_START_FRAME } from "./timeline";
 
@@ -33,8 +33,14 @@ export default function LoopTransitionOverlay({
     shade.style.opacity = String(1 - clamped);
   });
 
-  useEffect(() => {
-    if (stage === null && shadeRef.current) shadeRef.current.style.opacity = "0";
+  // The reset below is a synchronous scroll jump. This must run during the
+  // committing render, before the browser paints that jump — especially on
+  // touch devices where the next frame-driver emission can arrive too late.
+  useLayoutEffect(() => {
+    const shade = shadeRef.current;
+    if (!shade) return;
+    if (stage === "cover") shade.style.opacity = "1";
+    if (stage === null) shade.style.opacity = "0";
   }, [stage]);
 
   return (
