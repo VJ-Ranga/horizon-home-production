@@ -100,6 +100,7 @@ import {
   partStateAt,
   sectionStateAt,
   virtualHoldAtScrollPx,
+  activateDesktopTimeline,
   type SectionTimeline,
 } from "./timeline";
 import "./lab.css";
@@ -407,6 +408,20 @@ export default function AnimationLab({
      so the old 34px inspection pace is one URL away. Read once — it
      sets the page height, which must not change mid-session. */
   const [pxPerFrame] = useState(readPxPerFrame);
+  /* Server + first client render use the base scroll map (no
+     hydration mismatch on the .lab-spacer height). Right after mount a
+     desktop (>1100px) client switches in the desktopPacing holds and
+     this bump re-renders once so scrollPx grows to match — before any
+     scroll happens, so the "height must not change mid-session" rule
+     still holds for the user. */
+  const [, bumpTimeline] = useState(0);
+  useEffect(() => {
+    activateDesktopTimeline();
+    // One deliberate re-render so the .lab-spacer height below recomputes
+    // with the now-active desktopPacing. Fires once, before any scroll.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    bumpTimeline((n) => n + 1);
+  }, []);
   const scrollPx = totalScrollPx(pxPerFrame);
 
   const driver = useFrameDriver(skipEntry, entryReady && introComplete);

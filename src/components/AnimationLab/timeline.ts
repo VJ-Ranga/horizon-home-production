@@ -298,26 +298,37 @@ type Stop = CrawlStop | CarouselStop | ScrollThroughStop;
     has finished loading. */
 let stopsCache: Stop[] | null = null;
 
-/** True on desktop (>1100px) and on the server (deterministic markup;
-    the client rebuilds stopsCache with the real viewport on first use).
-    Cached so a mid-page resize doesn't silently re-scale the whole
-    scroll map — call resetTimelineCache() to pick up a new viewport. */
-let desktopTimelineFlag: boolean | null = null;
+/** Whether `desktopPacing` overrides are live. Starts false so the
+    server and the client's FIRST (hydration) render build the same
+    base scroll map — the .lab-spacer height is rendered straight from
+    totalScrollPx(), so a fork here would be a hydration mismatch. A
+    client flips it on after mount via activateDesktopTimeline(). */
+let desktopTimelineActive = false;
 function isDesktopTimeline(): boolean {
-  if (desktopTimelineFlag === null) {
-    desktopTimelineFlag =
-      typeof window === "undefined" ||
-      window.matchMedia("(min-width: 1101px)").matches;
+  return desktopTimelineActive;
+}
+
+/** Client, post-mount only: switch in the >1100px `desktopPacing`
+    values and rebuild the stop cache so totalScrollPx / scrollPxForFrame
+    reflect them. No-op on the server, on <=1100px, or if already on. */
+export function activateDesktopTimeline(): void {
+  if (
+    !desktopTimelineActive &&
+    typeof window !== "undefined" &&
+    window.matchMedia("(min-width: 1101px)").matches
+  ) {
+    desktopTimelineActive = true;
+    stopsCache = null;
   }
-  return desktopTimelineFlag;
 }
 
 /** Drop the cached stop list + desktop flag so `desktopPacing` is
-    re-evaluated. Nothing calls this today; wire it to a resize handler
-    if desktop<->mobile pacing needs to switch without a reload. */
+    re-evaluated from scratch. Nothing calls this today; wire it to a
+    resize handler if desktop<->mobile pacing must switch without a
+    reload. */
 export function resetTimelineCache(): void {
   stopsCache = null;
-  desktopTimelineFlag = null;
+  desktopTimelineActive = false;
 }
 
 /** The virtual enter/exit frame counts actually in effect for a section
