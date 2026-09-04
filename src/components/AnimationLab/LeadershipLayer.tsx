@@ -108,6 +108,7 @@ export default function LeadershipLayer() {
   // No freeze plateau, so a fast flick can't skip the section.
   const [mobileThrough, setMobileThrough] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const mobileCurrentRef = useRef(0);
   const [videoDialog] = useState(() =>
     createVideoDialogController({
       closeAfterFrames: POPUP_CLOSE_AFTER_FRAMES,
@@ -135,11 +136,14 @@ export default function LeadershipLayer() {
   }, []);
 
   // Mobile scroll-through glide (mirrors StrategyLayer). Only runs on
-  // phones; the >700px paths are untouched.
-  useEffect(() => {
-    if (!mobileThrough) return;
-    let rafId = 0;
-    let current = 0;
+  // phones; the >700px paths are untouched. It consumes the shared frame
+  // driver's scrollPx so the panel and background cannot drift apart.
+  useFrameEffect((_frame, _phase, scrollPx) => {
+    if (!mobileThrough) {
+      if (bodyRef.current) bodyRef.current.style.transform = "";
+      mobileCurrentRef.current = 0;
+      return;
+    }
     const pxPerFrame = readPxPerFrame();
     const startPx = scrollPxForFrame(LEADERSHIP.settledFrame, pxPerFrame);
     // The section's frame is pinned at settledFrame across holdFrames +
@@ -162,35 +166,25 @@ export default function LeadershipLayer() {
     const END_HOLD_PX = 300;
     const glideRoomPx = Math.max(budgetPx - START_HOLD_PX - END_HOLD_PX, 1);
 
-    const tick = () => {
-      rafId = requestAnimationFrame(tick);
-      const body = bodyRef.current;
-      if (!body) return;
-      const overflow = Math.max(
-        body.scrollHeight - window.innerHeight + BOTTOM_PAD,
-        0,
-      );
-      // Normalise the scroll travelled through the glide zone to 0..1,
-      // then map onto the full content overflow — so the content is
-      // ALWAYS fully glided by the end of the glide zone, whatever its
-      // height. Taller-than-room content just moves faster (here ~1.35x
-      // scroll) through the middle; the END_HOLD_PX tail is what it buys.
-      const t = Math.min(
-        Math.max((window.scrollY - startPx - START_HOLD_PX) / glideRoomPx, 0),
-        1,
-      );
-      const targetPx = t * overflow;
-      current += (targetPx - current) * EASE;
-      if (Math.abs(targetPx - current) < 0.4) current = targetPx;
-      body.style.transform = `translate3d(0, ${(-current).toFixed(2)}px, 0)`;
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(rafId);
-      if (bodyRef.current) bodyRef.current.style.transform = "";
-    };
-  }, [mobileThrough]);
+    const body = bodyRef.current;
+    if (!body) return;
+    const overflow = Math.max(
+      body.scrollHeight - window.innerHeight + BOTTOM_PAD,
+      0,
+    );
+    // Normalise the shared timeline distance to 0..1, then map onto the
+    // full content overflow. The end hold keeps the final content visible.
+    const t = Math.min(
+      Math.max((scrollPx - startPx - START_HOLD_PX) / glideRoomPx, 0),
+      1,
+    );
+    const targetPx = t * overflow;
+    mobileCurrentRef.current += (targetPx - mobileCurrentRef.current) * EASE;
+    if (Math.abs(targetPx - mobileCurrentRef.current) < 0.4) {
+      mobileCurrentRef.current = targetPx;
+    }
+    body.style.transform = `translate3d(0, ${(-mobileCurrentRef.current).toFixed(2)}px, 0)`;
+  });
 
   useFrameEffect((frame) => {
     currentFrameRef.current = frame;

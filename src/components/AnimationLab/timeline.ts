@@ -1002,7 +1002,7 @@ export const SECTIONS: SectionTimeline[] = [
     },
     // Keep the fully loaded hero on frame 50 for ten virtual frames
     // of scroll before its exit starts. No image files are duplicated.
-    holdFrames: 10,
+    holdFrames: 20,
     holdCrawlFrames: 0,
   },
   {
@@ -1023,7 +1023,7 @@ export const SECTIONS: SectionTimeline[] = [
     settledFrame: 90,
     enter: { frames: [70, 90], from: { y: 4 } },
     exit: { frames: [91, 105], to: { y: -4 } },
-    holdFrames: 10,
+    holdFrames: 20,
     // Half speed, not the shared 6x — a lighter touch is enough for a
     // short title card that is already fading out again 7 frames
     // after its settle, unlike a data-dense panel.
@@ -1043,8 +1043,11 @@ export const SECTIONS: SectionTimeline[] = [
       frames: [114, 134],
       from: { y: 5 },
     },
-    holdFrames: 10,
-    virtualExitFrames: 10,
+    holdFrames: 20,
+    // Finish this section's UI while the background remains pinned at 134.
+    // The next section enters at frame 141, so it cannot visibly overlap the
+    // Approach panel during its own enter window.
+    virtualExitFrames: 20,
     exit: {
       // FRAME-MAP: window 118 -> 135, camera holds 123-128.
       frames: [145, 158],
@@ -1064,7 +1067,7 @@ export const SECTIONS: SectionTimeline[] = [
       frames: [141, 161],
       from: { y: 5 },
     },
-    holdFrames: 10,
+    holdFrames: 20,
     exit: {
       // FRAME-MAP: composition intact to 166, animation window 150-170.
       frames: [161, 176],
@@ -1095,7 +1098,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [245, 255], from: {} },
     exit: { frames: [255, 269], to: {} },
     virtualEnterFrames: 10,
-    holdFrames: 10,
+    holdFrames: 20,
     virtualExitFrames: 14,
   },
   {
@@ -1154,7 +1157,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [322, 335], from: { y: 4 } },
     exit: { frames: [335, 371], to: { y: -4 } },
     virtualEnterFrames: 10,
-    holdFrames: 10,
+    holdFrames: 20,
     virtualExitFrames: 10,
   },
   {
@@ -1194,9 +1197,9 @@ export const SECTIONS: SectionTimeline[] = [
     // gate). Scroll through the 40 frames and it exits, footage
     // resumes. No virtualEnterFrames — nothing scroll-mapped to protect.
     settledFrame: 436,
-    enter: { frames: [434, 436], from: {} },
+    enter: { frames: [408, 436], from: {} },
     exit: { frames: [448, 454], to: { y: -5 } },
-    holdFrames: 40,
+    holdFrames: 60,
     virtualExitFrames: 20,
   },
   {
@@ -1599,9 +1602,7 @@ export function sectionStateAt(
   return { opacity, x, y, interactive: opacity > 0.98 };
 }
 
-/** State for a layer while its entrance may be split across real and
-    virtual frames. Once the virtual entrance completes, use the settled
-    frame instead of replaying the real entrance at half opacity. */
+/** State for a layer while its entrance may include extra virtual time. */
 export function sectionLayerStateAt(
   section: SectionTimeline,
   frame: number,
@@ -1610,9 +1611,7 @@ export function sectionLayerStateAt(
 ): ElementState {
   const virtualEnter = virtualEnterProgressAtScrollPx(section, scrollPx, pxPerFrame);
   const virtualExit = virtualExitProgressAtScrollPx(section, scrollPx, pxPerFrame);
-  const [enterStart, enterEnd] = section.enter?.frames ?? [frame, frame];
   const [exitStart, exitEnd] = section.exit?.frames ?? [frame, frame];
-  const combinedEnter = 0.5 + (virtualEnter ?? 0) * 0.5;
 
   if (virtualExit !== null && section.exit) {
     return sectionStateAt(
@@ -1622,9 +1621,11 @@ export function sectionLayerStateAt(
   }
 
   if (virtualEnter !== null && section.virtualEnterFrames && frame <= section.settledFrame) {
+    // The real enter already reaches the settled frame. A virtual enter is
+    // extra scroll/read time, not a second half-opacity entrance.
     return sectionStateAt(
       section,
-      enterStart + (enterEnd - enterStart) * combinedEnter
+      section.settledFrame
     );
   }
 

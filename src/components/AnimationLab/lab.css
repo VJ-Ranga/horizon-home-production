@@ -1906,16 +1906,13 @@ html.lab-menu-open body {
 }
 
 /* ---------- reveal ----------
-   Frame-driven (DigitalLayer.tsx writes opacity per item, per frame,
-   from staggerProgressAt in timeline.ts) rather than a CSS animation,
-   so it stays tied to scroll position. The template's own override —
-   opacity only, no translateY slide ("reveal content in place") — is
-   kept: unlike Approach's rise-in, nothing here gets a transform.
-   opacity:0 is only the first-paint fallback. */
+   DigitalLayer uses one section-level reveal through useSectionLayer.
+   Keep the panel contents visible as a group so a fast scroll cannot
+   leave individual words or features half-loaded. */
 .s-digital2__word,
 .s-digital2__lead,
 .s-digital2__feature {
-  opacity: 0;
+  opacity: 1;
 }
 
 /* ---------- bottom five circles ---------- */
@@ -3931,9 +3928,8 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   overflow: hidden;
 }
 
-/* Frame-driven (GovernanceCardsLayer.tsx writes opacity/translateY
-   per word/card, per frame) rather than a CSS animation — opacity:0
-   here is only the first-paint fallback. */
+/* Kept for compatibility with older markup; the current title is a single
+   element controlled by the section-level reveal. */
 .s-govcards__word {
   display: inline-block;
   opacity: 0;
@@ -3965,7 +3961,7 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   backdrop-filter: blur(18px) saturate(1.15);
   box-shadow: 0 12px 32px rgba(3, 32, 41, 0.25);
   text-align: center;
-  opacity: 0;
+  opacity: 1;
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 

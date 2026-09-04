@@ -27,52 +27,19 @@
    row (all labelled "User Profiles" in the source, verbatim — not a
    typo introduced here).
 
-   Reveal: frame-driven (VJ, 2026-08-23 — "all animation... need to
-   work with scrolling"), same staggerProgressAt helper as
-   ApproachLayer.tsx/MainStartLayer.tsx, not a fixed-duration CSS
-   animation — every item's opacity is written per frame, tied
-   directly to scroll position. The ANIMATION ITSELF stays different
-   here on purpose, though: the template's own CSS overrides
-   .horizon-motion-target/-heading for this section specifically to
-   strip the translateY slide and animate opacity only ("reveal
-   content in place; no horizontal/vertical slide" — see
-   digital-fade-in/digital-char-fade-in in the template). Matched
-   exactly: plain fade, no rise, for the title/lead/features here,
-   unlike Approach's rise-in. Title splits PER WORD, not per character
-   (2026-08-23, separate fix — per-character spans broke the font's
-   kerning between adjacent letters, which read as broken
-   letter-spacing; words keep their internal kerning intact).
-   CHAR_WINDOW/GROUP_WINDOW are wider than the section's own `enter`
-   (136-150) to give this many items room — widen further if it still
-   feels rushed. */
+   Reveal: one simple section-level animation. The shared
+   useSectionLayer controller moves and fades the complete panel, so the
+   title, lead, and eight features arrive together. This intentionally
+   avoids per-word/per-feature frame work: the content is static and needs
+   to become readable immediately after the section is ready. */
 
-import { useEffect, useRef } from "react";
-import {
-  progressBetween,
-  readPxPerFrame,
-  SECTIONS,
-  staggerProgressAt,
-  virtualEnterProgressAtScrollPx,
-} from "./timeline";
-import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
+import { SECTIONS } from "./timeline";
+import { useSectionLayer } from "./useFrameTimeline";
 import LottieIcon from "./LottieIcon";
 import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
 const DIGITAL = SECTIONS[3];
 const TITLE_TEXT = "The Next Horizon of Intelligent Reporting";
-// Splits on whitespace runs, KEEPING them as their own tokens (the
-// capturing group) so spacing between words renders as plain text,
-// not a wrapped span — see MainStartLayer.tsx for the same pattern.
-const TITLE_TOKENS = TITLE_TEXT.split(/(\s+)/);
-const TITLE_WORD_COUNT = TITLE_TOKENS.filter((token) => token.trim() !== "").length;
-// Widened to the full enter ramp (was [117, 129]) now the title is
-// 6 words, not 3 — gives each word room to fade before the section
-// settles at frame 131.
-const CHAR_WINDOW: [number, number] = [141, 161];
-// 0 lead, 1-8 the eight features.
-const GROUP_WINDOW: [number, number] = [141, 161];
-const GROUP_COUNT = 9;
-const EXIT_WINDOW = DIGITAL.exit!.frames;
 
 const FEATURES = [
   {
@@ -188,68 +155,6 @@ const PROFILES = [
 
 export default function DigitalLayer() {
   const ref = useSectionLayer(DIGITAL);
-  const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  const groupRefs = useRef<Array<HTMLElement | null>>([]);
-  const reducedMotionRef = useRef(false);
-  // Phones: no title/feature stagger — force everything solid, once.
-  const mobileSolidRef = useRef(false);
-
-  useEffect(() => {
-    reducedMotionRef.current = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
-  }, []);
-
-  useFrameEffect((frame, _phase, scrollPx) => {
-    if (mobileSolidRef.current) {
-      for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
-        const element = wordRefs.current[index];
-        if (element) element.style.opacity = "1";
-      }
-      for (let index = 0; index < GROUP_COUNT; index += 1) {
-        const element = groupRefs.current[index];
-        if (element) element.style.opacity = "1";
-      }
-      return;
-    }
-
-    if (reducedMotionRef.current) return;
-
-    const virtualEnter = virtualEnterProgressAtScrollPx(
-      DIGITAL,
-      scrollPx,
-      readPxPerFrame()
-    );
-    const realEnter = progressBetween(frame, CHAR_WINDOW[0], CHAR_WINDOW[1]);
-    const enterProgress = DIGITAL.virtualEnterFrames
-      ? virtualEnter === null
-        ? realEnter * 0.5
-        : 0.5 + virtualEnter * 0.5
-      : realEnter;
-    const animationFrame = CHAR_WINDOW[0] +
-      (CHAR_WINDOW[1] - CHAR_WINDOW[0]) * enterProgress;
-    const entering = virtualEnter !== null || frame < EXIT_WINDOW[0];
-    for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
-      const element = wordRefs.current[index];
-      if (!element) continue;
-      const t = entering
-        ? staggerProgressAt(index, TITLE_WORD_COUNT, animationFrame, CHAR_WINDOW)
-        : 1 - staggerProgressAt(TITLE_WORD_COUNT - 1 - index, TITLE_WORD_COUNT, frame, EXIT_WINDOW);
-      element.style.opacity = String(t);
-    }
-
-    for (let index = 0; index < GROUP_COUNT; index += 1) {
-      const element = groupRefs.current[index];
-      if (!element) continue;
-      const t = entering
-        ? staggerProgressAt(index, GROUP_COUNT, animationFrame, GROUP_WINDOW)
-        : 1 - staggerProgressAt(GROUP_COUNT - 1 - index, GROUP_COUNT, frame, EXIT_WINDOW);
-      element.style.opacity = String(t);
-    }
-  });
-
-  let titleWordIndex = -1;
 
   return (
     <div
@@ -262,34 +167,10 @@ export default function DigitalLayer() {
       <div className="s-digital2__stage">
         <article className="s-digital2__panel" data-lenis-prevent>
           <h2 className="s-digital2__title" id="digital2-title">
-            {TITLE_TOKENS.map((token, tokenIndex) => {
-              if (token.trim() === "") {
-                // eslint-disable-next-line react/no-array-index-key
-                return <span key={tokenIndex}>{token}</span>;
-              }
-              titleWordIndex += 1;
-              const index = titleWordIndex;
-              return (
-                <span
-                  // eslint-disable-next-line react/no-array-index-key
-                  key={tokenIndex}
-                  ref={(node) => {
-                    wordRefs.current[index] = node;
-                  }}
-                  className="s-digital2__word"
-                >
-                  {token}
-                </span>
-              );
-            })}
+            {TITLE_TEXT}
           </h2>
 
-          <p
-            className="s-digital2__lead"
-            ref={(node) => {
-              groupRefs.current[0] = node;
-            }}
-          >
+          <p className="s-digital2__lead">
             Reimagining the Annual Report as an intelligent digital experience
             that transforms how stakeholders discover, explore and engage with
             information through AI, personalisation, interactive visualisation
@@ -297,14 +178,11 @@ export default function DigitalLayer() {
           </p>
 
           <ul className="s-digital2__features">
-            {FEATURES.map((feature, index) => (
+            {FEATURES.map((feature) => (
               <li
-                key={feature.label}
-                className="s-digital2__feature"
-                ref={(node) => {
-                  groupRefs.current[index + 1] = node;
-                }}
-              >
+                  key={feature.label}
+                  className="s-digital2__feature"
+                >
                 <span className="s-digital2__icon" aria-hidden="true">
                   <img
                     src={`/digital/web-icons/${encodeURIComponent(feature.icon)}`}

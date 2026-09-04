@@ -24,42 +24,19 @@
    No <img> background — the scrubbed <canvas> is the background here,
    same swap as every other section.
 
-   Reveal: the section's own opacity/offset now comes from
-   useSectionLayer (standard pattern), same as everywhere else. The
-   title's per-word stagger and each card's stagger stay custom, same
-   staggerProgressAt helper as GovernanceLayer.tsx — word-not-character
-   split (kerning), both windows kept strictly inside this section's
-   own enter/exit frames (learned from the earlier Governance bug:
-   starting before the parent is visible wastes the stagger unseen,
-   ending past the settle frame causes a snap). Icon draw-in is the
-   one exception, kept as the template's own on-mount CSS animation
-   plus hover-redraw — same precedent as every other section's card
-   badges (ApproachLayer.tsx, DigitalLayer.tsx). Exit mirrors the
-   entrance in reverse (standing rule). */
+   Reveal: the section's own opacity/offset now controls the title and
+   all five cards as one compact group. Icon draw-in is kept as the
+   template's own on-mount CSS animation plus hover-redraw — same
+   precedent as every other section's card badges. */
 
 import { useEffect, useRef } from "react";
-import {
-  SECTIONS,
-  readPxPerFrame,
-  staggerProgressAt,
-  virtualEnterProgressAtScrollPx,
-  virtualExitProgressAtScrollPx,
-} from "./timeline";
+import { SECTIONS, progressBetween, easeOut } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 import LottieIcon from "./LottieIcon";
 
 const GOVERNANCE_CARDS = SECTIONS[10];
-
-const TITLE_TEXT = "Driving Sustainable Value Creation Through Effective Governance";
-const TITLE_TOKENS = TITLE_TEXT.split(/(\s+)/);
-const TITLE_WORD_COUNT = TITLE_TOKENS.filter((token) => token.trim() !== "").length;
-const SETTLE_FRAME = GOVERNANCE_CARDS.settledFrame;
-const ENTER_START = GOVERNANCE_CARDS.enter?.frames[0] ?? SETTLE_FRAME;
-const ENTER_END = SETTLE_FRAME + (GOVERNANCE_CARDS.virtualEnterFrames ?? 0);
-const TITLE_WINDOW: [number, number] = [ENTER_START, ENTER_END];
-const TITLE_EXIT_WINDOW: [number, number] = GOVERNANCE_CARDS.exit?.frames ?? [SETTLE_FRAME, SETTLE_FRAME];
-const CARDS_WINDOW: [number, number] = [ENTER_START + 2, ENTER_END];
-const CARDS_EXIT_WINDOW: [number, number] = GOVERNANCE_CARDS.exit?.frames ?? [SETTLE_FRAME, SETTLE_FRAME];
+const TITLE_WINDOW: [number, number] = [535, 538];
+const CARDS_WINDOW: [number, number] = [537, 540];
 
 const CARDS = [
   {
@@ -86,103 +63,21 @@ const CARDS = [
 
 export default function GovernanceCardsLayer() {
   const ref = useSectionLayer(GOVERNANCE_CARDS);
-  const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
-  // Phones: no title/card stagger — force title words and all 5 cards
-  // solid, once (see GlanceLayer's mobileSolid).
-  const mobileSolidRef = useRef(false);
-  useEffect(() => {
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
-  }, []);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
-    if (mobileSolidRef.current) {
-      for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
-        const element = wordRefs.current[index];
-        if (element) {
-          element.style.opacity = "1";
-          element.style.transform = "none";
-        }
-      }
-      for (let index = 0; index < CARDS.length; index += 1) {
-        const element = cardRefs.current[index];
-        if (element) {
-          element.style.opacity = "1";
-          element.style.transform = "none";
-        }
-      }
-      return;
+  useFrameEffect((frame) => {
+    const entering = frame < GOVERNANCE_CARDS.settledFrame;
+    const titleT = entering ? easeOut(progressBetween(frame, TITLE_WINDOW[0], TITLE_WINDOW[1])) : 1;
+    const cardsT = entering ? easeOut(progressBetween(frame, CARDS_WINDOW[0], CARDS_WINDOW[1])) : 1;
+
+    if (titleRef.current) {
+      titleRef.current.style.opacity = String(titleT);
+      titleRef.current.style.transform = `translateY(${10 * (1 - titleT)}px)`;
     }
-
-    const virtualEnter = virtualEnterProgressAtScrollPx(
-      GOVERNANCE_CARDS,
-      scrollPx,
-      readPxPerFrame()
-    );
-    const virtualExit = virtualExitProgressAtScrollPx(
-      GOVERNANCE_CARDS,
-      scrollPx,
-      readPxPerFrame()
-    );
-    const entering = virtualEnter !== null || frame < SETTLE_FRAME;
-    const animationFrame = virtualEnter === null
-      ? frame
-      : SETTLE_FRAME + virtualEnter * (GOVERNANCE_CARDS.virtualEnterFrames ?? 0);
-    const exitAnimationFrame = virtualExit === null
-      ? frame
-      : (GOVERNANCE_CARDS.exit?.frames[0] ?? SETTLE_FRAME) +
-        virtualExit * ((GOVERNANCE_CARDS.exit?.frames[1] ?? SETTLE_FRAME) - (GOVERNANCE_CARDS.exit?.frames[0] ?? SETTLE_FRAME));
-
-    for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
-      const element = wordRefs.current[index];
-      if (!element) continue;
-      const t = virtualExit !== null
-        ? 1 -
-          staggerProgressAt(
-            TITLE_WORD_COUNT - 1 - index,
-            TITLE_WORD_COUNT,
-            exitAnimationFrame,
-            TITLE_EXIT_WINDOW
-          )
-        : entering
-        ? staggerProgressAt(index, TITLE_WORD_COUNT, animationFrame, TITLE_WINDOW)
-        : frame <= SETTLE_FRAME
-        ? 1
-        : 1 -
-          staggerProgressAt(
-            TITLE_WORD_COUNT - 1 - index,
-            TITLE_WORD_COUNT,
-            exitAnimationFrame,
-            TITLE_EXIT_WINDOW
-          );
-      element.style.opacity = String(t);
-      element.style.transform = `translateY(${15 * (1 - t)}px)`;
-    }
-
-    for (let index = 0; index < CARDS.length; index += 1) {
-      const element = cardRefs.current[index];
-      if (!element) continue;
-      const t = virtualExit !== null
-        ? 1 -
-          staggerProgressAt(
-            CARDS.length - 1 - index,
-            CARDS.length,
-            exitAnimationFrame,
-            CARDS_EXIT_WINDOW
-          )
-        : entering
-        ? staggerProgressAt(index, CARDS.length, animationFrame, CARDS_WINDOW)
-        : frame <= SETTLE_FRAME
-        ? 1
-        : 1 -
-          staggerProgressAt(
-            CARDS.length - 1 - index,
-            CARDS.length,
-            exitAnimationFrame,
-            CARDS_EXIT_WINDOW
-          );
-      element.style.opacity = String(t);
-      element.style.transform = `translateY(${25 * (1 - t)}px)`;
+    if (cardsRef.current) {
+      cardsRef.current.style.opacity = String(cardsT);
+      cardsRef.current.style.transform = `translateY(${18 * (1 - cardsT)}px)`;
     }
   });
 
@@ -213,8 +108,6 @@ export default function GovernanceCardsLayer() {
     el.removeAttribute("data-lenis-prevent");
   }, [ref]);
 
-  let titleWordIndex = -1;
-
   return (
     <div
       className="lab-layer s-govcards"
@@ -224,38 +117,16 @@ export default function GovernanceCardsLayer() {
       aria-hidden="true"
     >
       <div className="s-govcards__content" data-lenis-prevent>
-        <h1 className="s-govcards__title">
-          {TITLE_TOKENS.map((token, tokenIndex) => {
-            if (token.trim() === "") {
-              // eslint-disable-next-line react/no-array-index-key
-              return <span key={tokenIndex}>{token}</span>;
-            }
-            titleWordIndex += 1;
-            const index = titleWordIndex;
-            return (
-              <span
-                // eslint-disable-next-line react/no-array-index-key
-                key={tokenIndex}
-                ref={(node) => {
-                  wordRefs.current[index] = node;
-                }}
-                className="s-govcards__word"
-              >
-                {token}
-              </span>
-            );
-          })}
+        <h1 className="s-govcards__title" ref={titleRef}>
+          Driving Sustainable Value Creation Through Effective Governance
         </h1>
 
-        <div className="s-govcards__cards">
+        <div className="s-govcards__cards" ref={cardsRef}>
           {CARDS.map((card, index) => (
             <div
               key={index}
               // eslint-disable-line react/no-array-index-key
               className="s-govcards__card lab-shine"
-              ref={(node) => {
-                cardRefs.current[index] = node;
-              }}
             >
               <div className="s-govcards__badge">
                 <LottieIcon

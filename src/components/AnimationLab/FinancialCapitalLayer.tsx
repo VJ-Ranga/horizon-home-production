@@ -53,9 +53,9 @@
    here. Background image is the same asset off every card's photo
    half, matching the source. */
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
-import { useSectionLayer } from "./useFrameTimeline";
+import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
 const FINCAP = SECTIONS[13];
 const CARD_COUNT = FINCAP.carousel!.count;
@@ -229,10 +229,9 @@ const CARDS: Card[] = [
 export default function FinancialCapitalLayer() {
   const ref = useSectionLayer(FINCAP, { interactiveDuringEnter: true });
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
+  const currentRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    let rafId = 0;
-    let current: number | null = null;
+  useFrameEffect((_frame, _phase, scrollPx) => {
     const pxPerFrame = readPxPerFrame();
     const startPx = scrollPxForFrame(FINCAP.settledFrame, pxPerFrame);
     const reduceMotion =
@@ -243,25 +242,18 @@ export default function FinancialCapitalLayer() {
     // ease() curve that stateForRel() uses.
     const damp = reduceMotion ? 1 : EASE;
 
-    const tick = () => {
-      rafId = requestAnimationFrame(tick);
+    // Dead zones on each side of the sweep keep the first and last cards
+    // visible while the shared timeline moves through the section.
+    const sweepPx = Math.min(Math.max(scrollPx - startPx - LEAD_PX, 0), SWEEP_PX);
+    const target = (sweepPx / SWEEP_PX) * (CARD_COUNT - 1);
+    if (currentRef.current === null) currentRef.current = target;
+    currentRef.current += (target - currentRef.current) * damp;
+    if (Math.abs(target - currentRef.current) < 0.0004) currentRef.current = target;
 
-      // Dead zones on each side of the sweep: held at card 0 for the
-      // first LEAD_PX (a beat after the freeze before anything moves),
-      // held at the last card for the final TAIL_PX (a beat once
-      // finished before scroll hands back to the frame timeline).
-      const sweepPx = Math.min(Math.max(window.scrollY - startPx - LEAD_PX, 0), SWEEP_PX);
-      const target = (sweepPx / SWEEP_PX) * (CARD_COUNT - 1);
-      if (current === null) current = target;
-      current += (target - current) * damp;
-      if (Math.abs(target - current) < 0.0004) current = target;
-
-      // The clipping stage is the whole viewport, so the positioning
-      // unit is the viewport height — this keeps the active/next gap in
-      // proportion at every screen size and parks the next card on the
-      // real bottom edge.
-      const V = window.innerHeight || 1;
-      const activeIndex = Math.min(Math.max(Math.round(current), 0), CARD_COUNT - 1);
+    // The clipping stage is the whole viewport, so the positioning unit is
+    // the viewport height and remains proportional at every screen size.
+    const V = window.innerHeight || 1;
+    const activeIndex = Math.min(Math.max(Math.round(currentRef.current), 0), CARD_COUNT - 1);
 
       const refH =
         cardRefs.current[activeIndex]?.offsetHeight ??
@@ -286,7 +278,7 @@ export default function FinancialCapitalLayer() {
       for (let index = 0; index < CARD_COUNT; index += 1) {
         const card = cardRefs.current[index];
         if (!card) continue;
-        const rel = index - current;
+        const rel = index - currentRef.current;
         const st = stateForRel(rel, previewC, activeC);
         // put the card's own centre at st.c of the viewport height; the
         // card is anchored top:0, so subtract half its height.
@@ -300,11 +292,7 @@ export default function FinancialCapitalLayer() {
         if (index === activeIndex) card.removeAttribute("aria-hidden");
         else card.setAttribute("aria-hidden", "true");
       }
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, []);
+  });
 
   return (
     <div

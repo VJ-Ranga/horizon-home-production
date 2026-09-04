@@ -13,14 +13,12 @@
    frame first, then stays fixed while the panel completes its movement
    and the layer exits.
 
-   The glide is scroll-driven, not frame-derived: it reads raw
-   window.scrollY (the same coordinate space scrollPxForFrame uses)
-   from the px where the pin frame begins, across the virtual span,
-   eased toward the target with EASE 0.12 in its own rAF loop. */
+   The glide consumes the shared frame driver's scrollPx value and is
+   eased toward the target with EASE 0.12. */
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
-import { useSectionLayer } from "./useFrameTimeline";
+import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
 const STRATEGY = SECTIONS[16];
 // The scroll distance over which the panel glides from its top to its
@@ -117,10 +115,11 @@ function FileIcon() {
 export default function StrategyLayer() {
   const ref = useSectionLayer(STRATEGY);
   const panelRef = useRef<HTMLDivElement>(null);
+  const currentRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    let rafId = 0;
-    let current: number | null = null;
+  useFrameEffect((_frame, _phase, scrollPx) => {
+    const panel = panelRef.current;
+    if (!panel) return;
     const pxPerFrame = readPxPerFrame();
     // The px position where the virtual pinned panel movement begins.
     const pinFrame = STRATEGY.scrollThrough!.pinFrame ?? STRATEGY.settledFrame;
@@ -153,32 +152,22 @@ export default function StrategyLayer() {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ease = reduceMotion ? 1 : EASE;
 
-    const tick = () => {
-      rafId = requestAnimationFrame(tick);
-      const panel = panelRef.current;
-      if (!panel) return;
+    const target =
+      sweepPx > 0
+        ? Math.min(Math.max((scrollPx - startPx) / sweepPx, 0), 1)
+        : 0;
+    if (currentRef.current === null) currentRef.current = target;
+    currentRef.current += (target - currentRef.current) * ease;
+    if (Math.abs(target - currentRef.current) < 0.0004) currentRef.current = target;
 
-      const target =
-        sweepPx > 0
-          ? Math.min(Math.max((window.scrollY - startPx) / sweepPx, 0), 1)
-          : 0;
-      if (current === null) current = target;
-      current += (target - current) * ease;
-      if (Math.abs(target - current) < 0.0004) current = target;
-
-      // Glide the whole panel up by exactly its overflow, so t = 1
-      // lands its bottom edge (last CTA + BOTTOM_PAD) at the viewport
-      // bottom. No snapping — one continuous move.
-      const overflow = Math.max(
-        panel.scrollHeight - window.innerHeight + BOTTOM_PAD,
-        0
-      );
-      panel.style.transform = `translate3d(0, ${(-current * overflow).toFixed(2)}px, 0)`;
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, []);
+    // Glide the whole panel up by exactly its overflow, so t = 1 lands its
+    // bottom edge (last CTA + BOTTOM_PAD) at the viewport bottom.
+    const overflow = Math.max(
+      panel.scrollHeight - window.innerHeight + BOTTOM_PAD,
+      0
+    );
+    panel.style.transform = `translate3d(0, ${(-currentRef.current * overflow).toFixed(2)}px, 0)`;
+  });
 
   return (
     <div
