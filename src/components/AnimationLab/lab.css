@@ -3641,6 +3641,22 @@ html.lab-menu-open body {
 .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(3) { transition-delay: 0s, 0.34s, 0.34s; }
 .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(4) { transition-delay: 0s, 0.44s, 0.44s; }
 
+/* Phones: no staggered fade — the intro and all four cards show solid
+   as soon as the layer is on screen (same as Financial Highlights and
+   Haycarb at a Glance). The click-to-expand still works. */
+@media (max-width: 700px) {
+  .s-nonfinancial9__intro,
+  .s-nonfinancial9__card,
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(1),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(2),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(3),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(4) {
+    opacity: 1 !important;
+    transform: none !important;
+    transition-delay: 0s !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .s-nonfinancial9__intro,
   .s-nonfinancial9__card {
@@ -4955,6 +4971,21 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   .s-financial2__metric {
     transition: background-color var(--dur-base) var(--ease-out),
       box-shadow var(--dur-base) var(--ease-out);
+  }
+
+  /* Phones: drop the per-part staggered fade. The whole section — head,
+     both metric columns, every row, the actions — shows solid the moment
+     the layer is on screen, same as Haycarb at a Glance. The JS still
+     gates clicks (pointer-events) to when the section is parked. */
+  .s-financial2__head,
+  .s-financial2__col,
+  .s-financial2__chartcard,
+  .s-financial2__actions,
+  .s-financial2__metrics li {
+    --reveal: 1 !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
 @media (prefers-reduced-motion: reduce) { .s-financial2__head, .s-financial2__col, .s-financial2__chartcard, .s-financial2__actions, .s-financial2__metrics li, .s-financial2__metric, .s-financial2__cta { transform: none; transition: none; } }
