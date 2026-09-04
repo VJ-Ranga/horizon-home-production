@@ -297,32 +297,70 @@ type Stop = CrawlStop | CarouselStop | ScrollThroughStop;
     totalScrollPx/frameForScrollPx/scrollPxForFrame, the whole module
     has finished loading. */
 let stopsCache: Stop[] | null = null;
+
+/** True on desktop (>1100px) and on the server (deterministic markup;
+    the client rebuilds stopsCache with the real viewport on first use).
+    Cached so a mid-page resize doesn't silently re-scale the whole
+    scroll map — call resetTimelineCache() to pick up a new viewport. */
+let desktopTimelineFlag: boolean | null = null;
+function isDesktopTimeline(): boolean {
+  if (desktopTimelineFlag === null) {
+    desktopTimelineFlag =
+      typeof window === "undefined" ||
+      window.matchMedia("(min-width: 1101px)").matches;
+  }
+  return desktopTimelineFlag;
+}
+
+/** Drop the cached stop list + desktop flag so `desktopPacing` is
+    re-evaluated. Nothing calls this today; wire it to a resize handler
+    if desktop<->mobile pacing needs to switch without a reload. */
+export function resetTimelineCache(): void {
+  stopsCache = null;
+  desktopTimelineFlag = null;
+}
+
 function stops(): Stop[] {
   if (!stopsCache) {
+    const onDesktop = isDesktopTimeline();
+    /** The section's desktop-only pacing overrides, or {} everywhere else. */
+    const dp = (section: SectionTimeline) =>
+      (onDesktop && section.desktopPacing) || {};
+    const effHoldFrames = (section: SectionTimeline) =>
+      dp(section).holdFrames ?? section.holdFrames ?? 0;
+
     const crawlStops: Stop[] = SECTIONS.filter(
       (section) =>
         !section.carousel &&
         !section.scrollThrough &&
-        (section.id !== "01-hero" || (section.holdFrames ?? 0) > 0)
+        (section.id !== "01-hero" || effHoldFrames(section) > 0)
     ).map((section) => ({
       kind: "crawl",
       sectionId: section.id,
       frame: section.settledFrame,
-      slowdown: section.holdSlowdown ?? HOLD_CRAWL_SLOWDOWN,
-      rampFrames: section.holdRampFrames ?? 0,
-      crawlFrames: section.holdCrawlFrames ?? HOLD_CRAWL_FRAMES,
-      holdFrames: section.holdFrames ?? 0,
-      virtualExitFrames: section.virtualExitFrames ?? 0,
-      virtualEnterFrames: section.virtualEnterFrames ?? 0,
+      slowdown:
+        dp(section).holdSlowdown ?? section.holdSlowdown ?? HOLD_CRAWL_SLOWDOWN,
+      rampFrames: dp(section).holdRampFrames ?? section.holdRampFrames ?? 0,
+      crawlFrames:
+        dp(section).holdCrawlFrames ??
+        section.holdCrawlFrames ??
+        HOLD_CRAWL_FRAMES,
+      holdFrames: effHoldFrames(section),
+      virtualExitFrames:
+        dp(section).virtualExitFrames ?? section.virtualExitFrames ?? 0,
+      virtualEnterFrames:
+        dp(section).virtualEnterFrames ?? section.virtualEnterFrames ?? 0,
     }));
     const carouselStops: Stop[] = SECTIONS.filter((section) => section.carousel).map(
       (section) => ({
         kind: "carousel",
         sectionId: section.id,
         frame: section.settledFrame,
-        scrollPx: section.carousel!.scrollPx,
-        virtualEnterFrames: section.virtualEnterFrames ?? 0,
-        virtualExitFrames: section.virtualExitFrames ?? 0,
+        scrollPx: dp(section).carouselScrollPx ?? section.carousel!.scrollPx,
+        virtualEnterFrames:
+          dp(section).virtualEnterFrames ?? section.virtualEnterFrames ?? 0,
+        virtualExitFrames:
+          dp(section).virtualExitFrames ?? section.virtualExitFrames ?? 0,
       })
     );
     const scrollThroughStops: Stop[] = SECTIONS.filter(
@@ -331,14 +369,18 @@ function stops(): Stop[] {
       kind: "scrollThrough",
       sectionId: section.id,
       frame: section.settledFrame,
-      scrollPx: section.scrollThrough!.scrollPx,
+      scrollPx:
+        dp(section).scrollThroughScrollPx ?? section.scrollThrough!.scrollPx,
       slowdown: section.scrollThrough!.slowdown,
       rampFrames: section.scrollThrough!.rampFrames,
       leadPx: section.scrollThrough!.leadPx,
       tailPx: section.scrollThrough!.tailPx,
       slowFromFrame: section.scrollThrough!.slowFromFrame,
       pinFrame: section.scrollThrough!.pinFrame,
-      virtualExitFrames: section.scrollThrough!.virtualExitFrames ?? 0,
+      virtualExitFrames:
+        dp(section).scrollThroughVirtualExitFrames ??
+        section.scrollThrough!.virtualExitFrames ??
+        0,
     }));
     stopsCache = [...crawlStops, ...carouselStops, ...scrollThroughStops].sort(
       (a, b) => a.frame - b.frame
@@ -975,6 +1017,29 @@ export interface SectionTimeline {
   pinFrame?: number;
   /** Virtual frame-equivalent exit animation after the pin. */
   virtualExitFrames?: number;
+  };
+  /** DESKTOP-ONLY (>1100px) pacing overrides. Ignored on tablet and
+      mobile — those keep the base values above, so the mobile/tablet
+      scroll model is untouched by anything set here. Use it to make a
+      section dwell longer on desktop without shifting the phone.
+
+      Read once at first use; a resize across the 1100px line needs a
+      reload to re-apply (same rule as the frame-set choice). Safest to
+      only *lengthen* phases that already exist in the base config —
+      turning a virtualEnter/Exit phase on from nothing here won't drive
+      its opacity curve. `holdFrames` is a pure dwell and always safe. */
+  desktopPacing?: {
+    holdFrames?: number;
+    virtualEnterFrames?: number;
+    virtualExitFrames?: number;
+    holdCrawlFrames?: number;
+    holdSlowdown?: number;
+    holdRampFrames?: number;
+    /** carousel sections (14-financial-capital, 18-community) */
+    carouselScrollPx?: number;
+    /** scroll-through sections (17-strategy) */
+    scrollThroughScrollPx?: number;
+    scrollThroughVirtualExitFrames?: number;
   };
 }
 
