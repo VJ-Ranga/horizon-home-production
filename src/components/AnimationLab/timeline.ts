@@ -1310,8 +1310,8 @@ export const SECTIONS: SectionTimeline[] = [
     // virtualExitFrames 10 -> 20, so the fade-out is pinned at 555 for
     // twice as long and the section leaves gently instead of snapping.
     settledFrame: 555,
-    enter: { frames: [553, 555], from: { x: 4 } },
-    exit: { frames: [555, 575], to: { x: 4 } },
+    enter: { frames: [553, 555], from: { y: 4 } },
+    exit: { frames: [555, 575], to: { y: 4 } },
     holdFrames: 60,
     virtualExitFrames: 20,
   },
