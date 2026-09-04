@@ -151,15 +151,15 @@ export default function LeadershipLayer() {
     const BOTTOM_PAD = 40;
     // Dwell zones carved out of the pinned budget. The first START_HOLD_PX
     // of scroll past the settle just holds the content still at its top;
-    // the last END_HOLD_PX holds it still, fully glided, at the footer.
-    // Without them the glide consumes the whole budget and is still
-    // finishing as the section starts to fade — the footer never gets a
-    // still beat and a small flick slips the whole section away.
-    // END_HOLD_PX must exceed the ~280px exit-fade so the glide is done
-    // before the fade begins. The glide itself stays 1:1 with scroll;
-    // it only compresses if the content is taller than the room left.
-    const START_HOLD_PX = 70;
-    const END_HOLD_PX = 350;
+    // the last END_HOLD_PX holds it still, fully glided, at the footer,
+    // covering the ~280px exit fade plus a small opaque beat. Without
+    // them the glide consumes the whole budget and is still finishing as
+    // the section fades — the footer never gets a still beat and a small
+    // flick slips the whole section away. The section design is fixed, so
+    // the glide compresses to fit whatever room is left (the content is
+    // taller than the budget); that trade buys the top/bottom hold.
+    const START_HOLD_PX = 50;
+    const END_HOLD_PX = 300;
     const glideRoomPx = Math.max(budgetPx - START_HOLD_PX - END_HOLD_PX, 1);
 
     const tick = () => {
