@@ -2812,6 +2812,14 @@ html.lab-menu-open body {
   .s-glance2__pill { justify-content: center; width: 100%; }
 }
 
+@media (max-width: 700px) {
+  /* Beat globals.css's `justify-content: safe center` (same-class
+     specificity, loads later): the reader must always start at its
+     first line, never vertically centred — centring is what made it
+     "sometimes not load at the top". */
+  .lab .s-glance2__stage { justify-content: flex-start; }
+}
+
 @media (max-width: 480px) {
   .s-glance2__stats { gap: 8px; }
   .s-glance2__stat { min-height: 84px; padding: 10px 6px; }

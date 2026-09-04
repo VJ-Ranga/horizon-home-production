@@ -118,10 +118,65 @@ export default function GlanceLayer() {
   const videoRef = useRef<HTMLDivElement>(null);
   const pillRefs = useRef<Array<HTMLLIElement | null>>([]);
   const mobileSolidRef = useRef(false);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
+
+  // The stage scrolls internally on <=1100px. `data-lenis-prevent` stops
+  // Lenis scrubbing the timeline while you read it — but left on
+  // unconditionally it also swallows the touch that should hand back to
+  // the page once you reach the bottom, or when the content fits and
+  // there is nothing to scroll (the "sometimes I can't move it" bug on
+  // real phones). Gate it: prevent only while the reader is actually
+  // overflowing AND not yet scrolled to its bottom edge. At the bottom,
+  // release so the next swipe advances to the next section. Desktop
+  // keeps the attribute exactly as before.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const compact = window.matchMedia("(max-width: 1100px)");
+
+    const sync = () => {
+      if (!compact.matches) {
+        stage.setAttribute("data-lenis-prevent", "");
+        return;
+      }
+      const overflow = stage.scrollHeight - stage.clientHeight;
+      const atBottom = stage.scrollTop >= overflow - 2;
+      if (overflow > 4 && !atBottom) {
+        stage.setAttribute("data-lenis-prevent", "");
+      } else {
+        stage.removeAttribute("data-lenis-prevent");
+      }
+    };
+
+    sync();
+    stage.addEventListener("scroll", sync, { passive: true });
+    window.addEventListener("resize", sync);
+    compact.addEventListener("change", sync);
+    return () => {
+      stage.removeEventListener("scroll", sync);
+      window.removeEventListener("resize", sync);
+      compact.removeEventListener("change", sync);
+    };
+  }, []);
+
+  // Content height can change after fonts/images settle or when the
+  // section re-enters — re-evaluate the prevent gate each frame too.
+  useFrameEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    if (!window.matchMedia("(max-width: 1100px)").matches) return;
+    const overflow = stage.scrollHeight - stage.clientHeight;
+    const atBottom = stage.scrollTop >= overflow - 2;
+    if (overflow > 4 && !atBottom) {
+      stage.setAttribute("data-lenis-prevent", "");
+    } else {
+      stage.removeAttribute("data-lenis-prevent");
+    }
+  });
 
   useFrameEffect((frame) => {
     currentFrameRef.current = frame;
@@ -224,10 +279,10 @@ export default function GlanceLayer() {
       data-initial-hidden="true"
       aria-labelledby="glance2-title"
     >
-      {/* data-lenis-prevent: this stage scrolls internally on mobile
-          (overflow-y:auto in lab.css); without it Lenis eats the touch
-          and scrubs the timeline instead of scrolling the content. */}
-      <div className="s-glance2__stage" data-lenis-prevent>
+      {/* data-lenis-prevent is applied/removed by the effect above, not
+          hardcoded: it must let go at the reader's bottom edge and when
+          the content fits, or a real-phone touch gets trapped. */}
+      <div className="s-glance2__stage" ref={stageRef}>
         <h2 className="s-glance2__title" id="glance2-title">
           {TITLE_TOKENS.map((token, tokenIndex) => {
             if (token.trim() === "") {
