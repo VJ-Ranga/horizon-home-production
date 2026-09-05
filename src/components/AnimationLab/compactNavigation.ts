@@ -14,6 +14,14 @@ export function compactSpecialTargetScrollPx(
   return null;
 }
 
+export function compactSpecialTransitionDurationMs(
+  scrollDistancePx: number,
+  pxPerFrame: number,
+  slowdown = 1,
+): number {
+  return Math.round((scrollDistancePx / pxPerFrame / COMPACT_TRANSITION_FPS) * 1000 * slowdown);
+}
+
 export function compactCarouselTargetScrollPx(
   currentFrame: number,
   currentScrollPx: number,

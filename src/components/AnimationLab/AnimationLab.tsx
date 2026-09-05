@@ -67,6 +67,7 @@ import LoopTransitionOverlay from "./LoopTransitionOverlay";
 import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
 import {
   compactSpecialTargetScrollPx,
+  compactSpecialTransitionDurationMs,
   compactTransitionDurationMs,
   nextCompactSectionFrame,
   readerConsumesScroll,
@@ -625,7 +626,14 @@ export default function AnimationLab({
       const fromScrollY = scrollY;
       const duration = specialTargetPx === null
         ? compactTransitionDurationMs(currentFrame, targetFrame!)
-        : Math.max(900, Math.round((Math.abs(specialTargetPx - currentScrollPx) / pxPerFrame / 15) * 1000));
+        : Math.max(
+            900,
+            compactSpecialTransitionDurationMs(
+              Math.abs(specialTargetPx - currentScrollPx),
+              pxPerFrame,
+              specialSection?.scrollThrough?.slowdown ?? 1,
+            ),
+          );
       const startedAt = performance.now();
       const animate = (now: number) => {
         const progress = Math.min((now - startedAt) / duration, 1);

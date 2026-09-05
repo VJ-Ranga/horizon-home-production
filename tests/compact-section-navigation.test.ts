@@ -4,10 +4,16 @@ import test from "node:test";
 import {
   compactCarouselTargetScrollPx,
   compactSpecialTargetScrollPx,
+  compactSpecialTransitionDurationMs,
   compactTransitionDurationMs,
   readerConsumesScroll,
   nextCompactSectionFrame,
 } from "../src/components/AnimationLab/compactNavigation.ts";
+
+test("compact scroll-through sections apply their slowdown to gesture duration", () => {
+  assert.equal(compactSpecialTransitionDurationMs(1_862, 14, 1), 8_867);
+  assert.equal(compactSpecialTransitionDurationMs(1_862, 14, 2), 17_733);
+});
 
 test("compact navigation spends a gesture on pinned holds and scroll-through spans", () => {
   assert.equal(compactSpecialTargetScrollPx(1_000, 1, 1_000, 2_120), 2_120);
