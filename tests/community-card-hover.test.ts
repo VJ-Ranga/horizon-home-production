@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const styles = readFileSync(
-  new URL("../src/components/AnimationLab/lab.css", import.meta.url),
+  new URL(
+    "../src/components/AnimationLab/styles/18-community.css",
+    import.meta.url,
+  ),
   "utf8",
 );
 

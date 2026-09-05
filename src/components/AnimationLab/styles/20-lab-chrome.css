@@ -1,0 +1,29 @@
+/* =========================================================
+   Background-music toggle on the lab page (IntroNavGate drives these).
+   Only this file loads on `/`, so the feature pages keep the plain
+   corner placement from globals.css.
+   ========================================================= */
+
+/* Before frame 50 it is not there at all. The fade is deliberately as
+   slow as the hero's own parts so it arrives with them rather than
+   popping in; opacity is !important because the component sets an
+   inline opacity of its own once the audio element is ready. */
+[data-bg-music] {
+  transition: opacity 900ms var(--ease-out, ease), top 600ms var(--ease-out, ease),
+    right 600ms var(--ease-out, ease), transform 0.2s ease, color 0.2s ease;
+}
+html.lab-music-hidden [data-bg-music] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Frames 50-70: the hero's video card owns the top-right corner, so sit
+   below it. The card is `min(16.48%, 29.30svh)` wide with a 633:353 card
+   plus caption, which bottoms out at ~22.5svh at its tallest; 24svh
+   clears it at every viewport measured. `right` matches the card's own
+   1.46%, so the toggle lines up with its edge rather than the screen's. */
+html.lab-music-hero [data-bg-music] {
+  top: 24svh;
+  right: 1.46%;
+  margin: 0;
+}

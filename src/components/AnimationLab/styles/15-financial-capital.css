@@ -1,0 +1,328 @@
+/* =========================================================
+   PART A (cont.) — SECTION 11, "Our Approach to Reporting —
+   Financial Capital"
+   Ported from html-templates/final/Artboard 7.html. No background
+   image here — unlike the source (which paints its own static
+   ocean-frame-0503.webp behind the sticky carousel), the shared
+   scrubbed canvas IS the background, frozen at frame 515 by the
+   timeline's carousel scroll-lock (see FinancialCapitalLayer.tsx and
+   the `carousel` field in timeline.ts) rather than swapped for a
+   separate image.
+
+   The template's own .track/position:sticky scroll-jack scaffolding
+   isn't needed either — that trick exists to keep a section pinned
+   on screen for its own private scroll budget on an ordinary page.
+   This lab already has an equivalent, more general mechanism (every
+   section is a stacked .lab-layer, and the shared frame driver
+   already knows how to freeze the timeline over a scroll budget), so
+   .s-fincap is a completely ordinary lab-layer and the cards read
+   scroll position directly rather than through a sticky/pinned
+   wrapper. */
+
+/* The whole viewport is the carousel's clipping stage (see the ported
+   reference model in FinancialCapitalLayer.tsx). The heading is lifted
+   out of flow and parked just above the active card so it reads as part
+   of the card group, not a separate band up top. */
+.s-fincap {
+  --fincap-u: min(0.0625vw, 0.11109vh);
+}
+
+.s-fincap__stage {
+  position: relative;
+  height: 100%;
+  padding: 0;
+}
+
+.s-fincap__intro {
+  position: absolute;
+  left: 50%;
+  /* bottom edge sits just above the active card, whose top is at
+     ~50% - (cardHeight / 2); keep the two visually grouped. */
+  bottom: calc(50% + clamp(120px, 19.2svh, 200px) + 20px);
+  transform: translateX(-50%);
+  width: min(1120px, calc(100% - 2 * var(--gutter)));
+  margin: 0;
+  text-align: center;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.s-fincap__title {
+  margin: 0;
+  color: var(--on-dark);
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: calc(var(--fincap-u) * 43);
+  font-weight: 400;
+  line-height: calc(var(--fincap-u) * 49);
+}
+
+.s-fincap__lede {
+  max-width: 1120px;
+  margin: clamp(14px, 2.2svh, 24px) auto 0;
+  color: #ffffff;
+  font-family: "Avenir Lab", Arial, sans-serif;
+  font-size: calc(var(--fincap-u) * 20);
+  line-height: calc(var(--fincap-u) * 30);
+}
+
+.s-fincap__cards {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  /* nudged 20px down to open a gap from the intro copy above */
+  transform: translate(-50%, 20px);
+  height: 100%;
+  /* ~30% wider than the old 960px base, still gutter-safe on small screens */
+  width: min(1000px, calc(100% - 2 * var(--gutter)));
+  margin: 0;
+  overflow: hidden;
+}
+
+.s-fincap__card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(93, 124, 127, 0.96) 0%,
+    rgba(36, 102, 120, 0.97) 45%,
+    rgba(10, 77, 108, 0.99) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 12px 32px rgba(3, 32, 41, 0.25);
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+.s-fincap__card-upper {
+  position: relative;
+  /* ~1.3x the old 160-210 range — cards read ~30% bigger on both axes */
+  min-height: clamp(166px, 23.2svh, 218px);
+}
+
+/* Per-card "Explore More" — anchored bottom-right over the card's
+   image half (see the spec mockup for section 14). */
+.s-fincap__cta {
+  position: absolute;
+  right: clamp(18px, 2.6vw, 30px);
+  /* sits lower over the card image (VJ) — was clamp(14px, 2svh, 20px) */
+  bottom: clamp(6px, 1svh, 10px);
+  z-index: 2;
+}
+
+.lab .s-fincap__cta {
+  gap: 8px;
+  padding: 0 0 3px;
+  border-radius: 0;
+  color: #ffffff;
+  background: transparent;
+  box-shadow: none;
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+
+/* underline the label text only — the ↗ (::after) stays undecorated */
+.lab .s-fincap__cta span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.lab .s-fincap__cta::after {
+  content: "↗";
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.lab .s-fincap__cta:hover {
+  color: #ffffff;
+  background: transparent;
+  box-shadow: none;
+  transform: translateX(3px);
+}
+
+.lab .s-fincap__cta:hover::after { transform: translateX(3px); }
+
+/* No inner "card becomes active" reveal. It was keyed off the
+   aria-hidden flag, which flips at the MIDPOINT of a scrub transition —
+   so the incoming card's text and stats flashed from opacity 0 and slid
+   14px just as it settled. Under the continuous stack scrub the card
+   content is simply always-visible; the carousel's own
+   translate/scale/opacity path carries the motion. */
+
+.s-fincap__card-image {
+  position: absolute;
+  inset: 0 0 0 40%;
+  background: url("/fincap/physical-report-frame-0125.webp") center/cover no-repeat;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 32%, #000 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 32%, #000 100%);
+}
+
+.s-fincap__card-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(11, 52, 64, 0.78) 0%, rgba(11, 52, 64, 0.60) 25%, rgba(11, 52, 64, 0.42) 100%);
+}
+
+.s-fincap__card-body {
+  position: relative;
+  z-index: 1;
+  padding: clamp(31px, 4.7svh, 52px) clamp(36px, 5.2vw, 73px) clamp(18px, 2.6svh, 29px);
+  color: #ffffff;
+}
+
+.s-fincap__card-body h2 {
+  margin: 0;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(29px, 2.5vw, 44px);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.s-fincap__card-body p {
+  max-width: 494px;
+  margin: clamp(13px, 2.3svh, 23px) 0 0;
+  font-size: clamp(15px, 1.24vw, 20px);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.s-fincap__card-lower {
+  position: relative;
+  z-index: 1;
+  padding: 0 clamp(36px, 5.2vw, 73px) clamp(23px, 3.9svh, 39px);
+  color: #ffffff;
+}
+
+.s-fincap__rule {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.s-fincap__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 31px;
+  margin-top: clamp(16px, 2.6svh, 26px);
+}
+
+.s-fincap__stat strong {
+  display: block;
+  color: #8bdce0;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(29px, 3.1vw, 52px);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.s-fincap__stat strong em {
+  color: #8bdce0;
+  font-style: normal;
+}
+
+.s-fincap__stat strong small {
+  font-size: 0.6em;
+}
+
+.s-fincap__stat span {
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* ---------- Section 14 · TABLET (701–1100px) ----------
+   The scroll-jack carousel stays live here — the only thing that
+   breaks at this width is the --fincap-u type (its 0.0625vw term
+   collapses the heading/lede on a narrow viewport), so those are
+   pinned to readable clamp() px. Card geometry is left as desktop. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-fincap__intro { width: min(760px, calc(100% - 2 * var(--gutter))); }
+  .s-fincap__title { font-size: clamp(30px, 4.6vw, 40px); line-height: 1.14; }
+  .s-fincap__lede {
+    max-width: none;
+    margin-top: clamp(12px, 2svh, 20px);
+    font-size: clamp(15px, 2.05vw, 18px);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .s-fincap__card-body p { max-width: 42ch; font-size: clamp(14px, 1.9vw, 16px); }
+  .s-fincap__stat strong { font-size: clamp(21px, 3.5vw, 30px); }
+  .s-fincap__stat span { font-size: clamp(12px, 1.5vw, 14px); }
+}
+
+/* ---------- Section 14 · MOBILE (≤700px) ----------
+   The carousel now runs on phones too (it used to be replaced by a
+   plain static stack here). The cards are kept compact — natural
+   height ≈ 40–50svh — so FinancialCapitalLayer.tsx's peek geometry
+   (the next card parks just below the active one) still holds
+   without touching its motion constants. The card's side image
+   becomes a top band; stats stay a 3-up row, just smaller. */
+@media (max-width: 700px) {
+  .s-fincap__intro {
+    left: 0;
+    right: 0;
+    bottom: auto;
+    top: clamp(22px, 4.5svh, 44px);
+    transform: none;
+    width: auto;
+    padding: 0 clamp(16px, 5vw, 22px);
+  }
+  .s-fincap__title { font-size: clamp(24px, 7vw, 32px); line-height: 1.12; }
+  .s-fincap__lede {
+    max-width: none;
+    margin-top: clamp(8px, 2svh, 14px);
+    font-size: clamp(12.5px, 3.5vw, 14px);
+    line-height: 1.42;
+    text-wrap: pretty;
+  }
+  .s-fincap__cards { width: calc(100% - 2 * var(--gutter)); }
+
+  /* flex column so "Explore More" can align to the right edge below
+     the copy (the image stays position:absolute, out of this flow). */
+  .s-fincap__card-upper { min-height: 0; display: flex; flex-direction: column; }
+  .s-fincap__card-image {
+    inset: 0 0 auto 0;
+    height: clamp(100px, 14.5svh, 132px);
+    -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+  }
+  .s-fincap__card-image::after {
+    background: linear-gradient(180deg, rgba(11, 52, 64, 0.2) 0%, rgba(11, 52, 64, 0.72) 100%);
+  }
+  .s-fincap__card-body {
+    padding: calc(clamp(100px, 14.5svh, 132px) + clamp(10px, 2.6vw, 16px)) clamp(16px, 5vw, 22px) clamp(8px, 2vw, 12px);
+  }
+  .s-fincap__card-body h2 { font-size: clamp(20px, 5.6vw, 26px); }
+  .s-fincap__card-body p {
+    max-width: none;
+    margin-top: clamp(6px, 1.6vw, 10px);
+    font-size: clamp(12px, 3.4vw, 14px);
+    line-height: 1.4;
+  }
+  /* "Explore More" drops into normal flow under the description and
+     sits at the right edge (was floated over the image band, where it
+     clashed with the heading). */
+  .s-fincap__cta {
+    position: static;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    align-self: flex-end;
+    margin: clamp(8px, 2vw, 12px) clamp(16px, 5vw, 22px) clamp(6px, 1.5vw, 10px);
+  }
+  .s-fincap__card-lower { padding: 0 clamp(16px, 5vw, 22px) clamp(12px, 3vw, 16px); }
+  .s-fincap__rule { margin-bottom: clamp(8px, 2vw, 12px); }
+  .s-fincap__stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(6px, 2.5vw, 12px);
+    margin-top: clamp(8px, 2vw, 12px);
+  }
+  .s-fincap__stat { min-width: 0; }
+  .s-fincap__stat strong { font-size: clamp(17px, 5vw, 22px); white-space: normal; }
+  .s-fincap__stat strong small { font-size: 0.6em; }
+  .s-fincap__stat span { font-size: clamp(10.5px, 3vw, 12.5px); line-height: 1.2; }
+}

@@ -1,0 +1,331 @@
+/* ---------------------------------------------------------
+   LOAD SCREEN + INTRO — LabIntro.tsx
+   Only rendered on /animation-lab-full, -intro and -loading.
+   Absent from every other route.
+   --------------------------------------------------------- */
+.lab-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  /* Sampled from /hero/intro.mp4's own opening frame (stable across
+     the first 2s — not a fade-in), not the /ai-assistant page's navy.
+     The video sits under this overlay from the very first paint (see
+     LabIntro.tsx), so matching its actual colour — not a generic
+     brand tone — is what makes the "loading" -> "playing" handoff
+     invisible instead of a visible colour jump. */
+  background: #095473;
+  transition: opacity 0.55s ease;
+}
+.lab-intro[data-stage="leaving"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lab-intro__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* under the load overlay while it crossfades out */
+  /* A <video> now (was a manually cover-fit <canvas>); object-fit
+     reproduces the same fill behaviour with no JS. */
+  object-fit: cover;
+  background: #095473; /* matches the load screen's base, no flash */
+}
+
+/* Load-screen visuals (aurora + counter). Stays mounted through the
+   hand-off and fades out over the intro's first frame — no hard cut. */
+.lab-intro__load {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.6s ease;
+}
+.lab-intro__load[data-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Load-screen background — ported 1:1 from the live /ai-assistant page:
+   Horizon project/src/components/AuroraBackground.tsx
+   + @keyframes fluid-1..4 in Horizon project/src/app/globals.css
+   (base #081F2B, brand-main #147385 blobs, noise overlay). Pure CSS
+   keyframe drift — no JS, no pointer interaction. */
+.lab-intro__aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lab-intro__aurora-base {
+  position: absolute;
+  inset: 0;
+  /* Matches .lab-intro's own base — see the comment there. */
+  background: #095473;
+}
+.lab-intro__fluid {
+  position: absolute;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 9999px;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+.lab-intro__fluid--1 {
+  left: -10%;
+  top: -10%;
+  background: rgba(20, 115, 133, 0.8); /* brand-main / 80 */
+  filter: blur(150px);
+  animation: lab-intro-fluid-1 16s ease-in-out infinite alternate;
+}
+.lab-intro__fluid--2 {
+  right: -10%;
+  top: 5%;
+  background: rgba(20, 115, 133, 0.5); /* brand-main / 50 */
+  filter: blur(200px);
+  animation: lab-intro-fluid-2 18s ease-in-out infinite alternate;
+}
+.lab-intro__fluid--3 {
+  left: -5%;
+  bottom: -10%;
+  background: rgba(20, 115, 133, 0.3); /* brand-main / 30 */
+  filter: blur(180px);
+  animation: lab-intro-fluid-3 15s ease-in-out infinite alternate;
+}
+.lab-intro__fluid--4 {
+  right: -5%;
+  bottom: -5%;
+  background: #051d21; /* color-mix(brand-main 25%, black) */
+  filter: blur(200px);
+  animation: lab-intro-fluid-4 20s ease-in-out infinite alternate;
+}
+.lab-intro__aurora-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@keyframes lab-intro-fluid-1 {
+  from { transform: translate3d(-8vw, -8vh, 0) scale(1); }
+  to { transform: translate3d(44vw, 36vh, 0) scale(1.35); }
+}
+@keyframes lab-intro-fluid-2 {
+  from { transform: translate3d(10vw, 12vh, 0) scale(1.1); }
+  to { transform: translate3d(-40vw, -26vh, 0) scale(0.85); }
+}
+@keyframes lab-intro-fluid-3 {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-34vw, -38vh, 0) scale(1.5); }
+}
+@keyframes lab-intro-fluid-4 {
+  from { transform: translate3d(-16vw, -10vh, 0) scale(1.2); }
+  to { transform: translate3d(28vw, -34vh, 0) scale(0.9); }
+}
+
+.lab-intro__loader {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #ffffff;
+}
+
+/* the % sits inside a thin circular progress ring */
+.lab-intro__dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(260px, 64vw);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+.lab-intro__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.lab-intro__ring-track,
+.lab-intro__ring-fill {
+  fill: none;
+}
+.lab-intro__ring-track {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 2;
+}
+.lab-intro__ring-fill {
+  /* White, matching the comet trail's own colour — was a warm
+     orange-to-green gradient (labIntroDialGrad, now removed). */
+  stroke: #ffffff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.2s linear;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+/* Bright comet-head tip at the ring-fill's leading edge — same bloom
+   look as /hero/intro.mp4's own opening shot (a glowing point trailed
+   by a fading line), echoed here so the load screen and the video it
+   hands off to read as one visual, not two different treatments. */
+.lab-intro__ring-head {
+  /* Same circle, same radius, same stroke-dashoffset formula as
+     .lab-intro__ring-fill — see the comment on the element in
+     LabIntro.tsx for why this is a dash on the same geometry rather
+     than a separately-positioned marker. */
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  /* ~1.2 units of a 100-unit pathLength — round linecap turns that
+     short a dash into a dot rather than a visible line segment. */
+  stroke-dasharray: 0.01 99.99;
+  transform: rotate(-90deg); /* static, same as ring-fill — never re-set */
+  transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.2s linear; /* identical to ring-fill's own */
+  /* Dot size is unchanged (stroke-width above) — only the glow around
+     it is bigger/brighter here, to match the video's own bloom. */
+  filter:
+    drop-shadow(0 0 3px rgba(255, 255, 255, 1))
+    drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))
+    drop-shadow(0 0 22px rgba(180, 235, 245, 0.75));
+}
+.lab-intro__count {
+  margin: 0;
+  font-family: "Avenir Lab", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(2.8rem, 11vw, 4.6rem);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+.lab-intro__count-pct {
+  font-size: 0.32em;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 0.12em;
+  vertical-align: 0.6em;
+}
+.lab-intro__label {
+  margin: 1.4rem 0 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* minimal variant — small ring, no big counter */
+.lab-intro[data-variant="minimal"] .lab-intro__loader { display: none; }
+.lab-intro__spinner {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: lab-intro-spin 0.9s linear infinite;
+}
+@keyframes lab-intro-spin {
+  to { transform: rotate(360deg); }
+}
+
+.lab-intro__skip {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  /* Higher than .lab-intro__load's z-index:2 — without this the button
+     had no z-index at all (auto), so during the aurora's 0.6s fade-out
+     right as "playing" begins, the still-fading (higher, explicit
+     z-index) overlay could paint over it. */
+  z-index: 3;
+  padding: 9px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.18);
+  color: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.lab-intro__skip:hover,
+.lab-intro__skip:focus-visible {
+  background: rgba(0, 0, 0, 0.36);
+}
+
+/* =========================================================
+   Hide the app-wide GlobalHeader during the intro's opening.
+   This file only loads on `/` (via AnimationLab's component import),
+   and `lab-nav-hidden` is only ever set by IntroNavGate on `/`, so
+   this cannot affect the feature pages.
+   ========================================================= */
+html.lab-nav-hidden [data-global-nav] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+html.lab-nav-hidden [data-global-nav]:first-of-type {
+  transition: opacity 0.4s ease;
+}
+
+/* GlobalHeader positions the hamburger `absolute` on every page that is
+   not in its own fixedPages list, which is right for the normal scrolling
+   feature pages. This page is not one: the lab paints into a fixed
+   viewport and gets its scroll length from .lab-spacer, so an absolute
+   button sits at document top and is 20,000px above the viewport by the
+   time you are a few sections in. Pin it so that once IntroNavGate
+   reveals it, it stays put for the rest of the page. Scoped to this file,
+   which only loads on `/`. */
+button[data-global-nav] {
+  position: fixed !important;
+}
+
+/* Force the hamburger bars white on `/`. GlobalHeader.tsx resolves them
+   to teal (#147385) here because home isn't in its whiteBarPages list,
+   but this page's backdrop is the dark scrubbed video canvas the whole
+   way down, so white is what reads. Scoped to this file, which only
+   loads on `/`; the open-state bars are already white in GlobalHeader. */
+button[data-global-nav] > span > span {
+  background-color: #fff !important;
+}
+
+html.lab-nav-teal button[data-global-nav][aria-label="Open menu"] > span > span {
+  background-color: #147385 !important;
+}
+
+/* Background-music toggle (BackgroundMusic.tsx) gets the exact same
+   colour treatment as the hamburger on `/`: white icon over the dark
+   scrubbed canvas, teal on the light-themed sections that add
+   `lab-nav-teal`. Its VISIBILITY is not shared with the nav — it appears
+   earlier, at frame 50, and is governed by `lab-music-hidden` in the
+   block at the end of this file. Scoped to this file, `/` only. */
+[data-bg-music] {
+  color: #fff !important;
+}
+[data-bg-music][aria-pressed="true"] {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+html.lab-nav-teal [data-bg-music] {
+  color: #147385 !important;
+}
+html.lab-nav-teal [data-bg-music][aria-pressed="true"] {
+  color: rgba(20, 115, 133, 0.5) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-intro { transition: none; }
+  .lab-intro__spinner { animation: none; }
+  .lab-intro__fluid { animation: none !important; }
+  .lab-intro__ring-fill { transition: none; }
+  .lab-intro__load { transition: none; }
+}

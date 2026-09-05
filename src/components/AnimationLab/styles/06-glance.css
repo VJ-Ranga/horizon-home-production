@@ -1,0 +1,415 @@
+/* =========================================================
+   PART A (cont.) — SECTION 4, "Haycarb at a Glance"
+   Ported from html-templates/final/06-glance.html (class root
+   .s-glance2, replacing the old simpler .s-glance layout this file
+   used to carry). Section-root rules (position, min-height, its own
+   background gradient) are NOT carried over — those belong to
+   .lab-layer here, same lesson as the Governance-Cards bug (a
+   root-level position/sizing rule fights .lab-layer's own
+   position:absolute; inset:0 and can knock the whole section out of
+   the stacking context). No background at all, matching the rest of
+   this file's light-toned sections — the scrubbed video shows
+   through; the stat tiles and pills carry their own light/teal
+   backing so they stay legible either way.
+
+   Token mapping, same convention as every other ported section here
+   (see the SECTION 2 comment above for the full rationale):
+   --font-display -> Georgia stack; --font-ui -> inherited; --ink-deep
+   -> #07324a (GlanceLayer's own dark-teal ink); --ink-muted -> #2c6175;
+   --ink-body -> #173e55; --ease-out/--shadow-lift -> .lab's own
+   tokens, unchanged. --tile-mint/--pill-teal/--glance-ground (new
+   tokens this template introduces, not literal Horizon tokens) map to
+   literal colors picked to match the old .s-glance scheme's own teal
+   family, kept as this file already tunes it. The heading's own
+   --font-ui + weight 300 (rather than the display serif every sibling
+   section uses) is the template's own documented inconsistency —
+   reproduced as drawn, not corrected. */
+
+.s-glance2 {
+  color: #07324a;
+}
+
+.s-glance2__stage {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(16px, 2.6svh, 30px);
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(28px, 5svh, 64px) var(--gutter);
+}
+
+.s-glance2__title {
+  margin: 0;
+  color: #07324a;
+  font-size: clamp(28px, 5.4svh, 64px);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.s-glance2__word { display: inline-block; }
+
+.s-glance2__quote {
+  max-width: 1000px;
+  margin: 12px auto 0;
+  color: #2c6175;
+  font-size: clamp(12px, 1.7svh, 19px);
+  font-style: normal;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.s-glance2__body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+  gap: clamp(24px, 4.2vw, 64px);
+  align-items: stretch;
+  margin-top: 24px;
+}
+
+.s-glance2__left {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(14px, 2svh, 22px);
+}
+
+.s-glance2__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 22px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.s-glance2__stat {
+  position: relative;
+  display: flex;
+  min-height: clamp(110px, 17svh, 145px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2.2svh, 26px) clamp(8px, 1.2vw, 16px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(20, 115, 133, 0.74);
+  backdrop-filter: blur(16.4px);
+  -webkit-backdrop-filter: blur(16.4px);
+  overflow: hidden;
+  isolation: isolate;
+  text-align: center;
+  transition: transform 0.28s var(--ease-out), background-color 0.28s var(--ease-out), border-color 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out);
+}
+
+/* Glass shine — same diagonal highlight + inset top-edge line as the
+   03-approach flip cards (.s-approach2__face--front::after), so the
+   tiles read as the same transparent glass. z-index -1 keeps it above
+   the tile's own background but below the hover sweep and the text. */
+.s-glance2__stat::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 34%, transparent 58%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), inset 0 -18px 28px rgba(3, 70, 82, 0.12);
+  pointer-events: none;
+}
+
+.s-glance2__stat > * {
+  position: relative;
+  z-index: 1;
+}
+
+.s-glance2__stat:hover,
+.s-glance2__stat:focus-within {
+  transform: translateY(-6px);
+  background: rgba(3, 71, 92, 0.78);
+  border-color: rgba(199, 237, 246, 0.66);
+  box-shadow: 0 26px 60px rgba(0, 21, 31, 0.34);
+}
+
+/* ---------- shine sweep on the stat tiles (hover) ----------
+   Same diagonal highlight band as the shared .lab-shine utility, added
+   per VJ 2026-08-28. Triggered on hover, in step with the tile's own
+   lift effect. Parked fully off the tile at rest (translateX(-60%) of a
+   box 3.4x the tile wide clears the left edge) so nothing shows until
+   the pointer is over it; on hover it sweeps right, fully past the
+   opposite edge. */
+.s-glance2__stat.lab-shine {
+  position: relative;
+  overflow: hidden;
+}
+.s-glance2__stat.lab-shine > * {
+  position: relative;   /* keep the value/label above the sweep */
+}
+.s-glance2__stat.lab-shine::before {
+  content: "";
+  position: absolute;
+  inset: -120%;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 65%
+  );
+  transform: translateX(-60%);
+  transition: transform 0.7s ease;
+  pointer-events: none;
+}
+.s-glance2__stat.lab-shine:hover::before,
+.s-glance2__stat.lab-shine:focus-within::before {
+  transform: translateX(60%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-glance2__stat.lab-shine::before { transition: none; }
+}
+
+.s-glance2__stat-value {
+  margin: 0;
+  color: var(--on-dark);
+  font-size: clamp(30px, 8svh, 92px);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.s-glance2__stat-unit { margin-left: 1px; font-size: 0.5em; vertical-align: 0.2em; }
+
+.s-glance2__stat-label {
+  max-width: none;
+  margin: 0.4em 0 0;
+  color: var(--on-dark-muted);
+  font-size: clamp(10px, 1.35svh, 15px);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.s-glance2__note {
+  margin: 0;
+  color: #277b8d;
+  font-size: clamp(10px, 1.4svh, 15px);
+  font-style: italic;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.s-glance2__video {
+  position: relative;
+  min-height: 0;
+  height: auto;
+  aspect-ratio: 1.58 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lift);
+  cursor: pointer;
+  transition: transform 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out);
+}
+
+.s-glance2__video:hover,
+.s-glance2__video:focus-visible {
+  transform: translateY(-5px);
+  box-shadow: 0 16px 34px rgba(6, 45, 60, 0.34);
+}
+
+.s-glance2__video:focus-visible { outline: 2px solid #07324a; outline-offset: 3px; }
+
+.s-glance2__video img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.s-glance2__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: clamp(52px, 7.8svh, 78px);
+  height: clamp(52px, 7.8svh, 78px);
+  place-items: center;
+  border-radius: 50%;
+  color: #147084;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(6, 45, 60, 0.3);
+  transform: translate(-50%, -50%);
+}
+
+.s-glance2__play svg { width: 34%; height: 34%; margin-left: 3px; fill: currentColor; position: relative; z-index: 1; }
+
+/* Ambient ring: the only motion in this dense section, restrained on
+   purpose — a soft, low-opacity pulse behind the play button. Not
+   scroll-driven; a continuous decorative loop, same precedent as
+   every other section's always-on decorative motion. Static when the
+   viewer prefers reduced motion. */
+.s-glance2__play::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .s-glance2__play::before { animation: glance2-ring-pulse 2.8s ease-out infinite; }
+  .s-glance2__video { transition: box-shadow 0.25s ease; }
+  .s-glance2__play { transition: transform 0.25s ease; }
+  .s-glance2__video:hover .s-glance2__play,
+  .s-glance2__video:focus-within .s-glance2__play { transform: translate(-50%, -50%) scale(1.08); }
+  .s-glance2__video:hover .s-glance2__play::before,
+  .s-glance2__video:focus-within .s-glance2__play::before { animation-duration: 1.6s; }
+}
+
+@keyframes glance2-ring-pulse {
+  0% { transform: scale(1); opacity: 0.5; }
+  70% { transform: scale(1.55); opacity: 0; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+.s-glance2__video-copy {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: clamp(14px, 2.4svh, 26px);
+  color: #ffffff;
+  background: linear-gradient(transparent, rgba(4, 32, 44, 0.82));
+}
+
+.s-glance2__video-eyebrow, .s-glance2__video-title { margin: 0; }
+.s-glance2__video-eyebrow { font-size: clamp(10px, 1.3svh, 14px); letter-spacing: 0.02em; }
+.s-glance2__video-title { margin-top: 0.15em; font-family: "Minion Pro", Georgia, "Times New Roman", serif; font-size: clamp(18px, 2.8svh, 30px); font-weight: 400; line-height: 1.1; }
+
+.s-glance2__video-dialog {
+  position: fixed;
+  top: 2%;
+  left: 50%;
+  width: min(92vw, 1440px);
+  max-height: 96%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: translateX(-50%);
+  transform-origin: top right;
+}
+
+.s-glance2__video-dialog[open] { animation: glance2-video-open 0.45s var(--ease-out) both; }
+.s-glance2__video-dialog::backdrop { background: transparent; }
+
+.s-glance2__video-dialog video,
+.s-glance2__video-dialog iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 90svh;
+  border: 2px solid #4caf78;
+  border-radius: 14px;
+  background: transparent;
+}
+
+.s-glance2__video-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #4caf78;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font: 400 28px/1 Arial, sans-serif;
+}
+
+@keyframes glance2-video-open {
+  from { opacity: 0; transform: translate(calc(-50% + 10vw), -8vh) scale(0.42); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.s-glance2__pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 2vw, 26px);
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Size only — colour / border / hover / focus ring come from the
+   shared .btn--watch component (`class="btn btn--watch s-glance2__pill"`). */
+.s-glance2__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  min-height: clamp(42px, 5.8svh, 48px);
+  width: clamp(170px, 13.8vw, 190px);
+  padding: 0 clamp(20px, 2.2vw, 32px);
+  border-radius: 999px;
+  font-size: clamp(13px, 1.8svh, 19px);
+  font-weight: 500;
+  line-height: 1.1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.s-glance2__pill svg,
+.s-glance2__pill img { width: 18px; height: 18px; flex: none; object-fit: contain; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .s-glance2__pill:hover,
+  .s-glance2__pill:focus-visible { transform: translateY(-2px); }
+}
+
+@media (max-height: 760px) and (min-width: 781px) {
+  .s-glance2__stage { gap: 12px; padding-block: 24px; }
+  .s-glance2__body { margin-top: 18px; }
+  .s-glance2__stat { min-height: 96px; }
+  .s-glance2__pills { margin-top: 8px; }
+}
+
+@media (max-width: 1100px) {
+  .s-glance2__stage {
+    justify-content: flex-start;
+    max-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+    scrollbar-width: none;
+    padding-bottom: clamp(40px, 8svh, 80px);
+  }
+  .s-glance2__stage::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+@media (max-width: 1100px) {
+  .s-glance2__body { grid-template-columns: 1fr; }
+  .s-glance2__body { margin-top: 18px; }
+  .s-glance2__quote { max-width: 100%; }
+  .s-glance2__video { order: -1; min-height: 40svh; aspect-ratio: auto; }
+  .s-glance2__title { font-size: clamp(28px, 10vw, 54px); }
+  .s-glance2__pills { flex-direction: column; align-items: stretch; }
+  .s-glance2__pill { justify-content: center; width: 100%; }
+}
+
+@media (max-width: 700px) {
+  /* Beat globals.css's `justify-content: safe center` (same-class
+     specificity, loads later): the reader must always start at its
+     first line, never vertically centred — centring is what made it
+     "sometimes not load at the top". */
+  .lab .s-glance2__stage { justify-content: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .s-glance2__stats { gap: 8px; }
+  .s-glance2__stat { min-height: 84px; padding: 10px 6px; }
+  .s-glance2__stat-label { font-size: 10px; }
+}

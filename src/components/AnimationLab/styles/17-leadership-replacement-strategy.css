@@ -1,0 +1,238 @@
+/* =========================================================
+   LEADERSHIP REPLACEMENT — final/Artboard 5.html
+   Foreground only: the shared video canvas remains the background.
+   ========================================================= */
+
+.s-leadership5 {
+  --leadership5-u: min(0.0625vw, 0.11109vh);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: #fff;
+  background: transparent;
+  font-family: "Avenir Lab", Arial, sans-serif;
+}
+
+.s-leadership5__head { position: relative; z-index: 2; padding: calc(var(--leadership5-u) * 84) 24px 0; text-align: center; }
+.s-leadership5__head h1 { margin: 0; color: #fff; font: 400 calc(var(--leadership5-u) * 42) / 1.15 "Minion Pro", Georgia, "Times New Roman", serif; }
+.s-leadership5__intro { max-width: calc(var(--leadership5-u) * 980); margin: calc(var(--leadership5-u) * 21) auto 0; color: #fff; font-size: calc(var(--leadership5-u) * 18); line-height: calc(var(--leadership5-u) * 27); letter-spacing: .002em; }
+
+/* Centre the reference canvas. people/portrait coordinates are anchored
+   to the reference's 1600-wide canvas; on viewports wider than 16:9 that
+   canvas is narrower than the page, so without this wrapper the group
+   hugs the left. The stage is 1600u wide, centred, then nudged 40u left
+   to account for the reference composition's own asymmetry. */
+.s-leadership5__stage { position: absolute; z-index: 2; top: 0; left: 50%; width: calc(var(--leadership5-u) * 1600); height: 100%; transform: translateX(calc(-50% - var(--leadership5-u) * 70)); pointer-events: none; }
+.s-leadership5__stage > * { pointer-events: auto; }
+
+.s-leadership5__people { position: absolute; z-index: 2; top: calc(var(--leadership5-u) * 397); left: calc(var(--leadership5-u) * 107); display: flex; gap: calc(var(--leadership5-u) * 345); }
+.s-leadership5__person { position: relative; height: calc(var(--leadership5-u) * 302); border-radius: calc(var(--leadership5-u) * 16); background: rgba(21,106,109,.9); backdrop-filter: blur(8px); }
+/* Right padding widened (was 28) to reserve the zone the chairman
+   portrait overlaps, so the statement wraps clear of it instead of
+   tucking behind the figure. Card height goes auto (min 302) so the
+   extra wrapped lines aren't clipped by the fixed box. */
+.s-leadership5__person--chairman { width: calc(var(--leadership5-u) * 633); min-height: calc(var(--leadership5-u) * 302); height: auto; padding: calc(var(--leadership5-u) * 32) calc(var(--leadership5-u) * 190) calc(var(--leadership5-u) * 16) calc(var(--leadership5-u) * 48); }
+/* This card's copy is the longest and its column is the most
+   portrait-constrained; 15 (vs the section's 16) keeps it to a sane
+   line count without tucking under the figure. */
+.s-leadership5__person--chairman .s-leadership5__statement { font-size: calc(var(--leadership5-u) * 15); line-height: calc(var(--leadership5-u) * 21); }
+.s-leadership5__person--md { width: calc(var(--leadership5-u) * 489); padding: calc(var(--leadership5-u) * 32) calc(var(--leadership5-u) * 24) 0 calc(var(--leadership5-u) * 91); }
+.s-leadership5__person--md { width: calc(var(--leadership5-u) * 588); margin-left: calc(var(--leadership5-u) * -48); padding-left: calc(var(--leadership5-u) * 139); }
+.s-leadership5__person--md .s-leadership5__rule { display: none; }
+.s-leadership5__portrait { position: absolute; z-index: 3; object-fit: cover; object-position: top center; }
+.s-leadership5__portrait-mobile { display: none; }
+.s-leadership5__portrait--chairman { left: calc(var(--leadership5-u) * 560); top: calc(var(--leadership5-u) * 274); width: calc(var(--leadership5-u) * 280); height: calc(var(--leadership5-u) * 425); }
+.s-leadership5__portrait--md { left: calc(var(--leadership5-u) * 900); top: calc(var(--leadership5-u) * 277); width: calc(var(--leadership5-u) * 266); height: calc(var(--leadership5-u) * 425); }
+.s-leadership5__role { margin: 0 0 calc(var(--leadership5-u) * 2); color: rgba(255,255,255,.78); font: 400 calc(var(--leadership5-u) * 17) / 1.3 "Minion Pro", Georgia, "Times New Roman", serif; }
+.s-leadership5__name { margin: 0; color: #fff; font-size: calc(var(--leadership5-u) * 31); font-weight: 400; line-height: 1.2; letter-spacing: .005em; }
+.s-leadership5__rule { display: block; height: calc(var(--leadership5-u) * 1); margin: calc(var(--leadership5-u) * 8) 0 0; background: rgba(255,255,255,.5); }
+.s-leadership5__person--chairman .s-leadership5__rule { display: none; }.s-leadership5__person--md .s-leadership5__rule { width: 100%; }
+.s-leadership5__statement { margin: calc(var(--leadership5-u) * 10) 0 0; color: #eaf3f3; font-size: calc(var(--leadership5-u) * 16); line-height: calc(var(--leadership5-u) * 22); white-space: normal; }
+
+.s-leadership5__actions { position: absolute; z-index: 2; top: calc(var(--leadership5-u) * 750); left: 0; right: 0; display: flex; justify-content: center; gap: calc(var(--leadership5-u) * 30); }
+.s-leadership5__pill { display: inline-flex; align-items: center; justify-content: center; gap: calc(var(--leadership5-u) * 10); height: calc(var(--leadership5-u) * 47); min-width: calc(var(--leadership5-u) * 216); padding: 0 calc(var(--leadership5-u) * 28); border: calc(var(--leadership5-u) * 2) solid #1594a1; border-radius: 999px; outline: 1px solid transparent; outline-offset: 4px; color: #1a7684; background: #fff; font-family: inherit; font-size: calc(var(--leadership5-u) * 15); font-weight: 500; text-decoration: none; white-space: nowrap; cursor: pointer; transition: transform .18s var(--ease-out), background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), outline-color var(--dur-base) var(--ease-out); }
+/* Hover animation ported from section 3's shared buttons: a detached
+   hairline ring fades in (via outline + outline-offset, so it survives
+   the .lab-shine overflow:hidden the live pills carry) plus the same
+   transform — scale(1.06) for the outline pills (section 3 "Explore
+   More"), translateY(-2px) for the filled pill (section 3 "Watch"). */
+.s-leadership5__pill svg, .s-leadership5__pill img { width: calc(var(--leadership5-u) * 17); height: calc(var(--leadership5-u) * 17); flex: 0 0 auto; object-fit: contain; }.s-leadership5__pill--primary { min-width: calc(var(--leadership5-u) * 241); color: #fff; background: #128f9f; border-color: #128f9f; }
+.s-leadership5__pill:hover { transform: scale(1.06); outline-color: rgba(255, 255, 255, 0.85); }
+.s-leadership5__pill--primary:hover { transform: translateY(-2px); background: #0f7d8b; border-color: #0f7d8b; outline-color: #1d7f94; }
+.s-leadership5__pill:active { transform: translateY(0); }
+.s-leadership5__pill:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+.s-leadership5__video-dialog {
+  position: fixed;
+  top: 2%;
+  left: 50%;
+  width: min(92vw, 1440px);
+  max-height: 96%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform: translateX(-50%);
+  transform-origin: top right;
+}
+.s-leadership5__video-dialog[open] { animation: glance2-video-open 0.45s var(--ease-out) both; }
+.s-leadership5__video-dialog::backdrop { background: transparent; }
+.s-leadership5__video-dialog iframe { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 90svh; border: 2px solid #4caf78; border-radius: 14px; background: transparent; }
+.s-leadership5__video-dialog-close { position: absolute; top: 10px; right: 10px; z-index: 1; display: grid; width: 40px; height: 40px; place-items: center; padding: 0; border: 1px solid #4caf78; border-radius: 999px; color: #fff; background: transparent; cursor: pointer; font: 400 28px/1 Arial, sans-serif; }
+@media (prefers-reduced-motion: reduce) {
+  .s-leadership5__pill { transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), outline-color var(--dur-base) var(--ease-out); }
+  .s-leadership5__pill:hover, .s-leadership5__pill--primary:hover, .s-leadership5__pill:active { transform: none; }
+}
+
+/* ---- Select Your Language: dropdown ---- */
+.s-leadership5__lang { position: relative; display: inline-flex; }
+.s-leadership5__lang-toggle { cursor: pointer; }
+.s-leadership5__lang-caret { width: calc(var(--leadership5-u) * 13); height: calc(var(--leadership5-u) * 13); margin-left: calc(var(--leadership5-u) * -2); transition: transform .2s ease; }
+.s-leadership5__lang.is-open .s-leadership5__lang-caret { transform: rotate(180deg); }
+.s-leadership5__lang-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + calc(var(--leadership5-u) * 12));
+  left: 50%;
+  min-width: 100%;
+  margin: 0;
+  padding: calc(var(--leadership5-u) * 6) 0;
+  list-style: none;
+  background: #fff;
+  border: calc(var(--leadership5-u) * 2) solid #1594a1;
+  border-radius: calc(var(--leadership5-u) * 16);
+  box-shadow: 0 calc(var(--leadership5-u) * 14) calc(var(--leadership5-u) * 34) rgba(0, 24, 33, .3);
+  transform: translateX(-50%);
+}
+.s-leadership5__lang.is-open .s-leadership5__lang-menu {
+  display: block;
+  animation: s-leadership5-lang-in .16s ease both;
+}
+@keyframes s-leadership5-lang-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(calc(var(--leadership5-u) * 8)); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.s-leadership5__lang-menu a {
+  display: block;
+  padding: calc(var(--leadership5-u) * 9) calc(var(--leadership5-u) * 24);
+  color: #1a7684;
+  font-size: calc(var(--leadership5-u) * 15);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.s-leadership5__lang-menu a:hover,
+.s-leadership5__lang-menu a:focus-visible { background: #eaf5f7; outline: none; }
+
+@media (max-width: 1100px) {
+  .s-leadership5 { --leadership5-u: 1px; overflow-x: hidden; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; }
+  .s-leadership5.is-scrollable { overflow-y: auto; }
+  .s-leadership5__stage { position: static; width: auto; height: auto; transform: none; }
+  .s-leadership5__lang { display: block; width: 100%; }
+  .s-leadership5__lang-menu { position: static; transform: none; left: auto; bottom: auto; width: 100%; margin: 10px 0 0; box-shadow: none; display: none; }
+  .s-leadership5__lang.is-open .s-leadership5__lang-menu { display: block; transform: none; animation: none; }
+  .s-leadership5__head { padding: 56px 24px 0; }.s-leadership5__head h1 { font-size: clamp(30px, 4vw, 38px); }.s-leadership5__intro { max-width: 760px; margin-top: 16px; font-size: 15px; line-height: 22px; }.s-leadership5__intro br { display: none; }
+  .s-leadership5__people { position: static; flex-direction: column; gap: 128px; margin: 138px clamp(20px, 6vw, 64px) 0; }
+  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md { width: auto; min-height: 0; height: auto; margin-left: 0; padding: 124px clamp(22px, 4vw, 42px) 28px; }
+  .s-leadership5__statement, .s-leadership5__person--chairman .s-leadership5__statement { font-size: 15px; line-height: 22px; margin-top: 16px; white-space: normal; }.s-leadership5__statement br { display: none; }.s-leadership5__rule, .s-leadership5__person--chairman .s-leadership5__rule { width: 100%; margin-left: 0; margin-top: 10px; }
+  .s-leadership5__name { font-size: 26px; }.s-leadership5__role { font-size: 14px; }
+  .s-leadership5__portrait:not(.s-leadership5__portrait-mobile) { display: none; }
+  .s-leadership5__portrait-mobile { display: block; left: 50%; top: -108px; width: 190px; height: auto; transform: translateX(-50%); }
+  .s-leadership5__actions { position: static; flex-direction: column; align-items: stretch; margin: 42px clamp(20px, 6vw, 64px); padding-bottom: 48px; gap: 14px; }.s-leadership5__pill { height: 48px; padding: 0 22px; font-size: 14px; width: 100%; }
+}
+
+@media (min-width: 641px) and (max-width: 1100px) {
+  .s-leadership5__people { gap: 88px; margin-top: 82px; }
+  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md {
+    display: grid;
+    grid-template-columns: minmax(190px, 36%) minmax(0, 1fr);
+    column-gap: clamp(22px, 3vw, 38px);
+    align-items: stretch;
+    min-height: 320px;
+    padding: 28px clamp(24px, 4vw, 44px) 28px 0;
+    overflow: visible;
+  }
+  .s-leadership5__portrait-mobile {
+    position: absolute;
+    left: 0;
+    top: auto;
+    bottom: 0;
+    width: min(36%, 260px);
+    height: 360px;
+    transform: none;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+  .s-leadership5__role, .s-leadership5__name, .s-leadership5__rule, .s-leadership5__statement { grid-column: 2; }
+  .s-leadership5__role { align-self: end; }
+  .s-leadership5__statement { align-self: start; }
+}
+
+@media (max-width: 640px) {
+  .s-leadership5__head { padding-top: 52px; }
+  .s-leadership5__people { gap: 112px; margin-top: 122px; }
+  .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md { padding-top: 196px; border-radius: 0; background: transparent; backdrop-filter: none; isolation: isolate; }
+  .s-leadership5__person::before { position: absolute; z-index: 0; top: 166px; right: 0; bottom: 0; left: 0; border-radius: 16px; background: rgba(21,106,109,.9); box-shadow: 0 10px 24px rgba(0, 38, 47, .16); content: ""; }
+  .s-leadership5__person > :not(.s-leadership5__portrait-mobile) { position: relative; z-index: 1; }
+  .s-leadership5__portrait-mobile { top: -109px; width: 220px; transform: none; }
+  .s-leadership5__portrait-mobile--chairman { right: auto; left: 18px; }
+  .s-leadership5__portrait-mobile--md { right: 18px; left: auto; }
+}
+
+/* Final Strategy cascade from 15 Horizon of Progress: this must remain after
+   the base lab rules so the supplied template composition wins in the app. */
+.lab .s-strategy { position: absolute; inset: 0; min-height: 0; font-family: "Avenir Lab", Arial, sans-serif; }
+.lab .s-strategy::after { display: none; }
+/* One continuous page (VJ 2026-08-31): the content — title, five
+   Strategic Pillars, three Risks & Opportunities — is taller than one
+   viewport. `__panel` is the single element StrategyLayer.tsx glides up
+   on Y by exactly its overflow as the reader scrolls the section's
+   `scrollThrough` budget (see that section's timeline entry). No
+   `__pages`/`__page` wrapper any more, no snapping. The root's own
+   overflow:hidden (from the base .s-strategy rule above) clips whatever
+   has not been glided into view yet. */
+.lab .s-strategy__panel { position: relative; z-index: 1; width: min(calc(100% - 48px), 1536px); max-width: 100%; margin: 0 auto; padding: clamp(22px, 3svh, 38px) clamp(24px, 4.8vw, 76px) clamp(24px, 3.5svh, 44px); border: 0; border-radius: 14px; background: transparent; box-shadow: none; backdrop-filter: none; will-change: transform; }
+.lab .s-strategy__panel > section { padding-top: 50px; }
+.lab .s-strategy__header { max-width: 1080px; margin: 0 auto clamp(20px, 2.6svh, 30px); text-align: center; }
+.lab .s-strategy__card-title, .lab .s-strategy__metric, .lab .s-strategy__metric-label, .lab .s-strategy__card-copy, .lab .s-strategy__risk-list, .lab .s-strategy__cta { font-family: "Avenir Lab", Arial, sans-serif; }
+.lab .s-strategy__title, .lab .s-strategy__section-title { font-family: "Minion Pro", Georgia, "Times New Roman", serif; }
+.lab .s-strategy__title { margin: 100px 0 0; color: #fff; font-size: clamp(40px, 6svh, 70px); font-weight: 400; line-height: 1.05; }
+.lab .s-strategy__section-title { display: flex; align-items: center; gap: 18px; margin: 0 0 25px; color: #fff; font-size: clamp(32px, 4svh, 46px); font-weight: 400; line-height: 1.1; }
+.lab .s-strategy__panel > section[aria-labelledby="pillars-title"] { margin-top: 10px; }
+.lab .s-strategy__panel > section[aria-labelledby="risks-title"] { margin-top: 10px; }
+
+/* Section 09 — center the governance intro copy in the viewport. */
+.lab .s-govintro__stage {
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.lab .s-strategy__pillars, .lab .s-strategy__risks { display: grid; gap: clamp(10px, 1vw, 16px); }
+.lab .s-strategy__pillars { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.lab .s-strategy__risks { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 10px; }
+.lab .s-strategy__card { min-width: 0; padding: clamp(16px, 1.8vw, 24px); border: 1px solid rgba(194, 230, 231, 0.2); border-radius: 7px; color: #fff; background: rgba(0, 54, 70, 0.86); box-shadow: 0 10px 22px rgba(0, 30, 42, 0.14); }
+.lab .s-strategy__pillar { min-height: 300px; }
+.lab .s-strategy__card-title { margin: 0; color: #fff; font-size: clamp(20px, 1.9svh, 23px); font-weight: 700; line-height: 1.2; }
+.lab .s-strategy__card-copy { min-height: 64px; margin: 14px 0 0; color: #d8e7e9; font-size: clamp(17px, 1.7svh, 19px); line-height: 1.4; }
+.lab .s-strategy__metric { margin: 0; color: #8bdce0; font-size: clamp(26px, 2.8svh, 34px); font-weight: 300; line-height: 1.1; }
+.lab .s-strategy__metric-label { margin: 3px 0 13px; color: #d8e7e9; font-size: clamp(16px, 1.6svh, 18px); }
+.lab .s-strategy__risk { position: relative; min-height: 210px; padding-top: 25px; }
+.lab .s-strategy__risk-list { display: grid; gap: 9px; margin: 18px 0 0; padding-left: 2px; list-style: none; color: #d8e7e9; font-size: clamp(17px, 1.7svh, 19px); line-height: 1.45; }
+.lab .s-strategy__risk-list li { position: relative; padding-left: 18px; }
+.lab .s-strategy__risk-list li::before { position: absolute; left: 2px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--risk-accent, #8bdce0); content: ""; }
+.lab .s-strategy__actions { display: flex; justify-content: center; margin-top: clamp(24px, 3.5svh, 38px); }
+.lab .s-strategy__cta { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 30px; border-radius: 999px; color: #fff; background: #07899a; box-shadow: var(--shadow-btn); font-size: clamp(18px, 1.9svh, 21px); font-weight: 500; text-decoration: none; }
+.lab .s-strategy__cta svg { width: 17px; height: 17px; margin-right: 9px; }
+
+@media (max-width: 1100px) {
+  .lab .s-strategy__pillars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .lab .s-strategy { overflow: visible; }
+  .lab .s-strategy__panel { width: min(calc(100% - (var(--gutter) * 2)), 600px); margin-top: 20px; padding-inline: 18px; }
+  .lab .s-strategy__pillars, .lab .s-strategy__risks { grid-template-columns: 1fr; }
+  .lab .s-strategy__pillar, .lab .s-strategy__risk { min-height: 0; }
+  .lab .s-strategy__card-copy { min-height: 0; }
+  .lab .s-strategy__cta { width: 100%; }
+}

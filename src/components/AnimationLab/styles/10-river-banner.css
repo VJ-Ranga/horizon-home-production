@@ -1,0 +1,68 @@
+/* =========================================================
+   PART A (cont.) — SECTION 11, "Banner — mountain river"
+   Ported from html-templates/11-banner-river.html. The scrim lives
+   on the root's own ::after (no media div left to hang it off, since
+   the background img is the shared canvas) rather than a sibling div.
+   ========================================================= */
+
+.s-banner-river {
+  display: flex;
+  align-items: flex-start;
+}
+
+.s-banner-river::after {
+  display: none;
+}
+
+.s-banner-river__body {
+  position: relative;
+  z-index: 1;
+  width: min(1450px, calc(100% - 90px));
+  margin-inline: auto;
+  padding-top: 38.3vh;
+  text-align: center;
+}
+
+.s-banner-river__copy {
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--on-dark);
+  font-family: "Minion Pro", Georgia, serif;
+  font-size: clamp(20px, 2.78svh, 30px);
+  font-weight: 400;
+  line-height: 1.18;
+}
+
+.s-banner-river__word {
+  display: inline-block;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.s-banner-river__copy + .s-banner-river__copy {
+  margin-top: 40px;
+}
+
+@media (max-width: 600px) {
+  .s-banner-river__body {
+    width: calc(100% - 52px);
+    padding-top: 24vh;
+  }
+
+  .s-banner-river__copy {
+    font-size: clamp(21px, 5.5vw, 30px);
+    line-height: 1.25;
+  }
+
+  .s-banner-river__copy + .s-banner-river__copy {
+    margin-top: 38px;
+  }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-banner-river__word {
+    opacity: 1;
+    transform: none;
+  }
+}

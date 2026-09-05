@@ -1,0 +1,624 @@
+/* =========================================================
+   PART A (cont.) — SECTION 2, "Our Approach to Reporting"
+   Ported from html-templates/final/03-approach-c2.html — variant C2,
+   centred composition, Horizon-teal glass cards. Replaces the earlier
+   02-approach.html port; class names are byte-identical to the
+   template so the two can be diffed. Section-root rules (position,
+   min-height, its own teal background) are NOT carried over — those
+   belong to .lab-layer / .lab here, see ApproachLayer.tsx.
+
+   Token mapping from the template's own tokens.css, since this app
+   doesn't import that file: --font-display -> the Georgia stack every
+   other section here already uses for display type; --font-ui ->
+   inherited (.lab already sets "Avenir Lab" as the base family);
+   --ink-deep/--ink-body -> literal hex, matching the dark-teal ink
+   GlanceLayer already uses for light-toned text over the video
+   (--glance-ink: #07324a). --ease-out/--dur-base/--teal-hero-ground
+   reuse .lab's own tokens directly, unchanged.
+   ========================================================= */
+
+.s-approach2 {
+  /* ---- GLASS: Horizon metric card ----
+     Hue and border are the Horizon app's own, read off
+     horizon/src/styles/tokens/colors.css:
+       --color-glass-faint   rgba(20, 115, 133, 0.34)
+       --color-border-subtle rgba(255, 255, 255, 0.16)
+
+     The FRONT FACE deliberately runs more opaque than 0.34 — 0.74,
+     VJ's call 2026-08-27. Horizon's own cards sit on flat UI; ours sit
+     on video with a blown-out sun behind the upper row, which reads
+     straight through a 0.34 tint. Same hue, more cover.
+
+     The back face is a different hue at 0.88 — it carries body copy,
+     so it has to be a surface rather than a tint, and it takes NO
+     blur: it lives inside the card's preserve-3d flip context, where
+     backdrop-filter renders unreliably and previously made its text
+     disappear.
+
+     Front-face glass is written literally rather than through
+     --glass-bg/--glass-blur, which are gone: those two were read by
+     these two rules only, and keeping a token that no longer matches
+     what ships is how the 18px-vs-actual confusion started. */
+  --glass-back-bg: rgba(17, 97, 112, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-radius: 16px;
+  --glass-ink: #ffffff;
+  --glass-back-ink: rgba(255, 255, 255, 0.95);
+  --glass-badge-bg: rgba(255, 255, 255, 0.95);
+  --glass-badge-ink: #0a5568;
+  --glass-badge-shadow: 0 6px 18px rgba(3, 32, 41, 0.28);
+  /* White now (source template changed 2026-08-23, was dark ink
+     #1c4f6b/#2b6178 in the version first ported) — kept as named vars
+     rather than hardcoding #fff directly on each rule so a future
+     re-check has one place to compare against the source again. */
+  --glass-heading: #ffffff;
+  --glass-lead: #ffffff;
+  /* CTA — white pill. The teal card glass would otherwise leave the
+     button as the only unfilled element on the page. */
+  --cta-bg: #ffffff;
+  --cta-ink: #0a5568;
+  --cta-shadow: 0 10px 26px rgba(6, 65, 77, 0.20);
+  --glass-focus: #ffffff;
+
+  /* ---- spacing scale, all multiples of 8 ---- */
+  --a2-nav-clear: clamp(56px, 6.67svh, 72px);
+  --a2-foot: clamp(40px, 6.67svh, 72px);
+  --a2-gutter-x: clamp(32px, 4.17vw, 80px);
+  --a2-gap-title: clamp(16px, 2.22svh, 24px);
+  --a2-gap-kicker: clamp(8px, 1.11svh, 12px);
+  --a2-gap-block: clamp(24px, 3.70svh, 40px);
+  --a2-gap-card: 16px;
+  --a2-card-w: clamp(150px, 13.07vw, 251px);
+  --a2-card-h: clamp(150px, 21svh, 225px);
+  --a2-pad-card: clamp(16px, 2.22svh, 24px);
+
+  /* ---- type scale, floors tuned for an older readership ---- */
+  --a2-fs-title: clamp(38px, 5.93svh, 64px);
+  --a2-fs-kicker: clamp(19px, 2.41svh, 26px);
+  --a2-fs-lead: clamp(16px, 1.85svh, 20px);
+  /* VJ 2026-09-03: was clamp(15px, 1.67svh, 18px) — 15px on a 900px-tall
+     desktop. Nudged so the same viewport lands on 16px. */
+  --a2-fs-label: clamp(16px, 1.78svh, 19px);
+  --a2-fs-body: clamp(13px, 1.48svh, 16px);
+  --a2-fs-cta: clamp(15px, 1.67svh, 18px);
+}
+
+.s-approach2__stage {
+  display: flex;
+  align-items: center;
+  min-height: 100%;
+  padding: var(--a2-nav-clear) var(--a2-gutter-x) var(--a2-foot);
+}
+
+/* 50vw, not 50%: a percentage resolves against the stage's padded
+   content box, giving less than half the actual viewport. vw measures
+   against the viewport, which is what "half the screen" means. */
+.s-approach2__col {
+  width: min(960px, 50vw);
+  text-align: center;
+}
+
+.s-approach2__title {
+  max-width: none;
+  margin: 0 auto;
+  color: var(--glass-heading);
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: var(--a2-fs-title);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.s-approach2__kicker {
+  max-width: 46ch;
+  margin: var(--a2-gap-title) auto 0;
+  color: var(--glass-heading);
+  font-size: var(--a2-fs-kicker);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.s-approach2__lead {
+  max-width: 62ch;
+  margin: var(--a2-gap-kicker) auto 0;
+  color: var(--glass-lead);
+  font-size: var(--a2-fs-lead);
+  line-height: 1.55;
+}
+
+/* ---------- reveal ----------
+   Frame-driven (ApproachLayer.tsx writes opacity/translateY per item,
+   per frame, from staggerProgressAt in timeline.ts) rather than a CSS
+   animation, so it stays tied to scroll position. opacity:0 here is
+   only the first-paint fallback, before the first frame tick runs. */
+.s-approach2__word {
+  display: inline-block;
+  opacity: 0;
+}
+
+.s-approach2__kicker,
+.s-approach2__lead,
+.s-approach2__card,
+.s-approach2__cta-row {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-approach2__word,
+  .s-approach2__kicker,
+  .s-approach2__lead,
+  .s-approach2__card,
+  .s-approach2__cta-row {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- card block ----------
+   Fixed card tracks, each row centred independently, so the
+   two-then-three stacks as a pyramid rather than a ragged block.
+   grid-auto-flow: column + grid-auto-columns rather than an explicit
+   template, so one rule serves both the two-card and the three-card
+   row. */
+.s-approach2__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--a2-gap-card);
+  margin: var(--a2-gap-block) 0 0;
+}
+
+.s-approach2__grid {
+  display: grid;
+  justify-content: center;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--a2-card-w);
+  gap: var(--a2-gap-card);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------- flip card ----------
+   Height is explicit, not min-height: __card-inner uses height:100%,
+   which only resolves against a definite ancestor height. */
+.s-approach2__card {
+  display: block;
+  width: 100%;
+  height: var(--a2-card-h);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  perspective: 1200px;
+}
+
+.s-approach2__card:focus-visible {
+  outline: 3px solid var(--glass-focus);
+  outline-offset: 4px;
+  border-radius: var(--glass-radius);
+}
+
+.s-approach2__card-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease-out);
+}
+
+/* Flips on hover, on keyboard focus, and on .is-flipped — the class
+   exists so a future scroll timeline could drive the flip without a
+   cursor, same as the template documents. */
+.s-approach2__card:hover .s-approach2__card-inner,
+.s-approach2__card:focus-within .s-approach2__card-inner,
+.s-approach2__card.is-flipped .s-approach2__card-inner {
+  transform: rotateY(180deg);
+}
+
+.s-approach2__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--a2-pad-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  text-align: center;
+}
+
+/* The blur belongs to the FRONT FACE only. Putting it on
+   .s-approach2__card-inner (the 3D-transformed flip layer) or stacking
+   opaque overlays on top both killed the effect outright, and blurring
+   card-inner also broke the back face's own rendering — its text
+   disappeared. overflow + isolation give backdrop-filter a clean
+   stacking context of its own next to that 3D ancestor. */
+/* NEVER hand-write -webkit-backdrop-filter in this file. Next's CSS
+   minifier treats the prefixed and unprefixed properties as duplicates
+   and keeps only the LAST one; with the pair written unprefixed-first,
+   what shipped was `-webkit-backdrop-filter` alone. Current Chrome
+   ignores that form completely (CSS.supports returns false for it, and
+   setting it alone computes to `none`), so every blur in the app was
+   silently dead while the same CSS looked correct in
+   public/html-sections/*.html — those are served raw from public/ and
+   never minified. That mismatch cost a long debugging session.
+
+   The build auto-prefixes: write `backdrop-filter` alone and the
+   emitted CSS carries both, correctly ordered. Verified against
+   .s-financial2__chartcard, which never had a hand-written prefix. */
+.s-approach2__face--front {
+  background: rgba(20, 115, 133, 0.74);
+  backdrop-filter: blur(16.4px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Above the ::after shine below. */
+.s-approach2__face--front > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The glass "shine" — a diagonal highlight plus an inset top-edge
+   line. This, not the blur alone, is most of what reads as GLASS to
+   the eye; without it a blurred tint just looks like a darkened panel. */
+.s-approach2__face--front::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: "";
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.08) 34%, transparent 58%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), inset 0 -18px 28px rgba(3, 70, 82, 0.12);
+  pointer-events: none;
+}
+
+/* No blur here — see the note on the token block above. */
+.s-approach2__face--back {
+  background: var(--glass-back-bg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transform: rotateY(180deg);
+}
+
+/* Badge is 31% of the card track, capped at 96px full size. */
+.s-approach2__badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 31%;
+  aspect-ratio: 1 / 1;
+  max-width: 96px;
+  margin: 0 0 var(--a2-gap-title);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  transition: transform 0.28s var(--ease-out);
+}
+
+.s-approach2__badge img {
+  width: 100%;
+  height: 100%;
+  color: var(--glass-badge-ink);
+}
+
+/* The label is an <h3>, so globals.css's `h1..h6 { font-family:
+   var(--font-heading) }` was giving it Minion Pro — the only serif in
+   the card, and at weight 600 (no such face; Minion Pro ships 400
+   only) the browser was synthesizing a fake bold. Stated outright as
+   Avenir Lab per VJ 2026-09-03, matching the card body underneath. */
+.s-approach2__card-label {
+  margin: 0;
+  color: var(--glass-ink);
+  font-family: "Avenir Lab", Arial, sans-serif;
+  font-size: var(--a2-fs-label);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.s-approach2__card-body {
+  margin: 0;
+  overflow: hidden;
+  color: var(--glass-back-ink);
+  font-size: var(--a2-fs-body);
+  line-height: 1.5;
+}
+
+/* ---------- call to action ----------
+   Centred, like everything else in this variant — the whole
+   composition is built on the canvas centreline. */
+.s-approach2__cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(12px, 1.4vw, 24px);
+  margin-top: var(--a2-gap-block);
+}
+
+/* "Watch the Highlights" is `class="btn btn--watch s-approach2__cta"`
+   — `.btn--watch` (shared, defined up in the button system) carries
+   the teal fill / white hairline / teal hover ring; `.s-approach2__cta`
+   below only carries this section's pill size. */
+
+.s-approach2__cta svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+/* CTA — re-checked against the template 2026-08-23: it now uses the
+   shared .btn--download component (tokens.css) rather than .btn--light,
+   and the page's own elaborate amber conic-gradient ring (kept in the
+   template's markup for history) is fully disabled there by a later
+   `.s-approach2__cta::before { display: none; }` override — same
+   specificity, later in the cascade, wins. What actually ships is
+   .btn--download's own, much simpler hover: a plain 1px white ring on
+   ::after, fading in on hover/focus, no colour, no rotation. Ported
+   directly rather than through a second .btn--download class, since
+   nothing else in this app reuses it yet. */
+.s-approach2__cta {
+  position: relative;
+  isolation: isolate;
+  width: 17.21vw;
+  min-height: clamp(46px, 5.19svh, 56px);
+  padding: 0 clamp(20px, 1.67vw, 32px);
+  background: var(--cta-bg);
+  color: var(--cta-ink);
+  font-size: var(--a2-fs-cta);
+  font-weight: 500;
+  box-shadow: var(--cta-shadow);
+  transition: transform 0.18s var(--ease-out), background-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.s-approach2__cta::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.s-approach2__cta:hover,
+.s-approach2__cta:focus-visible {
+  background: var(--cta-bg);
+  transform: scale(1.06);
+}
+
+.s-approach2__cta:hover::after,
+.s-approach2__cta:focus-visible::after {
+  opacity: 1;
+}
+
+.s-approach2__cta svg { width: 1.05em; height: 1.05em; flex: none; }
+
+.s-approach2__cta:focus-visible {
+  outline: 3px solid var(--glass-focus);
+  outline-offset: 4px;
+}
+
+/* "Watch the Highlights" popup — same pattern/geometry as
+   .s-hero__video-dialog, scoped to this section's own class prefix. */
+.s-approach2__video-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(92vw, 1440px);
+  max-height: 96%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  transform: translate(-50%, -50%);
+}
+
+.s-approach2__video-dialog[open] {
+  animation: approach-highlights-open 0.45s var(--ease-out) both;
+}
+
+@keyframes approach-highlights-open {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.s-approach2__video-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+
+.s-approach2__video-embed {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 90svh;
+  border: 2px solid #4caf78;
+  border-radius: 14px;
+  background: transparent;
+}
+
+.s-approach2__video-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #4caf78;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font: 400 28px/1 Arial, sans-serif;
+}
+
+/* Hidden in the template as of 2026-08-23 (display: none added to its
+   own rule there) — kept in the markup, just not shown, same as the
+   source. */
+.s-approach2__scrollbar {
+  display: none;
+  position: absolute;
+  top: var(--a2-nav-clear);
+  right: 1.4%;
+  z-index: 1;
+  width: 4px;
+  height: 110px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+}
+
+/* ---------- icon draw-in ----------
+   Icons are SOLID by default; the stroke draw-in is opt-in via the
+   animation below, which plays once on mount and settles solid
+   (`backwards` fill, no `both`) — by the time scroll actually reaches
+   this section the draw has long finished, so it just shows solid,
+   same as it would after any on-load animation completes. */
+@media (prefers-reduced-motion: no-preference) {
+  .s-approach2 .draw {
+    animation: approach2-draw 1.05s var(--ease-out) backwards;
+  }
+
+  .s-approach2__grid--pair li:nth-child(1) .draw { animation-duration: 0.85s; }
+  .s-approach2__grid--pair li:nth-child(2) .draw { animation-duration: 1.00s; }
+  .s-approach2__grid--trio li:nth-child(1) .draw { animation-duration: 1.15s; }
+  .s-approach2__grid--trio li:nth-child(2) .draw { animation-duration: 1.30s; }
+  .s-approach2__grid--trio li:nth-child(3) .draw { animation-duration: 1.45s; }
+
+  .s-approach2__card:hover .s-approach2__badge,
+  .s-approach2__card:focus-visible .s-approach2__badge {
+    transform: translateY(-4px);
+  }
+
+  .s-approach2 .s-approach2__card:hover .draw,
+  .s-approach2 .s-approach2__card:focus-visible .draw {
+    animation: approach2-redraw 0.7s var(--ease-out) backwards;
+  }
+
+  @keyframes approach2-draw {
+    from { stroke-dasharray: 1; stroke-dashoffset: 1; }
+    to   { stroke-dasharray: 1; stroke-dashoffset: 0; }
+  }
+
+  @keyframes approach2-redraw {
+    from { stroke-dasharray: 1; stroke-dashoffset: 1; }
+    to   { stroke-dasharray: 1; stroke-dashoffset: 0; }
+  }
+}
+
+/* ---------- narrow viewports ----------
+   Below 900px the 50% column and the three-track grid stop making
+   sense: the column takes the full width and the cards drop to two
+   tracks. */
+@media (max-width: 900px) {
+  .s-approach2__stage { align-items: flex-start; }
+  .s-approach2__col { width: 100%; }
+  .s-approach2__grid {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-columns: auto;
+  }
+  /* The trio row wraps to 2 + 1; the lone "Concise Report Structure"
+     card would otherwise sit in the left column. Span it across both
+     tracks and centre it at one column's width. */
+  .s-approach2__grid--trio > li:nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - (var(--a2-gap-card) / 2));
+  }
+  .s-approach2__title { max-width: none; }
+  .s-approach2__lead { max-width: none; }
+}
+
+/* Live-lab tablet/mobile sizing. The section remains one fixed layer over
+   the shared canvas: only its readable foreground scale changes. This keeps
+   the frame-driven section opacity/translate writes independent of viewport
+   geometry and keeps every CTA label inside its pill. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-approach2 {
+    /* 42px sat the heading right under the fixed hamburger — needs to
+       clear it with breathing room, like desktop does. */
+    --a2-nav-clear: 76px;
+    --a2-foot: 28px;
+    --a2-gutter-x: 28px;
+    --a2-gap-title: 12px;
+    --a2-gap-kicker: 8px;
+    --a2-gap-block: 20px;
+    --a2-gap-card: 12px;
+    --a2-card-w: min(22vw, 190px);
+    --a2-card-h: min(16svh, 170px);
+    --a2-pad-card: 14px;
+    --a2-fs-title: clamp(32px, 4.8svh, 50px);
+    --a2-fs-kicker: clamp(16px, 2svh, 22px);
+    --a2-fs-lead: clamp(14px, 1.55svh, 18px);
+    --a2-fs-label: clamp(13px, 1.45svh, 16px);
+    --a2-fs-body: clamp(12px, 1.25svh, 14px);
+    --a2-fs-cta: clamp(13px, 1.45svh, 16px);
+  }
+
+  .s-approach2__stage { align-items: flex-start; }
+  .s-approach2__col { margin-inline: auto; }
+  /* +30px below the last card before the CTA row (VJ's call). */
+  .s-approach2__cta-row { gap: 10px; margin-top: 50px; }
+  .s-approach2__cta { width: auto; min-width: 0; min-height: 44px; padding-inline: 18px; }
+}
+
+@media (max-width: 700px) {
+  .s-approach2 {
+    --a2-nav-clear: 20px;
+    --a2-foot: 14px;
+    --a2-gutter-x: 14px;
+    --a2-gap-title: 8px;
+    --a2-gap-kicker: 6px;
+    --a2-gap-block: 14px;
+    --a2-gap-card: 8px;
+    --a2-card-w: calc((100vw - 44px) / 2);
+    --a2-card-h: clamp(104px, 15svh, 132px);
+    --a2-pad-card: 10px;
+    --a2-fs-title: clamp(28px, 8vw, 36px);
+    --a2-fs-kicker: clamp(14px, 4.2vw, 17px);
+    --a2-fs-lead: clamp(12px, 3.5vw, 14px);
+    --a2-fs-label: clamp(11px, 3.05vw, 13px);
+    --a2-fs-body: clamp(10px, 2.75vw, 12px);
+    --a2-fs-cta: clamp(12px, 3.3vw, 14px);
+  }
+
+  .s-approach2 { overflow: hidden; }
+  .s-approach2__stage {
+    align-items: flex-start;
+    min-height: 100%;
+    /* Top pad clears the fixed hamburger + status bar; 4svh let the
+       heading collide with it on phones. */
+    padding: clamp(56px, 8svh, 76px) var(--a2-gutter-x) 2svh;
+  }
+  .s-approach2__col { width: 100%; }
+  .s-approach2__title { line-height: 1.05; }
+  .s-approach2__kicker,
+  .s-approach2__lead { max-width: none; }
+  .s-approach2__lead { line-height: 1.35; }
+  .s-approach2__groups { gap: 10px; margin-top: 14px; }
+  .s-approach2__grid { gap: var(--a2-gap-card); }
+  .s-approach2__card { height: var(--a2-card-h); }
+  .s-approach2__badge { max-width: 42px; margin-bottom: 6px; }
+  .s-approach2__card-label { line-height: 1.15; }
+  .s-approach2__card-body { line-height: 1.25; }
+  /* +20px below the last card before the CTA row (VJ's call). */
+  .s-approach2__cta-row { gap: 8px; margin-top: 34px; }
+  .s-approach2__cta { width: auto; min-width: 0; min-height: 40px; padding-inline: 14px; }
+}

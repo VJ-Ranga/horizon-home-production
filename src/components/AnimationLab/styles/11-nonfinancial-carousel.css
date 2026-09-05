@@ -1,0 +1,431 @@
+/* =========================================================
+   ARTBOARD 9 — reporting highlights carousel
+   Foreground only; the shared video canvas supplies the background.
+   ========================================================= */
+
+.s-nonfinancial9 {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+  font-family: "Avenir Lab", Arial, sans-serif;
+}
+
+.s-nonfinancial9__intro {
+  flex: none;
+  padding: 100px 6vw 0;
+  text-align: center;
+}
+
+.s-nonfinancial9__intro h1 {
+  margin: 0;
+  font-family: "Minion Pro", Georgia, serif;
+  font-size: clamp(38px, 4.2vw, 62px);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.s-nonfinancial9__intro p {
+  max-width: 1360px;
+  margin: clamp(22px, 3.4vh, 46px) auto 0;
+  font-size: clamp(15px, 1.25vw, 20px);
+  line-height: 1.45;
+}
+
+.s-nonfinancial9__breaker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  width: min(100% - 96px, 1100px);
+  margin: clamp(24px, 3vh, 36px) auto 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(13px, 1vw, 16px);
+  line-height: 1.45;
+  text-align: left;
+}
+
+.s-nonfinancial9__breaker p { margin: 0; }
+
+.s-nonfinancial9__viewport {
+  flex: none;
+  margin-top: clamp(48px, calc(4vh + 20px), 68px);
+  overflow: visible;
+}
+
+.s-nonfinancial9__rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
+  width: min(100% - 96px, 1100px);
+  margin-inline: auto;
+}
+
+.s-nonfinancial9__card {
+  position: relative;
+  min-height: min(363px, 42svh);
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1.5px solid rgba(170, 235, 232, 0.34);
+  color: #fff;
+  background: linear-gradient(180deg, rgba(93, 124, 127, 0.76), rgba(10, 77, 108, 0.9));
+  box-shadow: 0 18px 38px rgba(8, 57, 73, 0.2);
+  transition: min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: min-height;
+  cursor: pointer;
+}
+
+.s-nonfinancial9__card:focus-visible {
+  outline: 2px solid rgba(170, 235, 232, 0.9);
+  outline-offset: 3px;
+}
+
+/* Click to expand, not hover — NonFinancialLayer toggles .is-open on
+   the clicked card (one open at a time). VJ 2026-09-03. */
+.s-nonfinancial9__card.is-open {
+  min-height: min(430px, 48svh);
+  z-index: 2;
+}
+
+.s-nonfinancial9__card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.s-nonfinancial9__card::before {
+  position: absolute;
+  inset: 0;
+  background: url("/nonfinancial/nf-assurance.jpg") center / cover no-repeat;
+  content: "";
+  display: none;
+}
+
+.s-nonfinancial9__card::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(43, 155, 161, 0.12), rgba(0, 91, 119, 0.78));
+  content: "";
+  transition: background 0.45s ease;
+}
+
+.s-nonfinancial9__content {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 34px 28px;
+}
+
+.s-nonfinancial9__content h2 {
+  margin: 0;
+  font-size: clamp(20px, 1.4vw, 28px);
+  font-weight: 400;
+  line-height: 1.16;
+}
+
+.s-nonfinancial9__content p {
+  max-height: 0;
+  margin: 0;
+  overflow: hidden;
+  opacity: 0;
+  font-size: 17px;
+  line-height: 1.45;
+  transition: max-height 0.45s ease, opacity 0.45s ease, margin 0.45s ease;
+}
+
+.s-nonfinancial9__card.is-open .s-nonfinancial9__content p {
+  max-height: 220px;
+  margin-top: 12px;
+  opacity: 1;
+}
+
+/* =========================================================
+   Section 16 park-reveal — a normal time-based fade, NOT a
+   scroll-scrubbed one. NonFinancialLayer sets data-revealed="true"
+   on the root while the section sits on its 60-frame virtual hold at
+   frame 845 (see timeline.ts / NonFinancialLayer.tsx); the intro
+   and the four cards fade + rise in with a short stagger, and
+   reverse the moment it starts leaving.
+
+   Self-contained: this block re-declares the card's min-height
+   hover transition alongside opacity/transform so nothing here
+   depends on the base .s-nonfinancial9__card rule staying put.
+   ========================================================= */
+.s-nonfinancial9__intro,
+.s-nonfinancial9__card {
+  opacity: 0;
+  transform: translateY(26px);
+}
+.s-nonfinancial9__intro {
+  transition: opacity 0.5s var(--ease-out, ease),
+    transform 0.5s var(--ease-out, ease);
+}
+.s-nonfinancial9__card {
+  transition: min-height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.5s var(--ease-out, ease),
+    transform 0.5s var(--ease-out, ease);
+}
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__intro,
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card {
+  opacity: 1;
+  transform: none;
+}
+/* Delay list maps to the transition list (min-height, opacity,
+   transform) — 0s on min-height so the hover growth stays instant,
+   the stagger only on the fade-in. */
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(1) { transition-delay: 0s, 0.14s, 0.14s; }
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(2) { transition-delay: 0s, 0.24s, 0.24s; }
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(3) { transition-delay: 0s, 0.34s, 0.34s; }
+.s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(4) { transition-delay: 0s, 0.44s, 0.44s; }
+
+/* Phones: no staggered fade — the intro and all four cards show solid
+   as soon as the layer is on screen (same as Financial Highlights and
+   Haycarb at a Glance). The click-to-expand still works. */
+@media (max-width: 700px) {
+  .s-nonfinancial9__intro,
+  .s-nonfinancial9__card,
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(1),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(2),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(3),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(4) {
+    opacity: 1 !important;
+    transform: none !important;
+    transition-delay: 0s !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-nonfinancial9__intro,
+  .s-nonfinancial9__card {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .s-nonfinancial9__intro {
+    padding-top: 100px;
+  }
+
+  .s-nonfinancial9__intro p {
+    margin-top: 26px;
+  }
+
+  .s-nonfinancial9__breaker {
+    width: min(100% - 56px, 680px);
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .s-nonfinancial9__viewport {
+    overflow: visible;
+    margin-top: 62px;
+    padding-bottom: 32px;
+  }
+
+  .s-nonfinancial9__rail {
+    width: min(100% - 56px, 680px);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .s-nonfinancial9__card {
+    min-height: 300px;
+  }
+
+}
+
+@media (max-width: 560px) {
+  .s-nonfinancial9__intro {
+    padding-inline: 28px;
+  }
+
+  .s-nonfinancial9__rail {
+    width: min(100% - 36px, 420px);
+    grid-template-columns: 1fr;
+  }
+
+  .s-nonfinancial9__card {
+    flex-basis: 100%;
+    min-height: 410px;
+  }
+
+
+  .s-nonfinancial9__content {
+    padding: 26px 24px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .s-nonfinancial9 { overflow-x: hidden; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; }
+  .s-nonfinancial9.is-scrollable { overflow-y: auto; }
+  .s-nonfinancial9__intro { padding: 64px clamp(20px, 6vw, 64px) 0; }
+  .s-nonfinancial9__intro h1 { font-size: clamp(30px, 4vw, 42px); }
+  .s-nonfinancial9__intro p { max-width: 760px; margin-top: 18px; font-size: 15px; line-height: 1.45; }
+  .s-nonfinancial9__viewport { margin-top: 38px; padding-bottom: 52px; }
+  .s-nonfinancial9__rail { width: min(100% - 40px, 680px); grid-template-columns: 1fr; gap: 24px; }
+  .s-nonfinancial9__card { min-height: min(420px, 58svh); }
+  .s-nonfinancial9__content p, .s-nonfinancial9__card:hover .s-nonfinancial9__content p { max-height: 220px; margin-top: 12px; opacity: 1; }
+}
+
+/* final/15 Horizon of Progress.html foreground treatment. The supplied template image
+   and overlay are intentionally omitted because the video canvas is shared. */
+.s-strategy::after {
+  display: none;
+}
+
+/* .s-strategy__scrim radial dark vignette removed 2026-08-25 per VJ. */
+
+.s-strategy__panel {
+  width: min(calc(100% - 48px), 1536px);
+  margin: 10px auto;
+  padding: clamp(22px, 3svh, 38px) clamp(24px, 4.8vw, 76px) clamp(24px, 3.5svh, 44px);
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.s-strategy__header {
+  margin-bottom: clamp(20px, 2.6svh, 30px);
+}
+
+.s-strategy__risks {
+  margin-top: 10px;
+}
+
+/* 1:1 foreground geometry from html-templates/final/15 Horizon of Progress.html.
+   This block deliberately comes last so earlier lab-era card/panel rules
+   cannot change the final template composition. */
+.s-strategy {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  max-width: 100%;
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+  font-family: "Avenir Lab", Arial, sans-serif;
+}
+
+.s-strategy__panel {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100% - 48px), 1536px);
+  max-width: 100%;
+  margin: 10px auto;
+  padding: clamp(22px, 3svh, 38px) clamp(24px, 4.8vw, 76px) clamp(24px, 3.5svh, 44px);
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.s-strategy__header {
+  max-width: 1080px;
+  margin: 0 auto clamp(20px, 2.6svh, 30px);
+  text-align: center;
+}
+
+.s-strategy__title {
+  margin: 0;
+  color: #fff;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(32px, 5.2svh, 58px);
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.s-strategy__section-title {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0 0 14px;
+  color: #fff;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(21px, 2.7svh, 30px);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.s-strategy__section-title::after {
+  height: 1px;
+  flex: 1;
+  background: rgba(196, 235, 237, 0.34);
+  content: "";
+}
+
+.s-strategy__pillars,
+.s-strategy__risks {
+  display: grid;
+  gap: clamp(10px, 1vw, 16px);
+}
+
+.s-strategy__pillars { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.s-strategy__risks { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 10px; }
+
+section[aria-labelledby="risks-title"] .s-strategy__section-title { margin-bottom: 0; }
+section[aria-labelledby="risks-title"] { margin-top: 20px; }
+
+.s-strategy__card {
+  min-width: 0;
+  padding: clamp(16px, 1.8vw, 24px);
+  border: 1px solid rgba(194, 230, 231, 0.2);
+  border-radius: 7px;
+  color: #fff;
+  background: rgba(0, 54, 70, 0.86);
+  box-shadow: 0 10px 22px rgba(0, 30, 42, 0.14);
+}
+
+.s-strategy__pillar { min-height: 300px; }
+.s-strategy__icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 20px; color: #8bdce0; }
+.s-strategy__icon svg { width: 30px; height: 30px; object-fit: contain; }
+.s-strategy__icon img { display: block; width: 40px; height: 40px; object-fit: contain; filter: brightness(0) invert(1); }
+.s-strategy__card-title { margin: 0; color: #fff; font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(14px, 1.65svh, 18px); font-weight: 700; line-height: 1.2; }
+.s-strategy__card-copy { min-height: 64px; margin: 14px 0 0; color: #d8e7e9; font-size: clamp(11px, 1.3svh, 14px); line-height: 1.4; }
+.s-strategy__rule { height: 1px; margin: 16px 0; border: 0; background: rgba(196, 235, 237, 0.34); }
+.s-strategy__metric { margin: 0; color: #8bdce0; font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(21px, 2.5svh, 28px); font-weight: 300; line-height: 1.1; }
+.s-strategy__metric-label { margin: 3px 0 13px; color: #d8e7e9; font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(11px, 1.25svh, 13px); }
+
+.s-strategy__risk { position: relative; min-height: 210px; padding-top: 25px; }
+.s-strategy__risk::before { position: absolute; inset: 0 0 auto; height: 7px; border-radius: 7px 7px 0 0; background: var(--risk-accent); content: ""; }
+.s-strategy__risk--coral { --risk-accent: #f58f9d; }
+.s-strategy__risk--sage { --risk-accent: #8ecba9; }
+.s-strategy__risk--lilac { --risk-accent: #c7a1df; }
+.s-strategy__risk-head { display: flex; align-items: center; gap: 12px; }
+.s-strategy__risk-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 7px; color: #fff; background: color-mix(in srgb, var(--risk-accent) 60%, transparent); }
+.s-strategy__risk-icon svg { width: 18px; height: 18px; object-fit: contain; }
+.s-strategy__risk-icon img { display: block; width: 24px; height: 24px; object-fit: contain; filter: brightness(0) invert(1); }
+.s-strategy__risk-list { display: grid; gap: 8px; margin: 18px 0 0; padding-left: 20px; color: #d8e7e9; font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(11px, 1.3svh, 14px); line-height: 1.3; }
+.s-strategy__actions { display: flex; justify-content: center; margin-top: clamp(24px, 3.5svh, 38px); }
+.s-strategy__cta { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 28px; border-radius: 999px; color: #fff; background: #07899a; box-shadow: var(--shadow-btn); font-family: "Avenir Lab", Arial, sans-serif; font-size: clamp(13px, 1.5svh, 16px); font-weight: 500; text-decoration: none; }
+.s-strategy__cta svg,
+.s-strategy__cta img { width: 17px; height: 17px; margin-right: 9px; object-fit: contain; }
+
+@media (max-width: 1100px) {
+  .s-strategy__pillars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .s-strategy { overflow: visible; }
+  .s-strategy__panel { width: min(calc(100% - (var(--gutter) * 2)), 600px); margin-top: 20px; padding-inline: 18px; }
+  .s-strategy__pillars, .s-strategy__risks { grid-template-columns: 1fr; }
+  .s-strategy__pillar, .s-strategy__risk { min-height: 0; }
+  .s-strategy__card-copy { min-height: 0; }
+  .s-strategy__cta { width: 100%; }
+}
+
+/* Animation Lab layers must remain fixed over the shared canvas. The
+   standalone template uses position: relative, but that would remove this
+   section from the lab viewport. */
+.lab .s-strategy {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+}

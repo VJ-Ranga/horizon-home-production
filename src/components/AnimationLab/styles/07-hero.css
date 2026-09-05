@@ -1,0 +1,409 @@
+/* =========================================================
+   PART B — SECTION 1, THE HERO
+   Copied from html-templates/01-hero.html (FINAL, diff 2.36/255).
+   Every percentage is a PSD layer bounding box on the 3840x2160
+   canvas, so left/top map 1:1 onto the stage, which is inset:0.
+
+   Type weights are the PSD's, confirmed by measuring stem widths:
+   brand name Black 900 - report label + tagline + caption Regular
+   400 - scroll cue + pill labels Medium 500. No text-shadow
+   anywhere; the PSD has none, and removing the shadows an earlier
+   build carried measurably improved every text region.
+
+   The template's .s-hero__media rule is NOT here — that box is
+   .lab-media above, because the background is now the scrubbed
+   canvas. The template always anticipated that swap.
+   ========================================================= */
+
+.s-hero__stage { position: absolute; inset: 0; }
+
+/* Brand block — the only left-aligned content.
+   Line 1  x 170 -> 4.43%,  y 189 -> 8.75%
+   Line 2  x 169 -> 4.40%,  y 253 -> 11.71%   (top-to-top 64px = 2.96%) */
+.s-hero__brand { position: absolute; left: 4.42%; top: 8.75%; max-width: 46%; }
+.s-hero__brand-line { margin: 0; line-height: 1; color: var(--on-dark); text-shadow: none; }
+.s-hero__brand-line--1 { font-size: var(--hero-fs-brand); letter-spacing: 0.01em; }
+/* Line 2's cap line is pinned to its own PSD top rather than flowed under
+   line 1, so it cannot drift as line 1's clamp resolves. */
+.s-hero__brand-line--2 {
+  position: absolute;
+  top: 2.96svh;
+  left: 0;
+  font-size: var(--hero-fs-tagline);
+  font-weight: 400;
+  white-space: nowrap;
+}
+.s-hero__brand-name { font-weight: 900; }
+.s-hero__brand-report { font-weight: 400; }
+.s-hero__brand-sep {
+  display: inline-block;
+  margin-inline: 0.28em;
+  color: var(--on-dark);
+  opacity: 0.85;
+  font-weight: 300;
+}
+
+/* Video card — bbox 3151-3784 x 69-422. Anchored from the RIGHT
+   (3840-3784 = 56px = 1.46%) so that when the height cap narrows the
+   card on an ultra-wide viewport it keeps hugging the edge. */
+.s-hero__video { position: absolute; right: 1.46%; top: 3.19%; width: min(16.48%, 29.30svh); }
+.s-hero__video-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 633 / 353;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(4, 32, 40, 0.18);
+  transition: transform var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+.s-hero__video-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.s-hero__video-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Caption — bbox y 456: 34px (1.57%) under the card. Its right edge is
+   3770, i.e. 14px inside the card's own right edge (3784), not flush —
+   2.21% of the 633px card. */
+.s-hero__video-caption {
+  margin: 1.57svh 0 0;
+  padding-right: 2.21%;
+  text-align: right;
+  font-size: var(--hero-fs-caption);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--on-dark);
+  text-shadow: none;
+}
+
+/* Summary video popup — ported from html-templates/final/01-hero.html,
+   class names byte-identical so the two can be diffed. */
+.s-hero__video-dialog {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  width: min(92vw, 1440px);
+  max-height: 96%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  transform-origin: top right;
+  transform: translateX(-50%);
+}
+
+.s-hero__video-dialog[open] {
+  animation: summary-video-open 0.45s var(--ease-out) both;
+}
+
+@keyframes summary-video-open {
+  from {
+    opacity: 0;
+    transform: translate(calc(-50% + 10vw), -8vh) scale(0.42);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+.s-hero__video-dialog::backdrop { background: transparent; }
+
+.s-hero__video-dialog h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.s-hero__video-embed {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 90svh;
+  border: 2px solid #4caf78;
+  border-radius: 14px;
+  background: transparent;
+}
+
+.s-hero__video-dialog-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #4caf78;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+  font: 400 28px/1 Arial, sans-serif;
+}
+
+/* Wordmark — bbox 1161-2680 x 626-1448, centre x 1920.5.
+   width 39.56% - height 38.06% - aspect 1.8479 -> 70.33svh cap. */
+.s-hero__wordmark {
+  position: absolute;
+  left: 50%;
+  top: 28.98%;
+  transform: translateX(-50%);
+  width: min(39.56%, 70.33svh);
+  margin: 0;
+  line-height: 0;
+}
+.s-hero__wordmark img { width: 100%; height: auto; }
+
+/* Scroll cue — bbox 1689-2151 x 1654-1706, centre x 1920. Anchored on
+   the text's own centre (76.57 + 2.41/2 = 77.78%) so the padding that
+   buys the 44px hit area does not shift it. The PSD shows the words
+   alone, no chevron. */
+.s-hero__scroll {
+  position: absolute;
+  left: 50%;
+  top: 77.78%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-4);
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: var(--hero-fs-scroll);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--on-dark);
+  text-decoration: none;
+  text-shadow: none;
+  cursor: pointer;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.s-hero__scroll:hover { opacity: 0.78; }
+
+/* Button pair — pills 1244-1905 and 1984-2598 on y 1930-2054. The pair's
+   centre is 1921 = canvas centre, so the ROW is centred and the pills stay
+   at the PSD's own widths rather than equal columns. Row centre y = 92.2%. */
+.s-hero__actions {
+  position: absolute;
+  left: 50%;
+  top: 92.2%;
+  transform: translate(-50%, -50%);
+  flex-wrap: nowrap;
+  gap: 2.06vw;
+  max-width: calc(100% - var(--gutter) * 2);
+}
+.s-hero__cta {
+  height: clamp(44px, 5.7svh, 76px);
+  padding-block: 0;
+  padding-inline: 0;
+  font-size: var(--hero-fs-cta);
+  flex: none;
+}
+.s-hero__cta--report { width: 17.21vw; }
+.s-hero__cta--ai     { width: 15.99vw; }
+.s-hero__cta .btn-icon { width: 1.05em; height: 1.05em; flex: none; }
+
+/* Button 1 is the shared .btn--download component (tokens.css / final
+   template: `btn btn--light btn--download ...`) — scale + fading white
+   ring on hover. Ported directly under .s-hero__cta--report, same as
+   ApproachLayer ports it under .s-approach2__cta, since .lab .btn--light
+   outranks a bare .btn--download on specificity. Button 2 stays plain
+   .btn--ghost, no special hover. */
+.lab .s-hero__cta--report {
+  position: relative;
+  isolation: isolate;
+}
+
+.s-hero__cta--report::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.lab .s-hero__cta--report:hover,
+.lab .s-hero__cta--report:focus-visible {
+  transform: scale(1.06);
+}
+
+.s-hero__cta--report:hover::after,
+.s-hero__cta--report:focus-visible::after {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------
+   Responsive live-lab foreground.
+
+   The lab keeps one fixed stage over the shared scrubbed canvas at every
+   viewport. These rules move only Hero foreground elements; they do not
+   resize or carve .lab-media, whose geometry remains frame-driven.
+   --------------------------------------------------------- */
+@media (min-width: 781px) and (max-width: 1100px) {
+  .lab-hero-logo {
+    /* Lowered and stepped down a size — at 4%/22% it crowded the
+       title block below it on tablet. */
+    top: calc(7% + 20px);
+    left: 4%;
+    width: min(19%, 24svh);
+    transform: none;
+  }
+
+  .s-hero__brand {
+    left: 50%;
+    /* Pushed down to clear the lowered logo above and leave a gap
+       before the wordmark at 31%. */
+    top: 22%;
+    max-width: 90%;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  /* The two title lines were ~4px apart on `line-height: 1` and
+     collided when line 1 wrapped. Give them room to breathe. */
+  .s-hero__brand-line { line-height: 1.3; }
+  .s-hero__brand-line--2 {
+    position: static;
+    left: auto;
+    transform: none;
+    margin-top: 0.4rem;
+  }
+
+  .s-hero__video {
+    top: 4%;
+    right: 4%;
+    width: min(22%, 29.30svh);
+  }
+
+  .s-hero__video-caption { padding-right: 0; text-align: center; }
+
+  .s-hero__wordmark {
+    top: 31%;
+    width: min(58%, 70.33svh);
+  }
+
+  .s-hero__scroll { top: 80%; }
+
+  .s-hero__actions {
+    top: 93%;
+    gap: 12px;
+    max-width: 94%;
+  }
+
+  .s-hero__cta,
+  .s-hero__cta--report,
+  .s-hero__cta--ai {
+    width: auto;
+    min-width: 0;
+    height: 46px;
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 780px) {
+  .s-hero__stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 2.2svh, 22px);
+    padding: calc(var(--sp-6) + var(--sp-3)) var(--gutter) var(--sp-6);
+    text-align: center;
+  }
+
+  .lab-media__canvas { object-position: 50% 38%; }
+
+  .lab-hero-logo {
+    /* Centred on phones (VJ's call). */
+    top: calc(4% + 20px);
+    left: 50%;
+    width: min(54%, 24svh);
+    transform: translateX(-50%);
+  }
+
+  .s-hero__brand,
+  .s-hero__video,
+  .s-hero__wordmark,
+  .s-hero__scroll,
+  .s-hero__actions {
+    position: static;
+    transform: none;
+    left: auto;
+    top: auto;
+    right: auto;
+  }
+
+  /* Video card is dropped entirely on phones (VJ's call) — the theme
+     video is still reachable from the nav / other sections. */
+  .s-hero__video { display: none; }
+  .s-hero__brand {
+    order: 2;
+    position: relative;
+    top: -30px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .s-hero__wordmark {
+    position: static;
+    left: auto;
+    top: auto;
+    order: 3;
+    width: min(88%, 34svh);
+    /* HeroLayer's scroll-exit transform includes translateX(-50%), which is
+       correct for the desktop absolute box but double-shifts this flex item.
+       The flex stage already centres it. */
+    transform: none !important;
+  }
+  .s-hero__scroll { order: 4; }
+
+  .s-hero__actions {
+    position: absolute;
+    left: 50%;
+    top: 88%;
+    z-index: 2;
+    width: min(100%, 520px);
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: var(--sp-3);
+    transform: translate(-50%, -50%);
+  }
+
+  .s-hero__brand-line { line-height: 1.3; }
+  .s-hero__brand-line--2 { position: static; margin-top: var(--sp-2); }
+  .s-hero__brand-line--1 { white-space: normal; }
+
+  .lab-viewport {
+    --hero-fs-brand:   clamp(13px, 3.6vw, 17px);
+    --hero-fs-tagline: clamp(12px, 3.2vw, 15px);
+    --hero-fs-caption: clamp(11px, 3vw, 14px);
+    --hero-fs-scroll:  clamp(14px, 4vw, 19px);
+    --hero-fs-cta:     clamp(13px, 3.4vw, 15px);
+  }
+  .s-hero__cta,
+  .s-hero__cta--report,
+  .s-hero__cta--ai {
+    width: min(100%, 320px);
+    min-width: min(100%, 280px);
+    height: 44px;
+    padding-inline: var(--sp-5);
+  }
+  .s-hero__cta--report { width: min(100%, 320px); min-width: min(100%, 280px); }
+  .s-hero__scroll { min-height: 44px; padding-block: var(--sp-1); }
+}

@@ -1,0 +1,109 @@
+/* =========================================================
+   PART A (cont.) — SECTION 7, "Corporate Governance"
+   Ported from html-templates/final/07-governance.html, replacing the
+   earlier card-list/eyebrow/CTA layout wholesale — the new template
+   is a single combined heading + 5 counting stat cards, no CTA at
+   all. Class names are this app's own (the template's are terse
+   generics like .stat/.page that would collide with other sections),
+   but every value below is the source's own. Section-root rules
+   (position, min-height, its own #0d4054 background) are NOT carried
+   over — .lab-layer/.lab-media already provide those here. The
+   template's own dark gradient overlay (.page:before) was ported
+   once as .s-governance2__scrim, then dropped per VJ (2026-08-23) —
+   the shared canvas/scrim underneath is enough on its own here. */
+
+.s-governance2__content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: calc(clamp(40px, 8vh, 80px) + 60px) clamp(30px, 13.3vw, 256px) 40px;
+}
+
+.s-governance2__title {
+  margin: 0 auto clamp(30px, 4.5vh, 48px);
+  color: var(--on-dark);
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(28px, 2.45vw, 48px);
+  font-weight: 400;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Frame-driven (GovernanceLayer.tsx writes opacity/translateY per
+   word/stat/counter, per frame, from staggerProgressAt in
+   timeline.ts) rather than the template's fixed-duration CSS/JS
+   animation — see the file header for why. opacity:0 here is only
+   the first-paint fallback. */
+.s-governance2__word {
+  display: inline-block;
+  opacity: 0;
+}
+
+.s-governance2__stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(28px, 4.7vw, 90px);
+  width: 100%;
+}
+
+.s-governance2__stat {
+  opacity: 0;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+.s-governance2__stat:hover {
+  transform: translateY(-6px);
+  filter: brightness(1.15);
+}
+
+.s-governance2__stat-value {
+  margin: 0;
+  color: var(--on-dark);
+  font-weight: 300;
+  font-size: clamp(44px, 4.1vw, 80px);
+  line-height: 0.95;
+}
+
+.s-governance2__unit {
+  font-size: 0.55em;
+  vertical-align: 0.2em;
+}
+
+.s-governance2__stat-label {
+  max-width: 16ch;
+  margin: 12px 0 0;
+  color: var(--on-dark);
+  font-size: clamp(14px, 1.1vw, 22px);
+  line-height: 1.15;
+}
+.s-governance2__stat:nth-child(2) .s-governance2__stat-label { max-width: 19ch; }
+.s-governance2__stat:nth-child(4) .s-governance2__stat-label { max-width: 20ch; }
+.s-governance2__stat:nth-child(5) .s-governance2__stat-label { max-width: 17ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  .s-governance2__word,
+  .s-governance2__stat {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-governance2__content { padding: clamp(118px, 16svh, 150px) clamp(32px, 6vw, 72px) 44px; }
+  .s-governance2__title { max-width: 760px; white-space: normal; font-size: clamp(34px, 4.4vw, 42px); margin-bottom: clamp(38px, 6svh, 56px); }
+  .s-governance2__stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(30px, 5svh, 46px) clamp(28px, 5vw, 56px); }
+  .s-governance2__stat-value { font-size: clamp(48px, 6vw, 64px); }
+  .s-governance2__stat-label { max-width: 18ch; font-size: clamp(14px, 1.7vw, 17px); }
+}
+
+@media (max-width: 700px) {
+  .s-governance2__content { padding: 118px 26px 40px; }
+  .s-governance2__title { white-space: normal; font-size: clamp(30px, 9vw, 36px); margin-bottom: 36px; }
+  .s-governance2__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px 26px; }
+  .s-governance2__stat-value { font-size: clamp(46px, 13vw, 56px); }
+  .s-governance2__stat-label { font-size: 14px; line-height: 1.22; }
+}

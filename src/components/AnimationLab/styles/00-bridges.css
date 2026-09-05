@@ -1,0 +1,108 @@
+/* =========================================================
+   SECTION 5 — Banner | City Skyline
+   Foreground caption only. The shared scrubbed canvas supplies the
+   template's frame-0320 city background, so no image or scrim is added.
+   ========================================================= */
+
+.s-city {
+  color: var(--on-dark);
+  background: transparent;
+}
+
+.s-city__stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100%;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(72px, 16svh, 168px) var(--gutter) var(--sp-6);
+}
+
+/* Two stacked captions — metaphor, then the "Similarly, Haycarb…"
+   bridge. Same pattern as .s-ocean__copy. */
+.s-city__copy {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3.4svh, 38px);
+  width: min(100%, 1000px);
+}
+
+.s-city__caption {
+  margin: 0;
+  color: var(--on-dark);
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(19px, 2.55svh, 31px);
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: 0 2px 16px rgba(2, 25, 34, 0.35);
+}
+
+@media (max-width: 700px) {
+  .s-city__stage { padding-top: clamp(56px, 12svh, 112px); }
+  .s-city__copy { width: min(100%, 34ch); gap: 24px; }
+  .s-city__caption { font-size: clamp(17px, 4.7vw, 24px); line-height: 1.35; }
+}
+
+/* =========================================================
+   SECTION 9 — Governance intro breaker (transition to Lighthouse)
+   Text-only bridge, same structure as the city banner. Shared
+   scrubbed canvas supplies the lighthouse frame; no image or scrim.
+   ========================================================= */
+
+.s-govintro {
+  color: var(--on-dark);
+  background: transparent;
+}
+
+.s-govintro__stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100%;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(72px, 16svh, 168px) var(--gutter) var(--sp-6);
+}
+
+.s-govintro__copy {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3.4svh, 38px);
+  width: min(100%, 1000px);
+}
+
+.s-govintro__caption {
+  margin: 0;
+  color: var(--on-dark);
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(19px, 2.55svh, 31px);
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: 0 2px 16px rgba(2, 25, 34, 0.35);
+}
+
+@media (max-width: 700px) {
+  .s-govintro__stage { padding-top: clamp(56px, 12svh, 112px); }
+  .s-govintro__copy { width: min(100%, 34ch); gap: 24px; }
+  .s-govintro__caption { font-size: clamp(17px, 4.7vw, 24px); line-height: 1.35; }
+}
+
+/* =========================================================
+   ANIMATION LAB — styles
+
+   Two parts, kept apart on purpose:
+
+   PART A  lab harness + the ported section 2 panel.
+   PART B  the hero — copied from html-templates/01-hero.html, which
+           is FINAL and verified at mean diff 2.36/255 against the
+           PSD export. Every percentage in part B is a PSD layer
+           bounding box read off the 3840x2160 canvas. Do not
+           "tidy" those numbers.
+
+   The template's own comments are kept with the rules they explain.
+   ========================================================= */

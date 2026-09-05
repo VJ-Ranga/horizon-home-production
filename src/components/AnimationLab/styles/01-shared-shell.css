@@ -1,0 +1,982 @@
+
+/* ---------- native scrollbar, hidden ----------
+   The lab replaces it with its own indicator (.lab-scroll-progress
+   below) rather than showing the browser's default alongside it.
+   Scoped to html/body rather than .lab itself, since .lab is not the
+   scrolling element — the document is (.lab-spacer sets its height).
+   Scrolling still works identically; only the visual track is gone. */
+html, body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ---------- fonts + tokens, from html-templates/assets/tokens.css
+     (fonts copied to /public/fonts, so the urls are absolute) ---------- */
+
+@font-face { font-family: "Avenir Lab"; src: url("/fonts/avenir-light.woff2")   format("woff2"); font-weight: 300; font-display: swap; }
+@font-face { font-family: "Avenir Lab"; src: url("/fonts/avenir-regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Avenir Lab"; src: url("/fonts/avenir-medium.woff2")  format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Avenir Lab"; src: url("/fonts/avenir-heavy.woff2")   format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Avenir Lab"; src: url("/fonts/avenir-black.woff2")   format("woff2"); font-weight: 900; font-display: swap; }
+@font-face { font-family: "Minion Pro"; src: url("/fonts/minion-pro-regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+.lab {
+  --teal-hero-ground: #00778e;
+  --on-dark: #ffffff;
+  --on-dark-muted: #bcd4da;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 16px;
+  --sp-4: 24px;
+  --sp-5: 32px;
+  --sp-6: 48px;
+
+  --radius-sm: 8px;
+  --gutter: clamp(16px, 4vw, 48px);
+
+  --shadow-btn: 0 8px 20px rgba(6, 65, 77, 0.22);
+  --shadow-lift: 0 16px 40px rgba(6, 65, 77, 0.20);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-base: 0.28s;
+
+  position: relative;
+  width: 100%;
+  font-family: "Avenir Lab", ui-sans-serif, system-ui, sans-serif;
+  color: var(--on-dark);
+}
+
+/* =========================================================
+   PART A — the lab harness
+   ========================================================= */
+
+/* The teal ground. Sits behind the carved media, so the band the
+   carve leaves is the same teal the hero's CTAs sit on. */
+.lab::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--teal-hero-ground);
+}
+
+/* The carved media box. Height and corner radii are written by
+   LabScrubber every frame from carveAt(); everything here is only
+   the FIRST PAINT, before the first rAF tick.
+
+   The fallbacks are FULL-BLEED, because that is where the entry
+   starts — the intro hands over to full-bleed video and the carve
+   forms from there. Defaulting to the settled shape would flash the
+   finished carve for one frame at load.
+
+   Reduced motion has no entry: it opens already settled at frame 50,
+   and AnimationLab renders data-phase="scroll" from the very first
+   render, so the rule below gives it the PSD shape immediately.
+   Once JS is running, inline custom properties win over both.
+
+   The PSD's own values ("Rectangle 1 copy"): flat bottom edge at
+   y=1840 of 2160 = 85.19%; corners 600px across and 346px up, i.e.
+   15.63% horizontally and 18.80% vertically — an ELLIPTICAL radius,
+   since a circular one does not match the PSD curve.
+
+   That the carve FORMS on entry and OPENS on exit are both animation
+   assumptions (2026-08-19), not PSD measurements. */
+.lab-media {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 1;
+  height: var(--carve-h, 100%);
+  border-radius:
+    0 0 var(--carve-rx, 0%) var(--carve-rx, 0%) /
+    0 0 var(--carve-ry, 0%) var(--carve-ry, 0%);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Scrim — html-templates/final/02-main.html's own
+   .s-main-start__media::after (--horizon-scrim), applied here across
+   the WHOLE scrubbed video rather than just that one bridge section,
+   so every section's text sits on the same darkened backdrop instead
+   of only the bridge card getting it — EXCEPT Haycarb at a Glance,
+   which is light-themed on purpose and fades this out while it's on
+   screen (see --scrim-opacity, written by LabScrubber.tsx). Sits
+   above the canvas/poster (z-index higher than their stacking
+   context here, since it's a pseudo-element of the same .lab-media
+   box they paint into) but below the actual section content in
+   .lab-viewport (z-index: 2). */
+.lab-media::after {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  content: "";
+  background: rgba(5, 67, 57, 0.2);
+  clip-path: circle(var(--transition-scrim-radius, 0%) at 50% 50%);
+  /* Written per frame by LabScrubber.tsx — 1 everywhere except
+     Haycarb at a Glance's own on-screen window (light-themed, no
+     scrim wanted), where it fades to 0 in lockstep with Glance's own
+     opacity curve. Defaults to 1 so nothing regresses before the
+     first frame tick sets it. */
+  opacity: var(--transition-scrim-opacity, 0);
+  pointer-events: none;
+}
+
+/* Reduced motion / no entry: settled from the first paint. */
+.lab[data-phase="scroll"] .lab-media {
+  --carve-h: 85.19%;
+  --carve-rx: 15.63%;
+  --carve-ry: 18.80%;
+}
+
+/* Shorter teal band + a small gentle curve on portrait-ish viewports,
+   so the wide PSD sweep is not stretched into a big green wedge.
+   Mirrors CARVE_SETTLED_MOBILE / CARVE_SETTLED_PHONE in timeline.ts,
+   which LabScrubber writes per frame at the same breakpoints — these
+   rules are just the pre-JS fallback. */
+@media (max-width: 1100px) {
+  .lab[data-phase="scroll"] .lab-media {
+    --carve-h: 88%;
+    --carve-rx: 7%;
+    --carve-ry: 5%;
+  }
+}
+/* Phones: taller band so it sits behind BOTH stacked CTA pills. */
+@media (max-width: 780px) {
+  .lab[data-phase="scroll"] .lab-media {
+    --carve-h: 78%;
+  }
+}
+
+/* Always the full viewport, whatever the carve is doing — the frame
+   is a full-screen background that the box above crops, exactly as
+   the template's <img> was sized to the whole hero and cropped.
+
+   The poster and the canvas share these rules so their geometry is
+   identical: object-fit cover on the same box matches the canvas's
+   own centred cover draw, so the crossfade between them does not
+   shift the image by a pixel. */
+.lab-media__canvas,
+.lab-media__poster {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100svh;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* The poster is a plain <img> in the SSR markup, so it paints as soon
+   as it decodes — long before the canvas path (decode, setState,
+   first rAF) can put anything up. Without it the load shows flat teal
+   until the canvas is ready. It stays underneath afterwards; the
+   canvas draws opaque full-bleed over it, so it never shows again. */
+.lab-media__poster { z-index: 0; }
+
+.lab-media__canvas {
+  z-index: 1;
+  opacity: 0;
+  /* Short, because it now crossfades onto the SAME frame rather than
+     onto flat teal — this fade should be imperceptible. */
+  transition: opacity 0.2s linear;
+}
+.lab-media__canvas[data-ready="true"] { opacity: 1; }
+
+/* Mobile + tablet only. On iOS Safari `100svh` resolves to the SHORT
+   viewport (toolbars-visible), but .lab-media / .lab-viewport are
+   `position: fixed; inset: 0` and fill the REAL, taller visible area
+   once the toolbar collapses. That left a flat teal strip of page
+   background along the bottom that never cleared on scroll. `100dvh`
+   tracks the actual visible viewport, so the frame always covers it.
+   Desktop (>1100px) keeps the base `100svh` rule untouched — with no
+   collapsing toolbar the two values are identical there anyway. */
+@media (max-width: 1100px) {
+  .lab-media__canvas,
+  .lab-media__poster {
+    height: 100dvh;
+  }
+}
+
+/* One screen. Every section layer stacks inside it. */
+.lab-viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+
+  /* Hero type scale — from 01-hero.html. Height-driven, not
+     aspect-driven: sizing in vw breaks on a short, wide laptop. */
+  --hero-fs-brand:   clamp(12px, 1.92svh, 25px);
+  --hero-fs-tagline: clamp(11px, 1.60svh, 21px);
+  --hero-fs-caption: clamp(11px, 1.61svh, 21px);
+  --hero-fs-scroll:  clamp(13px, 2.41svh, 32px);
+  --hero-fs-cta:     clamp(12px, min(1.76svh, 1.00vw), 21px);
+}
+
+/* One-way end-to-start loop bridge. A single white shade covers the final
+   frames, hides the reset, and fades away while frames 32 -> 50 play below. */
+.lab-loop-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background: #fff;
+}
+
+.lab[data-loop-transition="active"] .lab-loop-transition {
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-loop-transition {
+    display: none;
+  }
+}
+
+/* A section layer. opacity/transform/visibility are written per
+   frame by useSectionLayer — no CSS transition, or it would fight
+   the scroll position for control. */
+.lab-layer {
+  position: absolute;
+  inset: 0;
+  will-change: opacity, transform;
+}
+
+.s-end-screen {
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  color: #fff;
+  text-align: center;
+}
+
+.s-end-screen__copy {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1000px);
+  margin: 0;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  /* Flat 48px on desktop, as specified. This was briefly a
+     clamp(19px, 5.33svh, 48px), which only actually reached 48px on
+     viewports 900px+ tall — a 1440x800 window rendered 42.6px, so the
+     spec was not being met on ordinary desktops. Tab/mobile scale down
+     from it in the media query below. Minion Pro ships one weight only,
+     so this stays 400 — anything else renders as faux bold. */
+  font-size: 48px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.35;
+  text-shadow: 0 2px 16px rgba(2, 25, 34, 0.35);
+}
+
+/* Tab + mobile keep the original viewport-scaled size — 48px would swamp
+   a phone, and this section's copy is long. */
+@media (max-width: 1100px) {
+  .s-end-screen__copy {
+    font-size: clamp(19px, 2.55svh, 31px);
+  }
+}
+
+/* ---------- section-layer first-paint state ----------
+   A layer that is not on screen at the opening frame must not paint
+   before useSectionLayer runs. Marked per layer in the JSX rather
+   than by phase, because the right answer is "is this section
+   visible at the current frame", which is true of neither the entry
+   nor reduced motion for section 2 (its enter window is 109-118, and
+   reduced motion opens at frame 50).
+
+   The hero carries no marker: it is present from frame 1.
+
+   useSectionLayer writes visibility: visible and pointer-events: auto
+   explicitly rather than "", because clearing an inline value would
+   let this rule apply again — the layer would arrive on schedule and
+   then vanish, or stay visible but never accept a click. */
+.lab-layer[data-initial-hidden="true"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Hero elements revealed by useRevealPart. That hook writes `opacity`
+   and the CSS `translate` property — never `transform`, which several
+   of these use for their PSD-derived centring. Declared here so the
+   compositor is warned about both. */
+.s-hero__brand,
+.s-hero__video,
+.s-hero__scroll,
+.s-hero__actions {
+  will-change: opacity, translate;
+}
+
+/* The wordmark is not part of the group above — it is not driven by
+   useRevealPart, so it never gets an inline `translate`. Its own
+   opacity/transform keyframe is declared further down. */
+.s-hero__wordmark { will-change: opacity, transform; }
+
+/* ---------- entry first-paint state ----------
+   Without this the whole hero paints fully visible for one frame on
+   load, then snaps away when the first rAF tick writes the real
+   state. The markup is present from SSR; useRevealPart cannot run
+   until after the first paint.
+
+   Scoped to data-phase="entry" so it applies ONLY when there is an
+   entry to wait for. Reduced motion renders data-phase="scroll" from
+   the very first render, so the hero is visible immediately there.
+
+   useRevealPart writes visibility: visible explicitly rather than "",
+   because clearing the inline value would let this rule apply again
+   mid-reveal. */
+.lab[data-phase="entry"] .s-hero__brand,
+.lab[data-phase="entry"] .s-hero__video,
+.lab[data-phase="entry"] .s-hero__scroll,
+.lab[data-phase="entry"] .s-hero__actions {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Hidden until HeroLayer adds --emerge (see WORDMARK_EMERGE_FRAME in
+   timeline.ts) — a plain class, not a [data-phase] rule, because the
+   trigger now fires DURING the entry (frame 46-48, before the settle
+   at 50), not at the entry -> scroll handover. */
+.s-hero__wordmark { opacity: 0; visibility: hidden; }
+
+/* Settled/reduced-motion fallback: the live hook normally adds the emerge
+   class, but the fully loaded template state must still paint the wordmark
+   if that class is delayed by image decode. Frame-driven inline exit styles
+   continue to win once the hero scrolls away. */
+.lab[data-phase="scroll"] .s-hero__wordmark {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ---------- wordmark emerge ----------
+   Triggered once, by HeroLayer, when frame reaches
+   WORDMARK_EMERGE_FRAME — a few frames before the hero settles at 50,
+   not after. Guarded by a ref there so it cannot fire twice: the
+   trigger only checks frame during the ENTRY phase, which happens
+   exactly once and never recurs, so scrolling back through the hero
+   later or the infinite-loop wrap (which only touches scrollY/frame,
+   never re-runs the entry) cannot restart or stack this with the
+   section's own fade. No other rule touches this element's opacity
+   or transform, so there is nothing else to duplicate it.
+
+   Slow and deliberate — 2.6s, well past when the frame clock itself
+   stops advancing at 50, so this keeps animating through the settle
+   on its own clock rather than snapping into place with everything
+   else. Plain scale + blur + fade, no colour tint. translateX(-50%)
+   is kept in every frame of the keyframe — dropping it would un-centre
+   the element, since this animates the same `transform` property the
+   static centring rule above uses. */
+.s-hero__wordmark--emerge {
+  visibility: visible;
+  animation: hero-wordmark-emerge 1800ms var(--ease-out) both;
+}
+
+@keyframes hero-wordmark-emerge {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.46);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-hero__wordmark--emerge { animation: none; opacity: 1; visibility: visible; }
+}
+
+/* .s-hero__scroll carries `transition: opacity` from the template,
+   for its hover state. A transition applies to inline changes too,
+   so during the entry it would smear the per-frame opacity writes by
+   0.28s and the scroll cue would lag visibly behind the rest of the
+   cascade. Off while the entry drives it; hover gets it back in the
+   scroll phase. */
+.lab[data-phase="entry"] .s-hero__scroll {
+  transition: none;
+}
+
+/* ---------- sticky nav reveal ----------
+   Hidden through the whole entry, same [data-phase="scroll"] gate as
+   the wordmark bloom — this only starts matching once frame 50 has
+   fully settled and handed over, i.e. "after the intro page", and
+   (like the wordmark) it can never re-fire: data-phase moves entry ->
+   scroll exactly once and never back.
+
+   Two beats, staggered so the logo settles before the hamburger
+   appears: the logo starts at 1.6667x and eases down to 1x — 60% of
+   its start size, matching "small 60%" — then, once that finishes
+   (1400ms anim + 200ms delay = 1600ms), the hamburger fades in on its
+   own. transform: translateX(-50%) is carried in both keyframe steps
+   so centring survives the scale. */
+.lab-nav__hamburger,
+.lab-nav__logo {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.lab-nav__logo {
+  transform: translateX(-50%) scale(1.6667);
+}
+
+.lab[data-phase="scroll"] .lab-nav__logo {
+  visibility: visible;
+  animation: lab-nav-logo-in 1400ms var(--ease-out) 200ms both;
+}
+
+.lab[data-phase="scroll"] .lab-nav__hamburger {
+  visibility: visible;
+  animation: lab-nav-hamburger-in 700ms var(--ease-out) 1700ms both;
+}
+
+@keyframes lab-nav-logo-in {
+  from { opacity: 0; transform: translateX(-50%) scale(1.6667); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes lab-nav-hamburger-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-nav__hamburger,
+  .lab-nav__logo {
+    animation: none;
+    opacity: 1;
+    visibility: visible;
+  }
+  .lab-nav__logo { transform: translateX(-50%) scale(1); }
+}
+
+.lab-spacer { position: relative; z-index: -1; }
+
+/* ---------- scroll lock, phase 1 ----------
+   The hero loads itself; nobody scrolls to reveal it. The spacer
+   still sets the page height throughout, so nothing reflows at the
+   handover — this only stops the page moving. Set on <html> by
+   AnimationLab for the whole entry phase. */
+html.lab-locked,
+html.lab-locked body,
+html.lab-gated,
+html.lab-gated body,
+html.lab-menu-open,
+html.lab-menu-open body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* ---------- menu hamburger reveal ----------
+   Dead since the lab's own menu was replaced by the app-wide
+   GlobalHeader (copied from Production); IntroNavGate now does the
+   reveal, keyed to the same LOGO_EXIT_FRAMES[1] (70). Kept only so
+   the selectors below still document what the frame gate used to
+   drive. */
+.lab-menu__hamburger {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+  transition: transform 0.6s var(--ease-out), opacity 0.6s var(--ease-out);
+}
+.lab-menu__hamburger[data-revealed="true"] {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-menu__hamburger { transition: none; }
+}
+
+/* ---------- loading gate, phase 2 only ----------
+   Hidden by default; shown only while AnimationLab's loading gate is
+   holding scroll for a section whose frames aren't decoded yet. */
+.lab-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.lab[data-gated="true"] .lab-loading { display: flex; }
+
+.lab-loading__ring {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.28);
+  border-top-color: var(--on-dark);
+  border-radius: 50%;
+  animation: lab-loading-spin 0.8s linear infinite;
+}
+
+/* Entry loader for the normal route on phones. It is deliberately separate
+   from the desktop gate so the mobile UI can report progress while only the
+   compact frame set is being decoded. */
+.lab-mobile-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--on-dark);
+  background: rgba(7, 18, 22, 0.92);
+  pointer-events: none;
+  text-align: center;
+}
+
+.lab-mobile-loading p,
+.lab-mobile-loading > span:last-child {
+  margin: 0;
+  font: 500 11px/1.2 var(--font-sans, sans-serif);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lab-mobile-loading__ring {
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--on-dark);
+  border-radius: 50%;
+  animation: lab-loading-spin 0.8s linear infinite;
+}
+
+@media (min-width: 701px) {
+  .lab-mobile-loading { display: none; }
+}
+
+@keyframes lab-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-loading__ring { animation: none; }
+}
+
+/* ---------- the logo ----------
+   One element, HeroLogo.tsx's whole lifecycle: enters, settles, then
+   fades back out over its own window (LOGO_EXIT_FRAMES, 50-70 in
+   timeline.ts) with the rest of the hero — no dock, no shrink.
+   `opacity` and `translate` are written per frame by that component;
+   position/top/left/transform/width/z-index are static here. bbox
+   1630-2211 x 80-340, centre x 1920.5 = canvas centre (hence centred,
+   never positioned from the left), aspect 2.2346 -> 26.90svh cap —
+   carried over unchanged from the settled .s-hero__logo rule this
+   replaces. */
+.lab-hero-logo {
+  position: fixed;
+  top: 3.7%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  width: min(15.13%, 26.90svh);
+  height: auto;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ---------- custom scroll progress ----------
+   Replaces the native scrollbar hidden above. Track is a thin,
+   translucent line; the FILL grows top-to-bottom as a direct fraction
+   of frame position (see ScrollProgress.tsx), not a thumb travelling
+   along the track. Opacity is also written inline from there (visible
+   only once the hero has fully exited, frame >= 70) rather than via
+   this CSS transition alone, so both conditions — phase and frame —
+   gate it together; the transition here just smooths that toggle. */
+.lab-scroll-progress {
+  position: fixed;
+  top: 12svh;
+  right: 1.1%;
+  z-index: 6;
+  width: 3px;
+  height: 76svh;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.lab-scroll-progress__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  border-radius: 999px;
+  background: var(--on-dark);
+}
+
+/* ---------- floating "AI Assistant" button — AiAssistantFab.tsx ----------
+   Fixed bottom-right, well clear of .lab-scroll-progress (right:1.1%,
+   a few px wide, hugging the very edge) — the FAB sits inset from the
+   edge instead, so the two never overlap. Opacity/pointer-events are
+   written per-frame by the component itself, same as every other
+   frame-gated element; the CSS here is purely static geometry. */
+.lab-ai-fab {
+  position: fixed;
+  right: 30px;
+  bottom: 40px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* 0 at rest, not 14px: flex `gap` still inserts space between items
+     even when one is collapsed to max-width:0, which left this a
+     70x56 oval instead of a clean 56px circle. Only opens up on
+     hover, alongside the label itself. */
+  gap: 0;
+  /* Fixed at the orb's OWN resting box (56px) — the label is
+     collapsed to zero width below, so this never reflows at rest;
+     hover only grows the label's own width, not this container. */
+  height: 56px;
+  padding: 0;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  /* All four share one duration/curve, opacity included — the hover
+     expand (background/gap/padding) originally ran faster (0.28s)
+     than opacity's reveal-fade (0.4s) and wasn't fully in sync; also
+     padding had no transition at all at first and snapped instantly.
+     Slowed to 0.4s across the board for a visibly gentler feel. */
+  transition: opacity 0.4s var(--ease-out),
+    background-color 0.4s var(--ease-out),
+    gap 0.4s var(--ease-out),
+    padding 0.4s var(--ease-out);
+}
+/* Pill backdrop appears only on hover/focus, behind the label — the
+   orb needs none, it already reads against any background. Kept as
+   the sampled intro colour (see .lab-intro's own comment) so it never
+   clashes with whatever section is scrolled behind it. */
+.lab-ai-fab:hover,
+.lab-ai-fab:focus-visible {
+  background-color: rgba(9, 84, 115, 0.82);
+  padding: 0 8px 0 18px;
+  gap: 14px;
+}
+
+.lab-ai-fab__label {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  /* Collapsed at rest: zero width AND clipped, so it takes no layout
+     space and cannot be tabbed/read as visible until it actually is.
+     max-width (not width) so "nowrap" text is never truncated once
+     it opens — comfortably wider than the string needs. */
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  /* Same 0.4s/curve as the container above and the orb below, no
+     stagger — all three move as one motion instead of arriving at
+     different times. */
+  transition: max-width 0.4s var(--ease-out), opacity 0.4s var(--ease-out);
+}
+.lab-ai-fab:hover .lab-ai-fab__label,
+.lab-ai-fab:focus-visible .lab-ai-fab__label {
+  max-width: 220px;
+  opacity: 1;
+}
+
+.lab-ai-fab__orb {
+  position: relative;
+  flex: none; /* never squeezed by the label */
+  width: 56px;
+  height: 56px;
+  transition: transform 0.4s var(--ease-out);
+}
+.lab-ai-fab:hover .lab-ai-fab__orb,
+.lab-ai-fab:focus-visible .lab-ai-fab__orb {
+  transform: scale(1.3); /* +30%, requested size */
+}
+
+/* Ported verbatim from Horizon (Backend)'s src/app/globals.css — same
+   keyframes, same class names, same 4s/6s/5s/3s durations as the
+   HaycarbChat orb they're borrowed from. Only AiAssistantFab.tsx's
+   own inline geometry (insets, dot/core sizes) was scaled down for a
+   56px button; the motion itself is untouched. */
+@keyframes orb-spin {
+  to { transform: rotate(360deg); }
+}
+.animate-orb-spin { animation: orb-spin 4s linear infinite; will-change: transform; }
+
+@keyframes orb-rotate-x {
+  0% { transform: rotateX(0deg) rotateZ(0deg); }
+  100% { transform: rotateX(360deg) rotateZ(0deg); }
+}
+.animate-orb-rotate-x { animation: orb-rotate-x 6s linear infinite; will-change: transform; }
+
+@keyframes orb-rotate-y {
+  0% { transform: rotateY(0deg) rotateZ(0deg); }
+  100% { transform: rotateY(360deg) rotateZ(0deg); }
+}
+.animate-orb-rotate-y { animation: orb-rotate-y 5s linear infinite; will-change: transform; }
+
+@keyframes orb-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50% { opacity: 0.8; transform: scale(1.08); }
+}
+.animate-orb-pulse { animation: orb-pulse 3s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-ai-fab,
+  .lab-ai-fab__label,
+  .lab-ai-fab__orb {
+    transition: none;
+  }
+  .animate-orb-spin,
+  .animate-orb-rotate-x,
+  .animate-orb-rotate-y,
+  .animate-orb-pulse {
+    animation: none;
+  }
+}
+
+/* ---------- mouse parallax ----------
+   Same values as loop test/assets/interaction-math.js: 3px/2px/0.2deg
+   maxima, applied to .lab-media (the fixed background box) via
+   translate3d + rotate, never touched by the section layers' own
+   transform usage. See useMouseParallax.ts. */
+.lab-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 180ms ease;
+  will-change: transform;
+}
+.lab-cursor::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+.lab-cursor.is-visible { opacity: 1; }
+
+/* ---------- lab chrome ---------- */
+.lab-hud {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 3;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(2, 26, 33, 0.72);
+  color: #dff1f5;
+  font: 500 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  user-select: none;
+}
+.lab-hud__frame { margin: 0 0 2px; font-size: 13px; color: #ffffff; }
+.lab-hud__phase { margin: 0 0 6px; color: #ffd9a8; }
+.lab-hud__row { display: flex; gap: 10px; justify-content: space-between; margin: 0; }
+.lab-hud__id { opacity: 0.75; }
+.lab-hud__val { font-variant-numeric: tabular-nums; }
+.lab-hud__note { margin: 6px 0 0; opacity: 0.55; max-width: 26ch; }
+.lab-hud__rule {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin: 6px 0 2px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(223, 241, 245, 0.25);
+  color: #ffffff;
+}
+.lab-hud__row--sub { padding-left: 8px; opacity: 0.85; }
+.lab-hud__row--sub em { font-style: normal; opacity: 0.5; }
+
+@media print { .lab-hud { display: none; } }
+
+/* ---------- shared button system, from tokens.css ---------- */
+.lab .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  border: 0;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+.lab .btn--light { background: #ffffff; color: #0a5568; box-shadow: var(--shadow-btn); }
+.lab .btn--light:hover { transform: translateY(-2px); }
+
+/* Reusable annual-report download button. Financial Highlights reuses this
+   exact Hero CTA treatment for its Explore More action. */
+.lab .btn--download {
+  position: relative;
+  isolation: isolate;
+  background: #ffffff;
+  color: #0a5568;
+  box-shadow: var(--shadow-btn);
+  transition: transform 0.18s var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.lab .btn--download::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.lab .btn--download:hover,
+.lab .btn--download:focus-visible {
+  background: #ffffff;
+  color: #0a5568;
+  transform: scale(1.06);
+}
+.lab .btn--download:hover::after,
+.lab .btn--download:focus-visible::after { opacity: 1; }
+
+.lab .btn--ghost { background: transparent; color: var(--on-dark); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85); }
+.lab .btn--ghost:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-2px); }
+
+/* ---------- .btn--watch: reusable "watch / video" button ----------
+   Teal fill (the section-06 pill colour), 1px white hairline, and a
+   teal outset ring that fades in on hover/focus. Drop it on any
+   section: `class="btn btn--watch"`. Pair with a section's own size
+   class for width/padding (e.g. .s-approach2__cta) or set your own.
+   The `.lab .btn--watch` specificity beats bare section rules, and
+   `.lab .btn--watch::after` beats a section's own ::after ring. */
+.lab .btn--watch {
+  position: relative;
+  isolation: isolate;
+  background: #1d7f94;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  box-shadow: var(--shadow-btn);
+  transition: transform 0.18s var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+.lab .btn--watch:hover,
+.lab .btn--watch:focus-visible {
+  background: #166874;
+  border-color: #1d7f94;
+  transform: translateY(-2px);
+}
+.lab .btn--watch::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 1px solid #1d7f94;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+.lab .btn--watch:hover::after,
+.lab .btn--watch:focus-visible::after {
+  opacity: 1;
+}
+
+.lab .btn-row { display: flex; align-items: center; }
+.lab .btn-row--center { justify-content: center; }
+
+.lab .visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- shine sweep (shared utility) ----------
+   Diagonal highlight band that sweeps across an element on hover,
+   lifted from css-animation-inspiration-demo.html's .shine/.shine::before.
+   First used on .s-govcards__card, per VJ 2026-08-28; drop the class on
+   anything else that wants the same effect.
+
+   USAGE: add class="lab-shine" alongside the element's own classes.
+   The element does NOT need position/overflow set itself — this
+   utility supplies both. If the element already declares its own
+   `position`, this one wins (it comes later in the cascade); that is
+   fine as long as it is also `relative` or another positioned value —
+   `static` would break the sweep's clipping.
+
+   TUNE PER INSTANCE with custom properties, either inline
+   (style="--shine-color: ...") or in a rule for that element's class:
+     --shine-color     the highlight colour           default a soft white
+     --shine-angle     sweep angle                     default 115deg
+     --shine-band      where the bright band sits/how  default 35% 50% 65%
+                        wide, as three comma-free stops (start mid end)
+     --shine-duration  sweep speed                      default 0.8s
+     --shine-distance  how far off-box the sweep travels default -120%
+                        (a wider box may need a bigger nudge to fully
+                        clear both edges)
+
+   Example — a warmer, slower sweep:
+     <div class="s-some__card lab-shine"
+          style="--shine-color: rgba(255,224,178,.22); --shine-duration: 1.2s;">
+*/
+.lab-shine {
+  position: relative;
+  overflow: hidden;
+}
+.lab-shine::before {
+  content: "";
+  position: absolute;
+  inset: var(--shine-distance, -120%);
+  background: linear-gradient(
+    var(--shine-angle, 115deg),
+    transparent var(--shine-band-start, 35%),
+    var(--shine-color, rgba(255, 255, 255, 0.18)) var(--shine-band-mid, 50%),
+    transparent var(--shine-band-end, 65%)
+  );
+  transform: translateX(-30%);
+  transition: transform var(--shine-duration, 0.8s) ease;
+  pointer-events: none;
+}
+.lab-shine:hover::before {
+  transform: translateX(55%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-shine::before { transition: none; }
+}

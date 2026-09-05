@@ -1,0 +1,99 @@
+/* =========================================================
+   PART A (cont.) — SECTION 1_2 BRIDGE, "A Journey of Possibilities"
+   Ported from html-templates/01-main-02.html. Positioning/sizing
+   that page did with position:absolute + min-height:100vh is dropped
+   — .lab-layer already gives this section inset:0 in the shared
+   viewport.
+   ========================================================= */
+
+.s-main-start__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: var(--sp-6) var(--gutter);
+  text-align: center;
+}
+
+.s-main-start__title--lower {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: calc(100% - (var(--gutter) * 2));
+  max-width: none;
+  margin: 0;
+  transform: translateX(-50%);
+  /* Text/colour only, ported from 02-main.html's own rule — that
+     template's background/media is NOT brought over, this section
+     still has none of its own, same as before. */
+  color: var(--on-dark);
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  /* VJ 2026-09-03: pinned to a tight 32-34px band. Still height-driven
+     so it nudges up on taller screens, but the 34px ceiling keeps the
+     51-character nowrap line inside the container at the narrow end of
+     the desktop width range. (Earlier steps: 20-32 -> 26-40 -> here.) */
+  font-size: clamp(32px, 3.6svh, 34px);
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+@media (max-width: 780px) {
+  .s-main-start__title--lower {
+    top: 48%;
+    width: calc(100% - 28px);
+    font-size: clamp(18px, 4.8vw, 24px);
+    line-height: 1.25;
+    white-space: normal;
+  }
+}
+
+/* The bridge is the real second section after Hero. Keep its title centred
+   inside the fixed lab stage at tablet and phone widths; it must not inherit
+   a desktop nowrap that can push the phrase off-screen. */
+@media (min-width: 781px) and (max-width: 1100px) {
+  /* NO height/radius clamp here. It used to cap .lab-media at ~90%,
+     which meant that even after the carve OPENS on scroll
+     (--carve-h: 100%) a teal band stayed pinned to the bottom on
+     tablet and never cleared — desktop and phone both let the carve
+     vars drive the box directly, so tablet now does too. The wide-
+     sweep concern the clamp addressed is already handled by the
+     CARVE_SETTLED_MOBILE shape (timeline.ts), which this range now
+     uses via CARVE_MOBILE_MAX_WIDTH = 1100. */
+
+  .s-main-start__title--lower {
+    top: 50%;
+    width: calc(100% - 56px);
+    font-size: clamp(20px, 2.6svh, 30px);
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .s-main-start__title--lower {
+    top: 49%;
+    width: calc(100% - 28px);
+    font-size: clamp(17px, 4.7vw, 21px);
+    line-height: 1.2;
+  }
+}
+
+/* Per-word reveal — frame-driven (MainStartLayer.tsx writes
+   opacity/transform per word, per frame, from staggerProgressAt in
+   timeline.ts) rather than a CSS animation, so it stays tied to
+   scroll position. Per-WORD, not per-character (2026-08-23): splitting
+   every letter into its own inline-block box broke the font's kerning
+   between adjacent letters, which read as broken letter-spacing.
+   Whitespace between words is plain text, not wrapped, so native word
+   spacing is untouched. opacity:0 here is only the first-paint
+   fallback, before the first frame tick can run. */
+.s-main-start__word {
+  display: inline-block;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-main-start__word { opacity: 1; transform: none; }
+}

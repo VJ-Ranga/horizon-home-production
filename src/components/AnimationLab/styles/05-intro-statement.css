@@ -1,0 +1,262 @@
+/* =========================================================
+   PART A (cont.) — INTRO STATEMENT, "Beyond the Beyond"
+   Ported from html-templates/final/05-blue-city.html (titled "Intro
+   Statement, Combined" in the source). Not part of the shared
+   SECTIONS array — see the note in IntroStatementLayer.tsx for why;
+   its own opacity is written there directly from frame, so the only
+   thing this stylesheet owns is the static layout/type.
+   ========================================================= */
+
+.s-intro {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Pale wash — the template's own .s-intro__media::after gradient,
+   unchanged. This is a section-owned overlay, separate from
+   .lab-media's shared dark scrim (see IntroStatementLayer.tsx for
+   why touching that shared one wasn't necessary). */
+.s-intro__media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(233, 245, 247, 0.97) 0%,
+    rgba(233, 245, 247, 0.92) 34%,
+    rgba(226, 242, 246, 0.45) 46%,
+    transparent 62%
+  );
+}
+
+.s-intro__stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+
+.s-intro__statement {
+  position: absolute;
+  top: calc(17% - 10px);
+  left: 50%;
+  width: min(78%, 1280px);
+  margin: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1.3em;
+  color: #1c4f6b;
+  font-family: "Minion Pro", Georgia, "Times New Roman", serif;
+  font-size: clamp(16px, 2.7svh, 34px);
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.s-intro__statement p { margin: 0; }
+
+@media (max-width: 780px) {
+  .s-intro__statement {
+    top: 13%;
+    width: min(90%, 680px);
+    gap: 1.1em;
+  }
+}
+
+/* Tab + mobile: the copy runs long and the lower half of the art is dark,
+   so the text needs lifting off it. One scrim over the whole section,
+   strongest at the bottom and fading out near the top — the sky and
+   mountains stay visible, the paragraphs sitting over the dark road do
+   not have to fight it.
+
+   This replaces a previous treatment that gave each paragraph its own
+   rounded translucent panel: it read as two grey boxes stacked over the
+   art rather than as part of the image. Desktop keeps its own top-down
+   wash on .s-intro__media above. */
+@media (max-width: 1100px) {
+  .s-intro__media {
+    background: linear-gradient(
+      0deg,
+      rgba(233, 245, 247, 0.97) 0%,
+      rgba(233, 245, 247, 0.93) 45%,
+      rgba(233, 245, 247, 0.72) 70%,
+      rgba(233, 245, 247, 0.28) 88%,
+      transparent 100%
+    );
+  }
+}
+
+/* Final live-lab responsive pass for Section 4. This block wins over the
+   earlier `781-1100` one (same specificity, later in the file), so the
+   full tablet layout lives HERE.
+
+   Card: near-full-width, in-flow from the top (like the phone layout),
+   only as tall as its content + small slack. Contents keep the section's
+   default type sizes. Quicklinks row stays pinned to the layer bottom. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  /* Layer stacks the card and the quicklinks as one centred group with
+     a fixed 50px gap between them: the card drops down from the top,
+     the quicklinks rise from the bottom, exactly as VJ marked. */
+  .s-digital2 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .s-digital2__stage {
+    height: auto;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .s-digital2__panel {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    justify-content: center;
+    width: min(96%, 1320px);
+    height: auto;
+    /* Card hugs its content — no forced tall box. */
+    min-height: min(42svh, 480px);
+    max-height: none;
+    margin: 0 auto;
+    padding: 32px clamp(30px, 4vw, 56px) 36px;
+  }
+  .s-digital2__lead { margin-block: 14px 20px; }
+  .s-digital2__features { column-gap: clamp(28px, 5vw, 64px); row-gap: 18px; }
+  .s-digital2__profiles-row {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    flex: 0 0 auto;
+    width: min(94%, 760px);
+    margin: 50px auto 0;   /* the 50px gap below the card */
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    justify-items: center;
+  }
+  .s-digital2__profiles { display: contents; }
+  .s-digital2__profiles-eyebrow {
+    position: static;
+    inset: auto;
+    grid-column: 1 / -1;
+    margin: 0 0 18px;
+  }
+  .s-digital2__profile,
+  .s-digital2__profile--cta { width: 100%; max-width: 120px; }
+}
+
+@media (max-width: 700px) {
+  .lab .s-digital2 { overflow: hidden; }
+  .s-digital2__stage { height: 100%; min-height: 0; }
+  .s-digital2__panel {
+    position: absolute;
+    /* +20px lower — more clearance under the fixed hamburger. */
+    top: calc(4% + 20px);
+    right: 4%;
+    left: 4%;
+    width: auto;
+    height: 50%;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    padding: 14px 12px 16px;
+    border-radius: 24px 9px 22px 7px;
+    overflow: hidden;
+  }
+  .s-digital2__title { font-size: clamp(21px, 6vw, 28px); line-height: 1.05; }
+  .s-digital2__lead { margin: 8px auto 12px; font-size: clamp(11px, 3vw, 13px); line-height: 1.25; }
+  .s-digital2__features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 8px;
+    row-gap: 8px;
+    margin-top: 8px;
+  }
+  .s-digital2__feature { grid-template-columns: 28px 1fr; gap: 6px; }
+  .s-digital2__icon { width: 28px; height: 28px; }
+  .s-digital2__icon svg,
+  .s-digital2__icon img { width: 62%; height: 62%; }
+  .s-digital2__feature-label { font-size: clamp(9px, 2.5vw, 11px); line-height: 1.1; }
+  .s-digital2__profiles-row {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    /* +40px higher — lifts the quicklinks well clear of the bottom edge. */
+    bottom: calc(3% + 40px);
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 6px;
+    justify-items: center;
+  }
+  .s-digital2__profiles { display: contents; }
+  .s-digital2__profiles-eyebrow {
+    position: static;
+    grid-column: 1 / -1;
+    margin: 0 0 4px;
+    font-size: clamp(16px, 4.5vw, 20px);
+  }
+  .s-digital2__profile,
+  .s-digital2__profile--cta { width: 100%; max-width: 92px; gap: 5px; }
+  .s-digital2__avatar { width: 48px; height: 48px; }
+  .s-digital2__profile-label { min-height: 2.2em; font-size: clamp(9px, 2.5vw, 11px); line-height: 1.08; }
+}
+
+/* Short laptop screens: keep the complete desktop composition visible
+   during the section's entrance offset by tightening sizes only. Nothing
+   is removed or hidden; all five quicklinks and the full panel remain. */
+/* Small-laptop breakpoint — 1366×768 (and 1280×720, landscape tablet,
+   ≥150% zoom). Gated on width so a 1440×900 laptop always keeps the
+   full layout regardless of its browser-chrome height: `max-width: 1366px`
+   is the 13–14" / zoomed class, `max-height: 820px` then only excludes a
+   tall window at that width. Section 4's card + quicklinks can't both fit
+   here, so everything shrinks to one screen. Size-only. */
+@media (min-width: 701px) and (max-width: 1366px) and (max-height: 820px) {
+  /* Anchor the stacked group to the top so any leftover overflow
+     spills below the fold, never up under the header. (No-op where
+     .s-digital2 isn't a flex column, i.e. > 1100px.) */
+  .s-digital2 { justify-content: flex-start; }
+
+  .s-digital2__panel {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    margin: 12px auto 0;
+    padding: 16px clamp(24px, 3vw, 44px) 18px;
+  }
+  .s-digital2__title { font-size: clamp(19px, 2vw, 27px); }
+  .s-digital2__lead {
+    margin-block: 8px 12px;
+    font-size: clamp(11px, 0.85vw, 13px);
+    line-height: 1.35;
+  }
+  .s-digital2__features {
+    row-gap: 10px;
+    column-gap: clamp(20px, 3.5vw, 44px);
+  }
+  .s-digital2__feature { gap: 10px; }
+  .s-digital2__icon { width: 38px; height: 38px; }
+  .s-digital2__feature-label {
+    font-size: clamp(10px, 0.8vw, 13px);
+    line-height: 1.15;
+  }
+
+  .s-digital2__profiles-row {
+    bottom: 4%;
+    margin-top: 18px;
+    gap: 10px;
+  }
+  .s-digital2__profiles-eyebrow {
+    margin: 0 0 10px;
+    font-size: clamp(15px, 1.9vw, 19px);
+  }
+  .s-digital2__profile,
+  .s-digital2__profile--cta { width: 100%; max-width: 104px; gap: 6px; }
+  .s-digital2__avatar { width: 46px; height: 46px; }
+  .s-digital2__profile-label { font-size: clamp(9px, 0.8vw, 11px); line-height: 1.1; }
+}
