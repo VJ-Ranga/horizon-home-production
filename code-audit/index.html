@@ -268,17 +268,19 @@
     globals.css
   components/
     AnimationLab/
-      AnimationLab.tsx       # coordinator, scroll, loop, loading gate
-      LabScrubber.tsx         # frame loading, cache, canvas paint
-      timeline.ts             # sections and frame calculations
-      *Layer.tsx              # section UI and local effects
-      lab.css                 # all lab layout and animation styles
+      AnimationLab.tsx         # coordinator, scroll, loop, loading gate
+      LabScrubber.tsx          # device-aware loading, cache, canvas paint
+      frameDirMobile.ts        # phone/tablet asset and viewport policy
+      timeline.ts              # sections and frame calculations
+      *Layer.tsx               # section UI and local effects
+      lab.css                  # 21-line ordered style entrypoint
+      styles/*.css             # split shared, layout, and section styles
     GlobalHeader.tsx
     BackgroundMusic.tsx
   styles/tokens/
-tests/                        # not included in tsconfig or package script
+tests/                        # source and behavior regression checks
 public/frames*                # very large animation assets
-public/vendor/                # minified third-party code</pre><p><strong>Risk:</strong> the structure is componentized, but shared responsibilities and the 5,929-line stylesheet make changes hard to isolate.</p></article>
+public/vendor/                # minified third-party code</pre><p><strong>Risk:</strong> the structure is now much easier to isolate after the CSS split and device-specific loader policies. The remaining coupling is in the shared coordinator and scrubber, where scroll state, settled-frame gates, decode windows, and canvas painting still meet.</p></article>
         <article class="card wide"><h3>Recommended structure</h3><pre class="mono code-block">src/
   app/
     ...
@@ -289,8 +291,11 @@ public/vendor/                # minified third-party code</pre><p><strong>Risk:<
     controllers/scroll.ts     # one scroll owner
     controllers/loop.ts       # programmatic loop transition
     controllers/frame-driver.ts # one rAF scheduler
-    assets/frame-resolver.ts  # desktop/mobile density selection
-    assets/frame-cache.ts     # bounded decode cache
+    assets/frame-resolver.ts  # desktop/tablet/phone asset selection
+    assets/frame-cache.ts     # shared decode primitives
+    assets/loaders/desktop.ts # full-quality desktop retention
+    assets/loaders/tablet.ts  # wider bounded tablet window
+    assets/loaders/phone.ts   # smaller phone window and fallback
     sections/*Layer.tsx       # presentational section components
     styles/base.css
     styles/sections/*.module.css
