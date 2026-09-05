@@ -76,14 +76,25 @@ export default function LabIntro({
   const [assetPlan, setAssetPlan] = useState<IntroAssetPlan | null>(null);
 
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 700px)");
+    const phoneQuery = window.matchMedia("(max-width: 700px)");
+    const compactQuery = window.matchMedia("(max-width: 1100px)");
     const updateSource = () => {
-      setAssetPlan(getIntroAssetPlan(query.matches, LAB_FRAME_COUNT));
+      setAssetPlan(
+        getIntroAssetPlan(
+          phoneQuery.matches,
+          LAB_FRAME_COUNT,
+          compactQuery.matches,
+        ),
+      );
     };
 
     updateSource();
-    query.addEventListener("change", updateSource);
-    return () => query.removeEventListener("change", updateSource);
+    phoneQuery.addEventListener("change", updateSource);
+    compactQuery.addEventListener("change", updateSource);
+    return () => {
+      phoneQuery.removeEventListener("change", updateSource);
+      compactQuery.removeEventListener("change", updateSource);
+    };
   }, []);
 
   const finish = useCallback(() => {

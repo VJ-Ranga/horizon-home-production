@@ -175,6 +175,59 @@ export default function FinancialLayer() {
     return () => query.removeEventListener("change", update);
   }, []);
 
+  // Claim the first touch before Lenis can advance the page timeline. Once
+  // the card reader reaches either edge, release it so the page can continue
+  // to the next section instead of becoming trapped in the inner scroller.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const compact = window.matchMedia("(max-width: 1100px)");
+    let touchY = 0;
+
+    const readerConsumes = (direction: number) => {
+      const max = stage.scrollHeight - stage.clientHeight;
+      if (max <= 4) return false;
+      if (direction > 0) return stage.scrollTop < max - 1;
+      if (direction < 0) return stage.scrollTop > 1;
+      return false;
+    };
+    const onTouchStart = (event: TouchEvent) => {
+      touchY = event.touches[0]?.clientY ?? 0;
+      if (compact.matches && stage.scrollHeight - stage.clientHeight > 4) {
+        stage.setAttribute("data-lenis-prevent", "");
+      }
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const y = event.touches[0]?.clientY ?? touchY;
+      const direction = touchY - y;
+      if (compact.matches) {
+        if (readerConsumes(direction)) stage.setAttribute("data-lenis-prevent", "");
+        else stage.removeAttribute("data-lenis-prevent");
+      }
+      touchY = y;
+    };
+    const onWheel = (event: WheelEvent) => {
+      if (!compact.matches) return;
+      if (readerConsumes(event.deltaY)) stage.setAttribute("data-lenis-prevent", "");
+      else stage.removeAttribute("data-lenis-prevent");
+    };
+    const onMediaChange = () => {
+      if (!compact.matches) stage.removeAttribute("data-lenis-prevent");
+    };
+
+    stage.addEventListener("touchstart", onTouchStart, { passive: true });
+    stage.addEventListener("touchmove", onTouchMove, { passive: true });
+    stage.addEventListener("wheel", onWheel, { passive: true });
+    compact.addEventListener("change", onMediaChange);
+    return () => {
+      stage.removeEventListener("touchstart", onTouchStart);
+      stage.removeEventListener("touchmove", onTouchMove);
+      stage.removeEventListener("wheel", onWheel);
+      compact.removeEventListener("change", onMediaChange);
+      stage.removeAttribute("data-lenis-prevent");
+    };
+  }, []);
+
   useFrameEffect((frame, _phase, scrollPx) => {
     const element = ref.current;
     if (!element) return;
@@ -203,7 +256,8 @@ export default function FinancialLayer() {
     element.style.setProperty("--financial-reveal", parked ? "1" : "0");
 
     if (stageRef.current) {
-      stageRef.current.style.pointerEvents = parked ? "auto" : "none";
+      const compact = window.matchMedia("(max-width: 1100px)").matches;
+      stageRef.current.style.pointerEvents = compact || parked ? "auto" : "none";
     }
   });
 
@@ -271,7 +325,7 @@ export default function FinancialLayer() {
       data-initial-hidden="true"
       aria-labelledby="financial2-title"
     >
-      <div className="s-financial2__stage" ref={stageRef} data-lenis-prevent>
+      <div className="s-financial2__stage" ref={stageRef}>
         <header className="s-financial2__head" data-reveal="0">
           <h1 className="s-financial2__title" id="financial2-title">
             Financial Highlights

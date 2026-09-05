@@ -46,6 +46,11 @@ const TITLE_TEXT = "A Journey of Possibilities - Shaping Tomorrow, Today";
 // preserved without changing the paragraph's layout.
 const TOKENS = TITLE_TEXT.split(/(\s+)/);
 const WORD_COUNT = TOKENS.filter((token) => token.trim() !== "").length;
+const WORD_INDEX_BY_TOKEN = TOKENS.map((token, tokenIndex) =>
+  token.trim() === ""
+    ? -1
+    : TOKENS.slice(0, tokenIndex).filter((item) => item.trim() !== "").length
+);
 const REVEAL_WINDOW: [number, number] = [70, 90];
 const EXIT_WINDOW = MAIN_START.exit!.frames;
 
@@ -91,8 +96,6 @@ export default function MainStartLayer() {
     }
   });
 
-  let wordIndex = -1;
-
   return (
     <div
       className="lab-layer s-main-start"
@@ -108,8 +111,7 @@ export default function MainStartLayer() {
               // eslint-disable-next-line react/no-array-index-key
               return <span key={tokenIndex}>{token}</span>;
             }
-            wordIndex += 1;
-            const index = wordIndex;
+            const index = WORD_INDEX_BY_TOKEN[tokenIndex];
             return (
               <span
                 // eslint-disable-next-line react/no-array-index-key

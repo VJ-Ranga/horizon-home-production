@@ -150,7 +150,10 @@ export default function StrategyLayer() {
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const ease = reduceMotion ? 1 : EASE;
+    // Mobile must land on the latest scroll sample immediately. The shared
+    // frame driver stops emitting when scroll stops, so damping there would
+    // leave the panel visibly short of its target and feel stuck.
+    const ease = mobile || reduceMotion ? 1 : EASE;
 
     const target =
       sweepPx > 0

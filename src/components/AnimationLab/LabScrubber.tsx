@@ -19,10 +19,9 @@
    animation assumption, not a PSD measurement.
    ========================================================= */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   LAB_FIRST_FRAME,
-  LAB_FRAME_COUNT,
   LAB_LAST_FRAME,
   SECTIONS,
   CARVE_MOBILE_MAX_WIDTH,
@@ -40,7 +39,12 @@ import {
   backgroundFrameForFrame,
   backgroundTransitionAtFrame,
 } from "./timeline";
-import { FRAME_DIR_MOBILE, isPhoneViewport } from "./frameDirMobile";
+import {
+  FRAME_DIR_MOBILE,
+  FRAME_DIR_TABLET,
+  isCompactViewport,
+  isPhoneViewport,
+} from "./frameDirMobile";
 
 /* Haycarb at a Glance is the one section built light-themed — dark
    ink on light stat tiles, no background of its own (VJ, 2026-08-21,
@@ -69,14 +73,17 @@ function resolveFrameDir(
   densify: number,
   hq: boolean,
   fourK: boolean,
-  phone: boolean
+  compact: boolean,
+  phone: boolean,
 ): string {
+  if (phone) return FRAME_DIR_MOBILE;
+  if (compact) return FRAME_DIR_TABLET;
   if (densify === 4) return FRAME_DIR_4X;
   if (densify === 2) return hq ? FRAME_DIR_2X_HQ : FRAME_DIR_2X;
   if (fourK) return FRAME_DIR_4K;
   if (hq) return FRAME_DIR_HQ;
   // Phones read the small set — same 1125 files, ~7x less bitmap.
-  return phone ? FRAME_DIR_MOBILE : FRAME_DIR_DEV;
+  return FRAME_DIR_DEV;
 }
 
 const LOAD_CONCURRENCY = 6;
@@ -90,6 +97,25 @@ const LOAD_CONCURRENCY = 6;
 const MOBILE_WINDOW_AHEAD = 45;
 const MOBILE_WINDOW_BACK = 20;
 const MOBILE_WINDOW_KEEP = 70;
+
+const subscribeToViewport = (onChange: () => void) => {
+  const query = window.matchMedia("(max-width: 700px)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const subscribeToCompactViewport = (onChange: () => void) => {
+  const query = window.matchMedia("(max-width: 1100px)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+
+const getPhoneSnapshot = () => isPhoneViewport();
+const getServerPhoneSnapshot = () => false;
+const getCompactSnapshot = () => isCompactViewport();
+const getServerCompactSnapshot = () => false;
+const subscribeToMount = () => () => {};
+const getMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
 
 export default function LabScrubber({
   posterFrame,
@@ -121,12 +147,24 @@ export default function LabScrubber({
      the frame dir resolves for real and the loader effect starts (it
      bails while !mounted), so the loader never briefly pulls the full
      set on a phone. */
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  const phone = mounted && isPhoneViewport();
-  const frameDir = resolveFrameDir(densify, hq, fourK, phone);
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    getMountedSnapshot,
+    getServerMountedSnapshot,
+  );
+  const phoneSnapshot = useSyncExternalStore(
+    subscribeToViewport,
+    getPhoneSnapshot,
+    getServerPhoneSnapshot,
+  );
+  const compactSnapshot = useSyncExternalStore(
+    subscribeToCompactViewport,
+    getCompactSnapshot,
+    getServerCompactSnapshot,
+  );
+  const compact = mounted && compactSnapshot;
+  const phone = mounted && phoneSnapshot;
+  const frameDir = resolveFrameDir(densify, hq, fourK, compact, phone);
 
   /* THE ONLY THING `densify` CHANGES: which FILE a frame maps to.
      Frame numbers everywhere else stay in 840-space. `frame` is
@@ -294,7 +332,7 @@ export default function LabScrubber({
       resize();
       setReady(true);
 
-      if (phone) {
+      if (compact) {
         await runPhoneLoader();
         return;
       }
@@ -322,7 +360,7 @@ export default function LabScrubber({
     /* hq / frameDir are fixed for the life of the page — they come
        from the server-read query string, so this never actually
        re-runs. Listed so the dependency is honest. */
-  }, [mounted, phone, hq, fourK, densify, frameDir, denseScale, fileCount]);
+  }, [mounted, compact, phone, hq, fourK, densify, frameDir, denseScale, fileCount]);
 
   useFrameEffect((frame) => {
     /* ---- the carve ---- */
@@ -433,6 +471,10 @@ export default function LabScrubber({
         <source
           media="(max-width: 700px)"
           srcSet={frameSrc(frameToFile(posterFrame), FRAME_DIR_MOBILE)}
+        />
+        <source
+          media="(max-width: 1100px)"
+          srcSet={frameSrc(frameToFile(posterFrame), FRAME_DIR_TABLET)}
         />
         <img
           className="lab-media__poster"

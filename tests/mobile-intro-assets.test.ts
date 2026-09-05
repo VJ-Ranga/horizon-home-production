@@ -40,3 +40,14 @@ test("desktop intro retains its existing asset and preload plan", () => {
     videoSrc: "/hero/intro.mp4",
   });
 });
+
+test("tablet intro uses the tablet frame and video assets", () => {
+  assert.equal(typeof getIntroAssetPlan, "function");
+  const plan = getIntroAssetPlan!(false, 1125, true);
+
+  assert.deepEqual(plan, {
+    frameDir: "/frames-tablet",
+    preloadFrameCount: 50,
+    videoSrc: "/video-tablet/intro-1280x800.mp4",
+  });
+});

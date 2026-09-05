@@ -87,6 +87,7 @@ import {
   loopTargetForBoundary,
   REVEAL_FRAMES,
   frameSrc,
+  frameForScrollPx,
   scrollPxForFrame,
   totalScrollPx,
   FRAME_DIR_DEV,
@@ -103,7 +104,12 @@ import {
   type SectionTimeline,
 } from "./timeline";
 import "./lab.css";
-import { FRAME_DIR_MOBILE, isPhoneViewport } from "./frameDirMobile";
+import {
+  FRAME_DIR_MOBILE,
+  FRAME_DIR_TABLET,
+  isCompactViewport,
+  isPhoneViewport,
+} from "./frameDirMobile";
 
 /** Which frame folder a given density/quality combination reads.
     densify 1 is the plain 840 sets and is byte-for-byte the original
@@ -115,13 +121,17 @@ import { FRAME_DIR_MOBILE, isPhoneViewport } from "./frameDirMobile";
 function resolveFrameDir(
   densify: number,
   hq: boolean,
-  fourK: boolean
+  fourK: boolean,
+  phone: boolean,
+  compact: boolean,
 ): string {
+  if (phone) return FRAME_DIR_MOBILE;
+  if (compact) return FRAME_DIR_TABLET;
   if (densify === 4) return FRAME_DIR_4X;
   if (densify === 2) return hq ? FRAME_DIR_2X_HQ : FRAME_DIR_2X;
   if (fourK) return FRAME_DIR_4K;
   if (hq) return FRAME_DIR_HQ;
-  return isPhoneViewport() ? FRAME_DIR_MOBILE : FRAME_DIR_DEV;
+  return FRAME_DIR_DEV;
 }
 
 /** HeroLogo.tsx no longer docks to a sticky spot — it fades out with
@@ -137,6 +147,26 @@ const INTRO_SEEN_KEY = "horizon:intro-seen";
    subscribe to — useSyncExternalStore is used for its SSR contract, not for
    change notification. */
 const subscribeToNothing = () => () => {};
+const subscribeToPhoneViewport = (onChange: () => void) => {
+  const query = window.matchMedia("(max-width: 700px)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const subscribeToCompactViewport = (onChange: () => void) => {
+  const query = window.matchMedia("(max-width: 1100px)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const getPhoneViewportSnapshot = () => isPhoneViewport();
+const getServerPhoneViewportSnapshot = () => false;
+const getCompactViewportSnapshot = () => isCompactViewport();
+const getServerCompactViewportSnapshot = () => false;
+const getMountedSnapshot = () => true;
+const getServerMountedSnapshot = () => false;
+const DEFAULT_LOAD_BUFFER = { behind: 2, ahead: 2 };
+const DIGITAL_ENTER_FRAME = 141;
+const DIGITAL_SETTLED_FRAME = 161;
+const DIGITAL_LOAD_BUFFER = { behind: 4, ahead: 4 };
 
 /* Storage throws in private mode / with site data blocked. Failing to read
    must not cost the visitor the intro, so treat it as unseen. Returns a
@@ -315,7 +345,24 @@ export default function AnimationLab({
      /animation-lab behaves exactly as it did before this existed.
      It changes two things and nothing else: which frame folder is
      read, and the canvas dpr cap. No timing, no layout, no copy. */
-  const frameDir = resolveFrameDir(densify, hq, fourK);
+  const mounted = useSyncExternalStore(
+    subscribeToNothing,
+    getMountedSnapshot,
+    getServerMountedSnapshot,
+  );
+  const phoneSnapshot = useSyncExternalStore(
+    subscribeToPhoneViewport,
+    getPhoneViewportSnapshot,
+    getServerPhoneViewportSnapshot,
+  );
+  const compactSnapshot = useSyncExternalStore(
+    subscribeToCompactViewport,
+    getCompactViewportSnapshot,
+    getServerCompactViewportSnapshot,
+  );
+  const compact = mounted && compactSnapshot;
+  const phone = mounted && phoneSnapshot;
+  const frameDir = resolveFrameDir(densify, hq, fourK, phone, compact);
   /* Reduced motion: no intro, no entry motion — the page opens
      already settled at frame 50 with scroll live. Read once, in a
      lazy initialiser, because the driver needs it on its very first
@@ -338,6 +385,7 @@ export default function AnimationLab({
      thread, mid-animation. That is exactly the first-run stutter.
      img.decode() resolves only once the bitmap is ready. */
   const [entryReady, setEntryReady] = useState(skipEntry);
+  const [mobileLoadProgress, setMobileLoadProgress] = useState(0);
 
   /* Load screen + intro (LabIntro). Only on the -full / -intro /
      -loading routes, and never under reduced motion. While it is up
@@ -373,8 +421,9 @@ export default function AnimationLab({
   const introComplete = introDone || introSeen;
 
   useEffect(() => {
-    if (skipEntry) return;
+    if (skipEntry || !mounted) return;
     let disposed = false;
+    let loaded = 0;
 
     const ready = async () => {
       const frames: number[] = [];
@@ -390,6 +439,11 @@ export default function AnimationLab({
           } catch {
             // A frame that fails to decode must not stall the page.
             // The scrubber falls back to the nearest frame it has.
+          } finally {
+            loaded += 1;
+            if (compact) {
+              setMobileLoadProgress(Math.round((loaded / frames.length) * 100));
+            }
           }
         })
       );
@@ -401,7 +455,7 @@ export default function AnimationLab({
     return () => {
       disposed = true;
     };
-  }, [skipEntry, frameDir]);
+  }, [skipEntry, frameDir, mounted, phone, compact]);
 
   /* Scroll pace. PX_PER_FRAME_DEFAULT unless ?px=<n> overrides it,
      so the old 34px inspection pace is one URL away. Read once — it
@@ -477,6 +531,89 @@ export default function AnimationLab({
       lenisRef.current = null;
     };
   }, [phase, skipEntry]);
+
+  /* Compact touch navigation advances one section per page swipe. Native
+     touch scrolling can otherwise carry a fast flick across several section
+     windows before the frame limiter catches up. Inner readers keep their
+     own edge handoff and are excluded here. */
+  useEffect(() => {
+    if (phase !== "scroll" || skipEntry || !compact) return;
+
+    let startY: number | null = null;
+    let startScrollY = 0;
+    let startedInsideReader = false;
+
+    const onTouchStart = (event: TouchEvent) => {
+      startY = event.touches[0]?.clientY ?? null;
+      startScrollY = window.scrollY;
+      startedInsideReader = Boolean(
+        (event.target as HTMLElement | null)?.closest("[data-lenis-prevent]")
+      );
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+      if (startedInsideReader || startY === null) return;
+      const endY = event.changedTouches[0]?.clientY ?? startY;
+      const delta = startY - endY;
+      startY = null;
+      if (Math.abs(delta) < 24) return;
+
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollable <= 0) return;
+      const currentProgress = Math.min(Math.max(startScrollY / scrollable, 0), 1);
+      const currentFrame = frameForScrollPx(
+        currentProgress * totalScrollPx(pxPerFrame),
+        pxPerFrame,
+      );
+      const sectionFrames = SECTIONS.map((section) => section.settledFrame);
+      const targetFrame = delta > 0
+        ? sectionFrames.find((frame) => frame > currentFrame + 1)
+        : [...sectionFrames].reverse().find((frame) => frame < currentFrame - 1);
+      if (targetFrame === undefined) return;
+
+      const targetY = scrollYForFrame(targetFrame, pxPerFrame);
+      lenisRef.current?.scrollTo(targetY, { duration: 0.55 });
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [compact, phase, pxPerFrame, skipEntry]);
+
+  /* Reset compact readers at the edge matching travel direction whenever a
+     new section becomes active. Reverse entry therefore starts at the
+     reader's bottom instead of restoring a stale middle position. */
+  const compactSectionRef = useRef<string | null>(null);
+  const compactFrameRef = useRef(HANDOFF_FRAME);
+  useEffect(() => {
+    if (phase !== "scroll" || !compact) return;
+
+    return driver.subscribe((frame, ph) => {
+      if (ph !== "scroll") return;
+      const previousFrame = compactFrameRef.current;
+      compactFrameRef.current = frame;
+      const active = SECTIONS.find((section) => {
+        const [start, end] = sectionFrameRange(section);
+        return frame >= start && frame <= end;
+      });
+      if (!active || active.id === compactSectionRef.current) return;
+
+      const direction = frame >= previousFrame ? 1 : -1;
+      compactSectionRef.current = active.id;
+      document
+        .querySelectorAll<HTMLElement>(
+          ".lab-layer[data-lenis-prevent], .lab-layer [data-lenis-prevent]",
+        )
+        .forEach((reader) => {
+          reader.scrollTop = direction > 0
+            ? 0
+            : Math.max(reader.scrollHeight - reader.clientHeight, 0);
+        });
+    });
+  }, [compact, driver, phase]);
 
   /* ---- infinite loop, phase 2 only ----
      "loop test/assets/main.js"'s boundary reset, ported here: scroll
@@ -661,8 +798,6 @@ export default function AnimationLab({
      panel has more to read per frame of scroll (the tall
      overflow:auto panels in Approach/Digital) declare a wider
      loadBuffer in timeline.ts. */
-  const DEFAULT_LOAD_BUFFER = { behind: 2, ahead: 2 };
-
   const loadedFramesRef = useRef<Set<number>>(new Set());
   const gatedRangeRef = useRef<[number, number] | null>(null);
   const [gated, setGated] = useState(false);
@@ -714,12 +849,28 @@ export default function AnimationLab({
         // staying pinned to whatever was sampled the instant gating
         // started.
         const rounded = Math.round(frame);
-        const buffer = loadBufferAt(rounded);
+        const wasGated = gatedRangeRef.current !== null;
+
+        // Digital must arrive freely. Do not let its wider buffer create a
+        // loading pause during 141-160; the first loading hold is the
+        // settled frame itself.
+        if (
+          rounded >= DIGITAL_ENTER_FRAME &&
+          rounded < DIGITAL_SETTLED_FRAME
+        ) {
+          gatedRangeRef.current = null;
+          if (wasGated) setGated(false);
+          return;
+        }
+
+        const isDigitalSettled = rounded === DIGITAL_SETTLED_FRAME;
+        const buffer = isDigitalSettled
+          ? DIGITAL_LOAD_BUFFER
+          : loadBufferAt(rounded);
         const range: [number, number] = [
           rounded - buffer.behind,
           rounded + buffer.ahead,
         ];
-        const wasGated = gatedRangeRef.current !== null;
         const stillNeeded = !isRangeLoaded(range[0], range[1]);
 
         gatedRangeRef.current = stillNeeded ? range : null;
@@ -821,6 +972,19 @@ export default function AnimationLab({
         <div className="lab-loading" aria-hidden="true">
           <span className="lab-loading__ring" />
         </div>
+
+        {compact && !skipEntry && !entryReady && (
+          <div
+            className="lab-mobile-loading"
+            data-mobile-loading
+            role="status"
+            aria-live="polite"
+          >
+            <span className="lab-mobile-loading__ring" aria-hidden="true" />
+            <p>Preparing mobile experience</p>
+            <span>{mobileLoadProgress}%</span>
+          </div>
+        )}
 
         {/* Load screen + intro shot. Only mounted on the -full /
             -intro / -loading routes; onDone releases the entry gate. */}

@@ -138,7 +138,7 @@ export function useFrameDriver(skipEntry: boolean, ready: boolean): FrameDriver 
     // own useState(readPxPerFrame) — both must agree or the spacer
     // height and the frame this loop computes fall out of sync.
     const pxPerFrame = readPxPerFrame();
-    const isMobile = window.matchMedia("(max-width: 700px)").matches;
+    const isCompactViewport = window.matchMedia("(max-width: 1100px)").matches;
 
     const tick = (now: number) => {
       rafId = requestAnimationFrame(tick);
@@ -182,7 +182,11 @@ export function useFrameDriver(skipEntry: boolean, ready: boolean): FrameDriver 
         // section windows between rAF samples. Limit only the emitted
         // frame so every section gets a chance to settle; the browser's
         // actual scroll position and the visual progress bar stay native.
-        if (isMobile && phase === lastPhase && Number.isFinite(lastFrame)) {
+        if (
+          isCompactViewport &&
+          phase === lastPhase &&
+          Number.isFinite(lastFrame)
+        ) {
           const limitedFrame = limitMobileFrame(lastFrame, frame);
           if (limitedFrame !== frame) {
             frame = limitedFrame;

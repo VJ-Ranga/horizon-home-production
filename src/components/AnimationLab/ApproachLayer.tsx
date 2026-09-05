@@ -58,6 +58,11 @@ const TITLE_TEXT = "Our Approach to Reporting";
 // not a wrapped span — see MainStartLayer.tsx for the same pattern.
 const TITLE_TOKENS = TITLE_TEXT.split(/(\s+)/);
 const TITLE_WORD_COUNT = TITLE_TOKENS.filter((token) => token.trim() !== "").length;
+const TITLE_WORD_INDEX_BY_TOKEN = TITLE_TOKENS.map((token, tokenIndex) =>
+  token.trim() === ""
+    ? -1
+    : TITLE_TOKENS.slice(0, tokenIndex).filter((item) => item.trim() !== "").length
+);
 const CHAR_WINDOW: [number, number] = [114, 134];
 // 0 kicker, 1 lead, 2-6 the five cards (left-to-right, row 1 then row
 // 2), 7 the CTA row.
@@ -131,19 +136,20 @@ export default function ApproachLayer() {
       readPxPerFrame()
     );
     const entering = virtualExit === null && frame < EXIT_WINDOW[0];
+    const sharedExitProgress = virtualExit !== null
+      ? 1 - staggerProgressAt(
+          0,
+          1,
+          virtualExit * VIRTUAL_EXIT_WINDOW[1],
+          VIRTUAL_EXIT_WINDOW,
+        )
+      : 1 - staggerProgressAt(0, 1, frame, EXIT_WINDOW);
     for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
       const element = wordRefs.current[index];
       if (!element) continue;
-      const t = virtualExit !== null
-        ? 1 - staggerProgressAt(
-            TITLE_WORD_COUNT - 1 - index,
-            TITLE_WORD_COUNT,
-            virtualExit * VIRTUAL_EXIT_WINDOW[1],
-            VIRTUAL_EXIT_WINDOW
-          )
-        : entering
+      const t = entering
         ? staggerProgressAt(index, TITLE_WORD_COUNT, frame, CHAR_WINDOW)
-        : 1 - staggerProgressAt(TITLE_WORD_COUNT - 1 - index, TITLE_WORD_COUNT, frame, EXIT_WINDOW);
+        : sharedExitProgress;
       element.style.opacity = String(t);
       element.style.transform = `translateY(${12 * (1 - t)}px)`;
     }
@@ -151,22 +157,13 @@ export default function ApproachLayer() {
     for (let index = 0; index < GROUP_COUNT; index += 1) {
       const element = groupRefs.current[index];
       if (!element) continue;
-      const t = virtualExit !== null
-        ? 1 - staggerProgressAt(
-            GROUP_COUNT - 1 - index,
-            GROUP_COUNT,
-            virtualExit * VIRTUAL_EXIT_WINDOW[1],
-            VIRTUAL_EXIT_WINDOW
-          )
-        : entering
+      const t = entering
         ? staggerProgressAt(index, GROUP_COUNT, frame, GROUP_WINDOW)
-        : 1 - staggerProgressAt(GROUP_COUNT - 1 - index, GROUP_COUNT, frame, EXIT_WINDOW);
+        : sharedExitProgress;
       element.style.opacity = String(t);
       element.style.transform = `translateY(${18 * (1 - t)}px)`;
     }
   });
-
-  let titleWordIndex = -1;
 
   /* data-initial-hidden: this layer's markup is in the SSR output and
      useSectionLayer cannot run until after the first paint, so without
@@ -189,8 +186,7 @@ export default function ApproachLayer() {
                 // eslint-disable-next-line react/no-array-index-key
                 return <span key={tokenIndex}>{token}</span>;
               }
-              titleWordIndex += 1;
-              const index = titleWordIndex;
+              const index = TITLE_WORD_INDEX_BY_TOKEN[tokenIndex];
               return (
                 <span
                   // eslint-disable-next-line react/no-array-index-key

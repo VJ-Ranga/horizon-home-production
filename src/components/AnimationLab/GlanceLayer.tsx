@@ -146,6 +146,11 @@ export default function GlanceLayer() {
     let touchY = 0;
     const onTouchStart = (e: TouchEvent) => {
       touchY = e.touches[0]?.clientY ?? 0;
+      if (compact.matches && stage.scrollHeight - stage.clientHeight > 4) {
+        // Claim the first move before Lenis can advance the page timeline.
+        // The next move releases this only when the reader is at its edge.
+        stage.setAttribute("data-lenis-prevent", "");
+      }
     };
     const onTouchMove = (e: TouchEvent) => {
       const y = e.touches[0]?.clientY ?? touchY;
@@ -158,11 +163,13 @@ export default function GlanceLayer() {
     stage.addEventListener("touchstart", onTouchStart, { passive: true });
     stage.addEventListener("touchmove", onTouchMove, { passive: true });
     stage.addEventListener("wheel", onWheel, { passive: true });
-    compact.addEventListener("change", () => apply(0));
+    const onMediaChange = () => apply(0);
+    compact.addEventListener("change", onMediaChange);
     return () => {
       stage.removeEventListener("touchstart", onTouchStart);
       stage.removeEventListener("touchmove", onTouchMove);
       stage.removeEventListener("wheel", onWheel);
+      compact.removeEventListener("change", onMediaChange);
     };
   }, []);
 

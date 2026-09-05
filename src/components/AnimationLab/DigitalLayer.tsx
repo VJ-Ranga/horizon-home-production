@@ -33,8 +33,14 @@
    avoids per-word/per-feature frame work: the content is static and needs
    to become readable immediately after the section is ready. */
 
-import { SECTIONS } from "./timeline";
-import { useSectionLayer } from "./useFrameTimeline";
+ import { useRef } from "react";
+ import {
+  SECTIONS,
+  readPxPerFrame,
+  sectionStateAt,
+  virtualEnterProgressAtScrollPx,
+} from "./timeline";
+import { useFrameEffect } from "./useFrameTimeline";
 import LottieIcon from "./LottieIcon";
 import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
@@ -154,7 +160,32 @@ const PROFILES = [
 ];
 
 export default function DigitalLayer() {
-  const ref = useSectionLayer(DIGITAL);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useFrameEffect((frame, _phase, scrollPx) => {
+    const element = ref.current;
+    if (!element) return;
+
+    const virtualEnter = virtualEnterProgressAtScrollPx(
+      DIGITAL,
+      scrollPx,
+      readPxPerFrame(),
+    );
+    const enterFrames = DIGITAL.enter?.frames ?? [DIGITAL.settledFrame, DIGITAL.settledFrame];
+    const animationFrame =
+      virtualEnter === null
+        ? frame >= enterFrames[0] &&
+          frame <= (DIGITAL.exit?.frames[0] ?? DIGITAL.settledFrame)
+          ? enterFrames[1]
+          : frame
+        : enterFrames[0] + virtualEnter * (enterFrames[1] - enterFrames[0]);
+    const state = sectionStateAt(DIGITAL, animationFrame);
+
+    element.style.opacity = String(state.opacity);
+    element.style.transform = `translate3d(${state.x}vw, ${state.y}vh, 0)`;
+    element.style.pointerEvents = state.interactive ? "auto" : "none";
+    element.style.visibility = state.opacity <= 0.001 ? "hidden" : "visible";
+  });
 
   return (
     <div

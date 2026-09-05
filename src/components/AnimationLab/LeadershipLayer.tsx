@@ -109,15 +109,22 @@ export default function LeadershipLayer() {
   const [mobileThrough, setMobileThrough] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const mobileCurrentRef = useRef(0);
-  const [videoDialog] = useState(() =>
-    createVideoDialogController({
+  const videoDialogRef = useRef<ReturnType<typeof createVideoDialogController> | null>(null);
+
+  useEffect(() => {
+    videoDialogRef.current = createVideoDialogController({
       closeAfterFrames: POPUP_CLOSE_AFTER_FRAMES,
       getCurrentFrame: () => currentFrameRef.current,
       getDialog: () => dialogRef.current,
       getVideoFrame: () => videoFrameRef.current,
       src: JOINT_MESSAGE_VIDEO_SRC,
-    })
-  );
+    });
+
+    return () => {
+      videoDialogRef.current?.handleClose();
+      videoDialogRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 1100px)");
@@ -151,7 +158,6 @@ export default function LeadershipLayer() {
     const budgetPx =
       ((LEADERSHIP.holdFrames ?? 0) + (LEADERSHIP.virtualExitFrames ?? 0)) *
       pxPerFrame;
-    const EASE = 0.16;
     const BOTTOM_PAD = 40;
     // Dwell zones carved out of the pinned budget. The first START_HOLD_PX
     // of scroll past the settle just holds the content still at its top;
@@ -179,16 +185,16 @@ export default function LeadershipLayer() {
       1,
     );
     const targetPx = t * overflow;
-    mobileCurrentRef.current += (targetPx - mobileCurrentRef.current) * EASE;
-    if (Math.abs(targetPx - mobileCurrentRef.current) < 0.4) {
-      mobileCurrentRef.current = targetPx;
-    }
+    // The frame driver stops emitting when scroll stops. A damped value here
+    // would therefore stop part-way through a swipe; mobile must land on the
+    // requested position in the same tick as the shared scroll sample.
+    mobileCurrentRef.current = targetPx;
     body.style.transform = `translate3d(0, ${(-mobileCurrentRef.current).toFixed(2)}px, 0)`;
   });
 
   useFrameEffect((frame) => {
     currentFrameRef.current = frame;
-    videoDialog.sync(frame);
+    videoDialogRef.current?.sync(frame);
   });
 
   useFrameEffect((frame) => {
@@ -265,7 +271,7 @@ export default function LeadershipLayer() {
           type="button"
           aria-haspopup="dialog"
           aria-controls="leadership-video-dialog"
-          onClick={videoDialog.open}
+              onClick={() => videoDialogRef.current?.open()}
         >
           <AssetIcon file="Web Icons-15.svg" />
           <span>Joint Message Video</span>
@@ -284,7 +290,7 @@ export default function LeadershipLayer() {
         onClick={(event) => {
           if (event.target === dialogRef.current) dialogRef.current?.close();
         }}
-        onClose={videoDialog.handleClose}
+            onClose={() => videoDialogRef.current?.handleClose()}
       >
         <iframe
           ref={videoFrameRef}

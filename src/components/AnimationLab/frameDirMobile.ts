@@ -13,7 +13,9 @@
    change mid-session), and SSR-safe. */
 
 export const FRAME_DIR_MOBILE = "/frames-mobile";
+export const FRAME_DIR_TABLET = "/frames-tablet";
 export const MOBILE_INTRO_VIDEO_SRC = "/video-mobile/intro-540x960.mp4";
+export const TABLET_INTRO_VIDEO_SRC = "/video-tablet/intro-1280x800.mp4";
 
 const FRAME_DIR_DESKTOP = "/frames";
 const DESKTOP_INTRO_VIDEO_SRC = "/hero/intro.mp4";
@@ -31,6 +33,7 @@ export type IntroAssetPlan = {
 export function getIntroAssetPlan(
   phone: boolean,
   totalFrameCount: number,
+  compact = phone,
 ): IntroAssetPlan {
   if (phone) {
     return {
@@ -40,6 +43,17 @@ export function getIntroAssetPlan(
         MOBILE_INTRO_PRELOAD_FRAME_COUNT,
       ),
       videoSrc: MOBILE_INTRO_VIDEO_SRC,
+    };
+  }
+
+  if (compact) {
+    return {
+      frameDir: FRAME_DIR_TABLET,
+      preloadFrameCount: Math.min(
+        totalFrameCount,
+        MOBILE_INTRO_PRELOAD_FRAME_COUNT,
+      ),
+      videoSrc: TABLET_INTRO_VIDEO_SRC,
     };
   }
 
@@ -58,6 +72,16 @@ export function isPhoneViewport(): boolean {
   if (typeof window === "undefined") return false;
   try {
     return window.matchMedia("(max-width: 700px)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/** Compact animation breakpoint shared by phones and tablets. */
+export function isCompactViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.matchMedia("(max-width: 1100px)").matches;
   } catch {
     return false;
   }

@@ -601,13 +601,27 @@ function buildLegs(pxPerFrame: number): Leg[] {
       });
     }
     if (stop.virtualEnterFrames > 0 && stop.holdFrames === 0) {
-      legs.splice(legs.length - (crawlEnd > stop.frame ? 1 : 0), 0, {
-        frameStart: stop.frame,
-        frameEnd: stop.frame,
-        pxPerFrame: 0,
-        pxSpan: stop.virtualEnterFrames * pxPerFrame,
-        virtualEnter: { sectionId: stop.sectionId, totalFrames: stop.virtualEnterFrames },
-      });
+      const last = legs.pop();
+      if (last && last.frameStart < stop.frame && last.frameEnd > stop.frame) {
+        legs.push({ ...last, frameEnd: stop.frame });
+        legs.push({
+          frameStart: stop.frame,
+          frameEnd: stop.frame,
+          pxPerFrame: 0,
+          pxSpan: stop.virtualEnterFrames * pxPerFrame,
+          virtualEnter: { sectionId: stop.sectionId, totalFrames: stop.virtualEnterFrames },
+        });
+        legs.push({ ...last, frameStart: stop.frame });
+      } else {
+        if (last) legs.push(last);
+        legs.push({
+          frameStart: stop.frame,
+          frameEnd: stop.frame,
+          pxPerFrame: 0,
+          pxSpan: stop.virtualEnterFrames * pxPerFrame,
+          virtualEnter: { sectionId: stop.sectionId, totalFrames: stop.virtualEnterFrames },
+        });
+      }
     }
     frame = crawlEnd;
 
@@ -1062,15 +1076,14 @@ export const SECTIONS: SectionTimeline[] = [
     label: "The Next Horizon of Intelligent Reporting",
     settledFrame: 161,
     enter: {
-      // FRAME-MAP: tablet starts entering left at 136, fully arrived
-      // (both elements in position) at 150.
+      // The background parks at 161 before Digital's content is fully
+      // settled and its real exit window begins.
       frames: [141, 161],
       from: { y: 5 },
     },
     holdFrames: 20,
     exit: {
-      // FRAME-MAP: composition intact to 166, animation window 150-170.
-      frames: [161, 176],
+      frames: [161, 181],
       to: { y: -5 },
     },
     // Taller than 02-approach's panel — features grid + interactive

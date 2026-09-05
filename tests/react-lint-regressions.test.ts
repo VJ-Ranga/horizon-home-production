@@ -1,0 +1,96 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+const source = (name: string) =>
+  readFileSync(`src/components/AnimationLab/${name}`, "utf8");
+
+test("word-indexed animation markup does not mutate counters during render", () => {
+  for (const name of ["ApproachLayer.tsx", "GovernanceLayer.tsx", "MainStartLayer.tsx"]) {
+    const contents = source(name);
+    assert.doesNotMatch(contents, /(?:titleWordIndex|wordIndex)\s*\+=\s*1/);
+  }
+});
+
+test("mobile frame source uses an external viewport snapshot", () => {
+  const contents = source("LabScrubber.tsx");
+  assert.match(contents, /useSyncExternalStore/);
+  assert.doesNotMatch(contents, /const \[mounted, setMounted\] = useState\(false\)/);
+});
+
+test("leadership video controller is created after refs mount", () => {
+  const contents = source("LeadershipLayer.tsx");
+  assert.doesNotMatch(contents, /const \[videoDialog\] = useState\(\(\) =>/);
+  assert.match(contents, /videoDialogRef\.current = createVideoDialogController/);
+});
+
+test("compact readers claim the first gesture and release at scroll edges", () => {
+  const glance = source("GlanceLayer.tsx");
+  const financial = source("FinancialLayer.tsx");
+  assert.match(glance, /onTouchStart[\s\S]*setAttribute\("data-lenis-prevent"/);
+  assert.match(financial, /readerConsumes[\s\S]*touchmove/);
+  assert.match(financial, /data-lenis-prevent/);
+});
+
+test("mobile scroll-through panels do not stop short after a swipe", () => {
+  const leadership = source("LeadershipLayer.tsx");
+  const strategy = source("StrategyLayer.tsx");
+  assert.doesNotMatch(leadership, /mobileCurrentRef\.current \+= \(targetPx - mobileCurrentRef\.current\) \* EASE/);
+  assert.match(strategy, /const ease = mobile \|\| reduceMotion \? 1 : EASE/);
+});
+
+test("approach exits as one shared visual fade", () => {
+  const contents = source("ApproachLayer.tsx");
+  assert.match(contents, /const sharedExitProgress/);
+  assert.match(contents, /const t = entering[\s\S]*sharedExitProgress/);
+});
+
+test("normal animation route has a mobile-only frame loader", () => {
+  const contents = source("AnimationLab.tsx");
+  assert.match(contents, /data-mobile-loading/);
+  assert.match(contents, /phone[\s\S]*entryReady[\s\S]*mobileLoadProgress/);
+  assert.match(contents, /FRAME_DIR_MOBILE/);
+  assert.doesNotMatch(contents, /mobile-loading[\s\S]*video/);
+});
+
+test("compact navigation snaps one page swipe to one section", () => {
+  const contents = source("AnimationLab.tsx");
+  assert.match(contents, /Compact touch navigation advances one section per page swipe/);
+  assert.match(contents, /sectionFrames\.find\(\(frame\) => frame > currentFrame \+ 1\)/);
+  assert.match(contents, /\[\.\.\.sectionFrames\]\.reverse\(\)\.find\(\(frame\) => frame < currentFrame - 1\)/);
+  assert.match(contents, /closest\("\[data-lenis-prevent\]"\)/);
+  assert.match(contents, /reader\.scrollTop = direction > 0[\s\S]*scrollHeight - reader\.clientHeight/);
+  assert.match(contents, /\.lab-layer\[data-lenis-prevent\], \.lab-layer \[data-lenis-prevent\]/);
+});
+
+test("tablet compact mode does not fall back to desktop frames", () => {
+  const scrubber = source("LabScrubber.tsx");
+  const harness = source("AnimationLab.tsx");
+  const timeline = source("useFrameTimeline.ts");
+  assert.match(scrubber, /FRAME_DIR_TABLET/);
+  assert.match(scrubber, /max-width: 1100px/);
+  assert.match(harness, /FRAME_DIR_TABLET/);
+  assert.match(harness, /isCompactViewport/);
+  assert.match(timeline, /matchMedia\("\(max-width: 1100px\)"\)/);
+});
+
+test("digital section settles at 161 and exits over 20 frames", () => {
+  const contents = readFileSync("src/components/AnimationLab/timeline.ts", "utf8");
+  const digital = contents.match(
+    /id: "04-digital"[\s\S]*?loadBuffer: \{ behind: 4, ahead: 4 \}/,
+  )?.[0];
+  assert.ok(digital);
+  assert.match(digital, /settledFrame: 161/);
+  assert.match(digital, /enter:[\s\S]*?frames: \[141, 161\]/);
+  assert.doesNotMatch(digital, /virtualEnterFrames/);
+  assert.match(digital, /exit:[\s\S]*?frames: \[161, 181\]/);
+  assert.match(digital, /loadBuffer: \{ behind: 4, ahead: 4 \}/);
+  assert.match(
+    source("AnimationLab.tsx"),
+    /DIGITAL_ENTER_FRAME[\s\S]*DIGITAL_SETTLED_FRAME[\s\S]*rounded >= DIGITAL_ENTER_FRAME[\s\S]*rounded < DIGITAL_SETTLED_FRAME/,
+  );
+  assert.match(
+    source("DigitalLayer.tsx"),
+    /frame >= enterFrames\[0\][\s\S]*frame <= \(DIGITAL\.exit\?\.frames\[0\]/,
+  );
+});

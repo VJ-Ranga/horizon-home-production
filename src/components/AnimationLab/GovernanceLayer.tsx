@@ -60,6 +60,11 @@ const GOVERNANCE = SECTIONS[9];
 const TITLE_TEXT = "Corporate Governance - Key Highlights";
 const TITLE_TOKENS = TITLE_TEXT.split(/(\s+)/);
 const TITLE_WORD_COUNT = TITLE_TOKENS.filter((token) => token.trim() !== "").length;
+const TITLE_WORD_INDEX_BY_TOKEN = TITLE_TOKENS.map((token, tokenIndex) =>
+  token.trim() === ""
+    ? -1
+    : TITLE_TOKENS.slice(0, tokenIndex).filter((item) => item.trim() !== "").length
+);
 // MUST stay inside the parent's own enter window, both ends — see
 // the original reasoning below, numbers re-measured 2026-08-25 when
 // this section was squeezed onto the new cut's much shorter
@@ -201,8 +206,6 @@ export default function GovernanceLayer() {
     }
   });
 
-  let titleWordIndex = -1;
-
   return (
     <div
       className="lab-layer s-governance2"
@@ -218,8 +221,7 @@ export default function GovernanceLayer() {
               // eslint-disable-next-line react/no-array-index-key
               return <span key={tokenIndex}>{token}</span>;
             }
-            titleWordIndex += 1;
-            const index = titleWordIndex;
+            const index = TITLE_WORD_INDEX_BY_TOKEN[tokenIndex];
             return (
               <span
                 // eslint-disable-next-line react/no-array-index-key
