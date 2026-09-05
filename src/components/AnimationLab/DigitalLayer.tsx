@@ -178,7 +178,15 @@ export default function DigitalLayer() {
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {
     const timedDigital = sectionTimingForMode(DIGITAL, mode);
-    if (mode !== "desktop") return;
+    if (mode !== "desktop") {
+      wordRefs.current.forEach((element) => {
+        if (element) element.style.opacity = "1";
+      });
+      groupRefs.current.forEach((element) => {
+        if (element) element.style.opacity = "1";
+      });
+      return;
+    }
 
     const virtualEnter = virtualEnterProgressAtScrollPx(
       timedDigital,

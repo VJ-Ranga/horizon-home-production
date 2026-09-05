@@ -68,6 +68,7 @@ import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
 import {
   compactTransitionDurationMs,
   nextCompactSectionFrame,
+  readerConsumesScroll,
 } from "./compactNavigation";
 import LabScrubber from "./LabScrubber";
 import LabIntro from "./LabIntro";
@@ -550,6 +551,7 @@ export default function AnimationLab({
     let startY: number | null = null;
     let startScrollY = 0;
     let startedInsideReader = false;
+    let readerElement: HTMLElement | null = null;
     let animationFrameId: number | null = null;
 
     const clearNavigationLock = () => {
@@ -581,12 +583,13 @@ export default function AnimationLab({
       compactNavigationLockRef.current = true;
       compactNavigationTargetRef.current = targetFrame;
       const targetY = scrollYForFrame(targetFrame, pxPerFrame, "compact");
+      const fromScrollY = scrollY;
       const duration = compactTransitionDurationMs(currentFrame, targetFrame);
       const startedAt = performance.now();
       const animate = (now: number) => {
         const progress = Math.min((now - startedAt) / duration, 1);
         window.scrollTo({
-          top: startScrollY + (targetY - startScrollY) * progress,
+          top: fromScrollY + (targetY - fromScrollY) * progress,
           behavior: "auto",
         });
         if (progress < 1) {
@@ -613,29 +616,57 @@ export default function AnimationLab({
     const onTouchStart = (event: TouchEvent) => {
       startY = event.touches[0]?.clientY ?? null;
       startScrollY = window.scrollY;
-      startedInsideReader = Boolean(
-        (event.target as HTMLElement | null)?.closest("[data-lenis-prevent]")
-      );
+      readerElement = (event.target as HTMLElement | null)?.closest("[data-lenis-prevent]") ?? null;
+      startedInsideReader = readerElement !== null;
     };
 
     const onTouchMove = (event: TouchEvent) => {
-      if (!startedInsideReader) event.preventDefault();
+      if (!startedInsideReader) {
+        event.preventDefault();
+        return;
+      }
+      if (!readerElement || startY === null) return;
+      const touchY = event.touches[0]?.clientY ?? startY;
+      const direction = startY - touchY > 0 ? 1 : -1;
+      if (!readerConsumesScroll(
+        readerElement.scrollTop,
+        readerElement.clientHeight,
+        readerElement.scrollHeight,
+        direction,
+      )) {
+        event.preventDefault();
+      }
     };
 
     const onTouchEnd = (event: TouchEvent) => {
-      if (startedInsideReader || startY === null) return;
+      if (startY === null) return;
       const endY = event.changedTouches[0]?.clientY ?? startY;
       const delta = startY - endY;
       startY = null;
-      if (Math.abs(delta) < 24) return;
+      const direction = delta > 0 ? 1 : -1;
+      const readerAtEdge = readerElement !== null && !readerConsumesScroll(
+        readerElement.scrollTop,
+        readerElement.clientHeight,
+        readerElement.scrollHeight,
+        direction,
+      );
+      readerElement = null;
+      if (Math.abs(delta) < 24 || (startedInsideReader && !readerAtEdge)) return;
       moveOneSection(delta > 0 ? 1 : -1, startScrollY);
     };
 
     const onWheel = (event: WheelEvent) => {
-      if ((event.target as HTMLElement | null)?.closest("[data-lenis-prevent]")) return;
-      event.preventDefault();
       if (Math.abs(event.deltaY) < 1) return;
-      moveOneSection(event.deltaY > 0 ? 1 : -1, window.scrollY);
+      const direction = event.deltaY > 0 ? 1 : -1;
+      const reader = (event.target as HTMLElement | null)?.closest("[data-lenis-prevent]");
+      if (reader && readerConsumesScroll(
+        reader.scrollTop,
+        reader.clientHeight,
+        reader.scrollHeight,
+        direction,
+      )) return;
+      event.preventDefault();
+      moveOneSection(direction, window.scrollY);
     };
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });

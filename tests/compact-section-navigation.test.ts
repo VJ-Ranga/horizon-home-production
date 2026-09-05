@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   compactTransitionDurationMs,
+  readerConsumesScroll,
   nextCompactSectionFrame,
 } from "../src/components/AnimationLab/compactNavigation.ts";
 
@@ -25,11 +26,19 @@ test("first six compact sections use a 15fps transition budget", () => {
   assert.equal(compactTransitionDurationMs(275, 335), 550);
 });
 
+test("inner readers consume gestures only while they have room in that direction", () => {
+  assert.equal(readerConsumesScroll(40, 100, 300, 1), true);
+  assert.equal(readerConsumesScroll(200, 100, 300, 1), false);
+  assert.equal(readerConsumesScroll(40, 100, 300, -1), true);
+  assert.equal(readerConsumesScroll(0, 100, 300, -1), false);
+});
+
 test("compact outer navigation prevents native momentum and locks transitions", () => {
   assert.match(source, /compactNavigationLockRef/);
   assert.match(source, /event\.preventDefault\(\)/);
   assert.match(source, /closest\("\[data-lenis-prevent\]"\)/);
   assert.match(source, /targetFrame[\s\S]*settledFrame/);
   assert.match(source, /compactTransitionDurationMs/);
+  assert.match(source, /fromScrollY[\s\S]*top: fromScrollY/);
   assert.match(source, /passive:\s*false/);
 });

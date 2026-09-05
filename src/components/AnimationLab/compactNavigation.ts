@@ -1,6 +1,17 @@
 export const COMPACT_TRANSITION_FPS = 15;
 export const COMPACT_CONTROLLED_END_FRAME = 255;
 const DEFAULT_COMPACT_TRANSITION_MS = 550;
+const SETTLED_FRAME_EPSILON = 0.25;
+
+export function readerConsumesScroll(
+  scrollTop: number,
+  clientHeight: number,
+  scrollHeight: number,
+  direction: 1 | -1,
+): boolean {
+  const maxScrollTop = Math.max(scrollHeight - clientHeight, 0);
+  return direction > 0 ? scrollTop < maxScrollTop - 1 : scrollTop > 1;
+}
 
 export function nextCompactSectionFrame(
   currentFrame: number,
@@ -8,8 +19,8 @@ export function nextCompactSectionFrame(
   direction: 1 | -1,
 ): number | null {
   const candidates = direction > 0
-    ? settledFrames.filter((frame) => frame > currentFrame)
-    : settledFrames.filter((frame) => frame < currentFrame).reverse();
+    ? settledFrames.filter((frame) => frame > currentFrame + SETTLED_FRAME_EPSILON)
+    : settledFrames.filter((frame) => frame < currentFrame - SETTLED_FRAME_EPSILON).reverse();
   return candidates[0] ?? null;
 }
 

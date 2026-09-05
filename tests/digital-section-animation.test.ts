@@ -25,3 +25,8 @@ test("digital layer reads the active desktop/compact timing policy", () => {
   assert.match(component, /TITLE_WORD_COUNT/);
   assert.match(component, /GROUP_COUNT/);
 });
+
+test("digital compact content remains visible while the section layer fades", () => {
+  assert.match(component, /if \(mode !== "desktop"\)[\s\S]*wordRefs\.current[\s\S]*style\.opacity = "1"/);
+  assert.match(component, /if \(mode !== "desktop"\)[\s\S]*groupRefs\.current[\s\S]*style\.opacity = "1"/);
+});
