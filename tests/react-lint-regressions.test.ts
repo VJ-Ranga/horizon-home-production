@@ -55,9 +55,10 @@ test("normal animation route has a mobile-only frame loader", () => {
 
 test("compact navigation snaps one page swipe to one section", () => {
   const contents = source("AnimationLab.tsx");
-  assert.match(contents, /Compact touch navigation advances one section per page swipe/);
-  assert.match(contents, /sectionFrames\.find\(\(frame\) => frame > currentFrame \+ 1\)/);
-  assert.match(contents, /\[\.\.\.sectionFrames\]\.reverse\(\)\.find\(\(frame\) => frame < currentFrame - 1\)/);
+  assert.match(contents, /Compact outer navigation advances one section per gesture/);
+  assert.match(contents, /nextCompactSectionFrame/);
+  assert.match(contents, /compactNavigationLockRef/);
+  assert.match(contents, /passive: false/);
   assert.match(contents, /closest\("\[data-lenis-prevent\]"\)/);
   assert.match(contents, /reader\.scrollTop = direction > 0[\s\S]*scrollHeight - reader\.clientHeight/);
   assert.match(contents, /\.lab-layer\[data-lenis-prevent\], \.lab-layer \[data-lenis-prevent\]/);

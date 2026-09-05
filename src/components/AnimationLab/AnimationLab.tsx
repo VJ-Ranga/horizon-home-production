@@ -65,6 +65,7 @@ import CommunityLayer from "./CommunityLayer";
 import EndScreenLayer from "./EndScreenLayer";
 import LoopTransitionOverlay from "./LoopTransitionOverlay";
 import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
+import { nextCompactSectionFrame } from "./compactNavigation";
 import LabScrubber from "./LabScrubber";
 import LabIntro from "./LabIntro";
 import {
@@ -529,16 +530,58 @@ export default function AnimationLab({
     };
   }, [compact, phase, skipEntry]);
 
-  /* Compact touch navigation advances one section per page swipe. Native
-     touch scrolling can otherwise carry a fast flick across several section
-     windows before the frame limiter catches up. Inner readers keep their
-     own edge handoff and are excluded here. */
+   /* Compact outer navigation advances one section per gesture. Native touch
+      and wheel momentum are intercepted outside inner readers so a fast input
+      cannot cross several section windows before the frame limiter catches up. */
+  const compactNavigationLockRef = useRef(false);
+  const compactNavigationTargetRef = useRef<number | null>(null);
+  const compactNavigationTimerRef = useRef<number | null>(null);
   useEffect(() => {
     if (phase !== "scroll" || skipEntry || !compact) return;
 
     let startY: number | null = null;
     let startScrollY = 0;
     let startedInsideReader = false;
+
+    const clearNavigationLock = () => {
+      compactNavigationLockRef.current = false;
+      compactNavigationTargetRef.current = null;
+      if (compactNavigationTimerRef.current !== null) {
+        window.clearTimeout(compactNavigationTimerRef.current);
+        compactNavigationTimerRef.current = null;
+      }
+    };
+
+    const moveOneSection = (direction: 1 | -1, scrollY: number) => {
+      if (compactNavigationLockRef.current) return;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollable <= 0) return;
+      const currentProgress = Math.min(Math.max(scrollY / scrollable, 0), 1);
+      const currentFrame = frameForScrollPx(
+        currentProgress * totalScrollPx(pxPerFrame, "compact"),
+        pxPerFrame,
+        "compact",
+      );
+      const targetFrame = nextCompactSectionFrame(
+        currentFrame,
+        SECTIONS.map((section) => section.settledFrame),
+        direction,
+      );
+      if (targetFrame === null) return;
+
+      compactNavigationLockRef.current = true;
+      compactNavigationTargetRef.current = targetFrame;
+      compactNavigationTimerRef.current = window.setTimeout(clearNavigationLock, 900);
+      const targetY = scrollYForFrame(targetFrame, pxPerFrame);
+      window.scrollTo({ top: targetY, behavior: "smooth" });
+    };
+
+    const unsubscribe = driver.subscribe((frame, nextPhase) => {
+      const targetFrame = compactNavigationTargetRef.current;
+      if (nextPhase === "scroll" && targetFrame !== null && Math.abs(frame - targetFrame) <= 1) {
+        clearNavigationLock();
+      }
+    });
 
     const onTouchStart = (event: TouchEvent) => {
       startY = event.touches[0]?.clientY ?? null;
@@ -548,41 +591,39 @@ export default function AnimationLab({
       );
     };
 
+    const onTouchMove = (event: TouchEvent) => {
+      if (!startedInsideReader) event.preventDefault();
+    };
+
     const onTouchEnd = (event: TouchEvent) => {
       if (startedInsideReader || startY === null) return;
       const endY = event.changedTouches[0]?.clientY ?? startY;
       const delta = startY - endY;
       startY = null;
       if (Math.abs(delta) < 24) return;
+      moveOneSection(delta > 0 ? 1 : -1, startScrollY);
+    };
 
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      if (scrollable <= 0) return;
-      const currentProgress = Math.min(Math.max(startScrollY / scrollable, 0), 1);
-      const currentFrame = frameForScrollPx(
-        currentProgress * totalScrollPx(pxPerFrame),
-        pxPerFrame,
-      );
-      const sectionFrames = SECTIONS.map((section) => section.settledFrame);
-      const targetFrame = delta > 0
-        ? sectionFrames.find((frame) => frame > currentFrame + 1)
-        : [...sectionFrames].reverse().find((frame) => frame < currentFrame - 1);
-      if (targetFrame === undefined) return;
-
-      const targetY = scrollYForFrame(targetFrame, pxPerFrame);
-      if (lenisRef.current) {
-        lenisRef.current.scrollTo(targetY, { duration: 0.55 });
-      } else {
-        window.scrollTo({ top: targetY, behavior: "smooth" });
-      }
+    const onWheel = (event: WheelEvent) => {
+      if ((event.target as HTMLElement | null)?.closest("[data-lenis-prevent]")) return;
+      event.preventDefault();
+      if (Math.abs(event.deltaY) < 1) return;
+      moveOneSection(event.deltaY > 0 ? 1 : -1, window.scrollY);
     };
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: false });
+    window.addEventListener("wheel", onWheel, { passive: false });
     return () => {
+      unsubscribe();
       window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("wheel", onWheel);
+      clearNavigationLock();
     };
-  }, [compact, phase, pxPerFrame, skipEntry]);
+  }, [compact, driver, phase, pxPerFrame, skipEntry]);
 
   /* Reset compact readers at the edge matching travel direction whenever a
      new section becomes active. Reverse entry therefore starts at the
