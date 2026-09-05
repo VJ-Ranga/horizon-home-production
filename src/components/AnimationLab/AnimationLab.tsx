@@ -103,6 +103,7 @@ import {
   sectionStateAt,
   virtualHoldAtScrollPx,
   type SectionTimeline,
+  type TimelineMode,
 } from "./timeline";
 import "./lab.css";
 import {
@@ -205,9 +206,13 @@ function sectionFrameRange(section: SectionTimeline): [number, number] {
     scrolling, they belong to the entry. Uses the measured document
     scrollable height rather than assuming it matches totalScrollPx
     exactly, the same way the original straight-line version did. */
-function scrollYForFrame(frame: number, pxPerFrame: number): number {
+function scrollYForFrame(
+  frame: number,
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
+): number {
   const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-  const t = scrollPxForFrame(frame, pxPerFrame) / totalScrollPx(pxPerFrame);
+  const t = scrollPxForFrame(frame, pxPerFrame, mode) / totalScrollPx(pxPerFrame, mode);
   return Math.min(Math.max(t, 0), 1) * scrollable;
 }
 
@@ -572,7 +577,7 @@ export default function AnimationLab({
       compactNavigationLockRef.current = true;
       compactNavigationTargetRef.current = targetFrame;
       compactNavigationTimerRef.current = window.setTimeout(clearNavigationLock, 900);
-      const targetY = scrollYForFrame(targetFrame, pxPerFrame);
+      const targetY = scrollYForFrame(targetFrame, pxPerFrame, "compact");
       window.scrollTo({ top: targetY, behavior: "smooth" });
     };
 
