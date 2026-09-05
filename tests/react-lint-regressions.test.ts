@@ -39,6 +39,12 @@ test("mobile scroll-through panels do not stop short after a swipe", () => {
   assert.match(strategy, /const ease = mobile \|\| reduceMotion \? 1 : EASE/);
 });
 
+test("strategy mobile panel finishes before its virtual exit fade", () => {
+  const strategy = source("StrategyLayer.tsx");
+  assert.match(strategy, /const sweepPx = mobile[\s\S]*?STRATEGY\.scrollThrough!\.scrollPx - exitPx/);
+  assert.doesNotMatch(strategy, /MOBILE_SLOWDOWN/);
+});
+
 test("approach exits as one shared visual fade", () => {
   const contents = source("ApproachLayer.tsx");
   assert.match(contents, /const sharedExitProgress/);
