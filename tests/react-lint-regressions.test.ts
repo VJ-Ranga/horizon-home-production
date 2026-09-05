@@ -95,7 +95,7 @@ test("frame-driven community rail has one transform owner", () => {
 test("compact scrolling does not start the desktop Lenis loop", () => {
   const lab = source("AnimationLab.tsx");
   assert.match(lab, /if \(phase !== "scroll" \|\| skipEntry \|\| compact\) return;/);
-  assert.match(lab, /window\.scrollTo\(\{ top: targetY, behavior: "smooth" \}\)/);
+  assert.match(lab, /window\.requestAnimationFrame\(animate\)/);
 });
 
 test("desktop frame fallback preserves the last painted frame", () => {

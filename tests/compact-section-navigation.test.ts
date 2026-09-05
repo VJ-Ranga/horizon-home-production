@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { nextCompactSectionFrame } from "../src/components/AnimationLab/compactNavigation.ts";
+import {
+  compactTransitionDurationMs,
+  nextCompactSectionFrame,
+} from "../src/components/AnimationLab/compactNavigation.ts";
 
 const source = readFileSync(
   new URL("../src/components/AnimationLab/AnimationLab.tsx", import.meta.url),
@@ -15,10 +18,18 @@ test("large compact gestures target only the adjacent settled section", () => {
   assert.equal(nextCompactSectionFrame(50, [50, 150, 250], -1), null);
 });
 
+test("first six compact sections use a 15fps transition budget", () => {
+  assert.equal(compactTransitionDurationMs(50, 90), 2667);
+  assert.equal(compactTransitionDurationMs(161, 255), 6267);
+  assert.equal(compactTransitionDurationMs(255, 275), 1333);
+  assert.equal(compactTransitionDurationMs(275, 335), 550);
+});
+
 test("compact outer navigation prevents native momentum and locks transitions", () => {
   assert.match(source, /compactNavigationLockRef/);
   assert.match(source, /event\.preventDefault\(\)/);
   assert.match(source, /closest\("\[data-lenis-prevent\]"\)/);
   assert.match(source, /targetFrame[\s\S]*settledFrame/);
+  assert.match(source, /compactTransitionDurationMs/);
   assert.match(source, /passive:\s*false/);
 });

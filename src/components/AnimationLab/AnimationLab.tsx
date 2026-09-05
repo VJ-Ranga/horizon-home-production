@@ -65,7 +65,10 @@ import CommunityLayer from "./CommunityLayer";
 import EndScreenLayer from "./EndScreenLayer";
 import LoopTransitionOverlay from "./LoopTransitionOverlay";
 import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
-import { nextCompactSectionFrame } from "./compactNavigation";
+import {
+  compactTransitionDurationMs,
+  nextCompactSectionFrame,
+} from "./compactNavigation";
 import LabScrubber from "./LabScrubber";
 import LabIntro from "./LabIntro";
 import {
@@ -547,6 +550,7 @@ export default function AnimationLab({
     let startY: number | null = null;
     let startScrollY = 0;
     let startedInsideReader = false;
+    let animationFrameId: number | null = null;
 
     const clearNavigationLock = () => {
       compactNavigationLockRef.current = false;
@@ -576,9 +580,27 @@ export default function AnimationLab({
 
       compactNavigationLockRef.current = true;
       compactNavigationTargetRef.current = targetFrame;
-      compactNavigationTimerRef.current = window.setTimeout(clearNavigationLock, 900);
       const targetY = scrollYForFrame(targetFrame, pxPerFrame, "compact");
-      window.scrollTo({ top: targetY, behavior: "smooth" });
+      const duration = compactTransitionDurationMs(currentFrame, targetFrame);
+      const startedAt = performance.now();
+      const animate = (now: number) => {
+        const progress = Math.min((now - startedAt) / duration, 1);
+        window.scrollTo({
+          top: startScrollY + (targetY - startScrollY) * progress,
+          behavior: "auto",
+        });
+        if (progress < 1) {
+          animationFrameId = window.requestAnimationFrame(animate);
+        } else {
+          animationFrameId = null;
+          clearNavigationLock();
+        }
+      };
+      compactNavigationTimerRef.current = window.setTimeout(
+        clearNavigationLock,
+        duration + 500,
+      );
+      animationFrameId = window.requestAnimationFrame(animate);
     };
 
     const unsubscribe = driver.subscribe((frame, nextPhase) => {
@@ -626,6 +648,7 @@ export default function AnimationLab({
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("wheel", onWheel);
+      if (animationFrameId !== null) window.cancelAnimationFrame(animationFrameId);
       clearNavigationLock();
     };
   }, [compact, driver, phase, pxPerFrame, skipEntry]);
