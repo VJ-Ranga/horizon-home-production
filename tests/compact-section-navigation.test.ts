@@ -2,10 +2,25 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  compactCarouselTargetScrollPx,
   compactTransitionDurationMs,
   readerConsumesScroll,
   nextCompactSectionFrame,
 } from "../src/components/AnimationLab/compactNavigation.ts";
+
+test("compact navigation spends a gesture on the financial capital carousel", () => {
+  const startPx = 10_000;
+  const carouselPx = 3_210;
+
+  assert.equal(
+    compactCarouselTargetScrollPx(675, startPx, 1, 675, startPx, carouselPx),
+    startPx + carouselPx,
+  );
+  assert.equal(
+    compactCarouselTargetScrollPx(675, startPx + carouselPx, -1, 675, startPx, carouselPx),
+    startPx,
+  );
+});
 
 const source = readFileSync(
   new URL("../src/components/AnimationLab/AnimationLab.tsx", import.meta.url),

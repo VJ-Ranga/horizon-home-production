@@ -3,6 +3,22 @@ export const COMPACT_CONTROLLED_END_FRAME = 255;
 const DEFAULT_COMPACT_TRANSITION_MS = 550;
 const SETTLED_FRAME_EPSILON = 0.25;
 
+export function compactCarouselTargetScrollPx(
+  currentFrame: number,
+  currentScrollPx: number,
+  direction: 1 | -1,
+  carouselFrame: number,
+  carouselStartPx: number,
+  carouselBudgetPx: number,
+): number | null {
+  if (Math.abs(currentFrame - carouselFrame) > SETTLED_FRAME_EPSILON) return null;
+
+  const carouselEndPx = carouselStartPx + carouselBudgetPx;
+  if (direction > 0 && currentScrollPx < carouselEndPx - 1) return carouselEndPx;
+  if (direction < 0 && currentScrollPx > carouselStartPx + 1) return carouselStartPx;
+  return null;
+}
+
 export function readerConsumesScroll(
   scrollTop: number,
   clientHeight: number,

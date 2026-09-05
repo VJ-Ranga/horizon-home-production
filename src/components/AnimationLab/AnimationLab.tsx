@@ -66,6 +66,7 @@ import EndScreenLayer from "./EndScreenLayer";
 import LoopTransitionOverlay from "./LoopTransitionOverlay";
 import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
 import {
+  compactCarouselTargetScrollPx,
   compactTransitionDurationMs,
   nextCompactSectionFrame,
   readerConsumesScroll,
@@ -568,23 +569,44 @@ export default function AnimationLab({
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
       if (scrollable <= 0) return;
       const currentProgress = Math.min(Math.max(scrollY / scrollable, 0), 1);
+      const currentScrollPx = currentProgress * totalScrollPx(pxPerFrame, "compact");
       const currentFrame = frameForScrollPx(
-        currentProgress * totalScrollPx(pxPerFrame, "compact"),
+        currentScrollPx,
         pxPerFrame,
         "compact",
       );
+      const carousel = SECTIONS.find(
+        (section) => section.carousel && Math.abs(currentFrame - section.settledFrame) <= 0.25,
+      );
+      const carouselStartPx = carousel
+        ? scrollPxForFrame(carousel.settledFrame, pxPerFrame, "compact")
+        : null;
+      const carouselTargetPx = carousel && carouselStartPx !== null
+        ? compactCarouselTargetScrollPx(
+            currentFrame,
+            currentScrollPx,
+            direction,
+            carousel.settledFrame,
+            carouselStartPx,
+            carousel.carousel!.scrollPx,
+          )
+        : null;
       const targetFrame = nextCompactSectionFrame(
         currentFrame,
         SECTIONS.map((section) => section.settledFrame),
         direction,
       );
-      if (targetFrame === null) return;
+      if (targetFrame === null && carouselTargetPx === null) return;
 
       compactNavigationLockRef.current = true;
-      compactNavigationTargetRef.current = targetFrame;
-      const targetY = scrollYForFrame(targetFrame, pxPerFrame, "compact");
+      compactNavigationTargetRef.current = carouselTargetPx === null ? targetFrame : null;
+      const targetY = carouselTargetPx === null
+        ? scrollYForFrame(targetFrame!, pxPerFrame, "compact")
+        : (carouselTargetPx / totalScrollPx(pxPerFrame, "compact")) * scrollable;
       const fromScrollY = scrollY;
-      const duration = compactTransitionDurationMs(currentFrame, targetFrame);
+      const duration = carouselTargetPx === null
+        ? compactTransitionDurationMs(currentFrame, targetFrame!)
+        : Math.max(900, Math.round((Math.abs(carouselTargetPx - currentScrollPx) / pxPerFrame / 15) * 1000));
       const startedAt = performance.now();
       const animate = (now: number) => {
         const progress = Math.min((now - startedAt) / duration, 1);
