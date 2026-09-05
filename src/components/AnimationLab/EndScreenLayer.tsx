@@ -31,7 +31,7 @@ export default function EndScreenLayer() {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     if (mobileSolidRef.current) {
       for (let index = 0; index < WORD_COUNT; index += 1) {
         const word = wordRefs.current[index];
@@ -41,8 +41,8 @@ export default function EndScreenLayer() {
     }
 
     const pxPerFrame = readPxPerFrame();
-    const virtualEnter = virtualEnterProgressAtScrollPx(END_SCREEN, scrollPx, pxPerFrame);
-    const virtualExit = virtualExitProgressAtScrollPx(END_SCREEN, scrollPx, pxPerFrame);
+    const virtualEnter = virtualEnterProgressAtScrollPx(END_SCREEN, scrollPx, pxPerFrame, mode);
+    const virtualExit = virtualExitProgressAtScrollPx(END_SCREEN, scrollPx, pxPerFrame, mode);
 
     const entering = virtualEnter !== null || frame < END_SCREEN.settledFrame;
     // During the pinned virtual-enter frames the real frame is frozen at

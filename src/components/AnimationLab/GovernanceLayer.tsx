@@ -109,7 +109,7 @@ export default function GovernanceLayer() {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     if (mobileSolidRef.current) {
       for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
         const element = wordRefs.current[index];
@@ -135,12 +135,14 @@ export default function GovernanceLayer() {
     const virtualEnter = virtualEnterProgressAtScrollPx(
       GOVERNANCE,
       scrollPx,
-      readPxPerFrame()
+      readPxPerFrame(),
+      mode,
     );
     const virtualExit = virtualExitProgressAtScrollPx(
       GOVERNANCE,
       scrollPx,
-      readPxPerFrame()
+      readPxPerFrame(),
+      mode,
     );
     const entering = virtualEnter !== null || frame < SETTLE_FRAME;
     const animationFrame = virtualEnter === null

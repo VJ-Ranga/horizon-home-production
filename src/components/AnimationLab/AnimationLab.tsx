@@ -471,6 +471,7 @@ export default function AnimationLab({
     skipEntry,
     entryReady && introComplete,
     beforeScrollRead,
+    compact ? "compact" : "desktop",
   );
   const [loopTransition, setLoopTransition] = useState<LoopTransition | null>(null);
   const loopTransitionRef = useRef(false);

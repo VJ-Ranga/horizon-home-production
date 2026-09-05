@@ -11,9 +11,17 @@ const styles = readFileSync(
   "utf8",
 );
 
-test("digital reporting uses one section animation instead of child staggers", () => {
-  assert.doesNotMatch(component, /staggerProgressAt/);
-  assert.doesNotMatch(component, /groupRefs/);
-  assert.doesNotMatch(component, /wordRefs/);
+test("digital desktop uses the old word and group stagger animation", () => {
+  assert.match(component, /staggerProgressAt/);
+  assert.match(component, /groupRefs/);
+  assert.match(component, /wordRefs/);
   assert.doesNotMatch(styles, /\.s-digital2__word,\s*\.s-digital2__lead,\s*\.s-digital2__feature\s*\{\s*opacity: 0/);
+});
+
+test("digital layer reads the active desktop/compact timing policy", () => {
+  assert.match(component, /sectionTimingForMode/);
+  assert.match(component, /sectionTimingForMode\(DIGITAL, mode\)/);
+  assert.match(component, /staggerProgressAt/);
+  assert.match(component, /TITLE_WORD_COUNT/);
+  assert.match(component, /GROUP_COUNT/);
 });

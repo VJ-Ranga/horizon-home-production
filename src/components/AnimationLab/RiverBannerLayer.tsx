@@ -64,7 +64,7 @@ export default function RiverBannerLayer() {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     if (mobileSolidRef.current) {
       for (let index = 0; index < WORD_COUNT; index += 1) {
         const word = wordRefs.current[index];
@@ -80,6 +80,7 @@ export default function RiverBannerLayer() {
       RIVER,
       scrollPx,
       readPxPerFrame(),
+      mode,
     );
     // While the 40 virtual frames are under the scroll head, drive the
     // stagger off that 0..1 progress mapped onto 800 -> 840. Before

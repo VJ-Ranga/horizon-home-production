@@ -28,7 +28,7 @@ export default function CityBannerLayer() {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     if (mobileSolidRef.current) {
       for (let index = 0; index < WORD_COUNT; index += 1) {
         const word = wordRefs.current[index];
@@ -37,8 +37,8 @@ export default function CityBannerLayer() {
       return;
     }
 
-    const virtualEnter = virtualEnterProgressAtScrollPx(CITY, scrollPx, readPxPerFrame());
-    const virtualExit = virtualExitProgressAtScrollPx(CITY, scrollPx, readPxPerFrame());
+    const virtualEnter = virtualEnterProgressAtScrollPx(CITY, scrollPx, readPxPerFrame(), mode);
+    const virtualExit = virtualExitProgressAtScrollPx(CITY, scrollPx, readPxPerFrame(), mode);
     const entering = virtualEnter !== null || frame < CITY.exit!.frames[0];
     const animationFrame = virtualEnter === null
       ? frame

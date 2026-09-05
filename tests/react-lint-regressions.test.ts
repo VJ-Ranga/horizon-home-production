@@ -71,7 +71,7 @@ test("tablet compact mode does not fall back to desktop frames", () => {
   assert.match(scrubber, /max-width: 1100px/);
   assert.match(harness, /FRAME_DIR_TABLET/);
   assert.match(harness, /isCompactViewport/);
-  assert.match(timeline, /matchMedia\("\(max-width: 1100px\)"\)/);
+  assert.match(timeline, /TimelineMode/);
 });
 
 test("phone frame loading uses a bounded window and last-painted fallback", () => {
@@ -106,7 +106,7 @@ test("Lenis is advanced by the frame driver before scroll sampling", () => {
   const timeline = source("useFrameTimeline.ts");
   const lab = source("AnimationLab.tsx");
   assert.match(timeline, /beforeScrollRead/);
-  assert.match(lab, /useFrameDriver\(\s*skipEntry,\s*entryReady && introComplete,\s*beforeScrollRead,?\s*\)/);
+  assert.match(lab, /useFrameDriver\(\s*skipEntry,\s*entryReady && introComplete,\s*beforeScrollRead,\s*compact \? "compact" : "desktop",?\s*\)/);
   assert.doesNotMatch(lab, /const raf = \(time: number\) => \{\s*lenis\.raf\(time\)/);
 });
 
@@ -125,8 +125,6 @@ test("digital section settles at 161 and exits over 20 frames", () => {
     source("AnimationLab.tsx"),
     /DIGITAL_ENTER_FRAME[\s\S]*DIGITAL_SETTLED_FRAME[\s\S]*rounded >= DIGITAL_ENTER_FRAME[\s\S]*rounded < DIGITAL_SETTLED_FRAME/,
   );
-  assert.match(
-    source("DigitalLayer.tsx"),
-    /frame >= enterFrames\[0\][\s\S]*frame <= \(DIGITAL\.exit\?\.frames\[0\]/,
-  );
+  assert.match(source("DigitalLayer.tsx"), /staggerProgressAt/);
+  assert.match(source("DigitalLayer.tsx"), /CHAR_WINDOW: \[number, number\] = \[141, 161\]/);
 });

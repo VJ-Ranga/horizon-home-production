@@ -46,6 +46,7 @@ import { useEffect, useRef } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
+  sectionTimingForMode,
   staggerProgressAt,
   virtualExitProgressAtScrollPx,
 } from "./timeline";
@@ -68,8 +69,6 @@ const CHAR_WINDOW: [number, number] = [114, 134];
 // 2), 7 the CTA row.
 const GROUP_WINDOW: [number, number] = [114, 134];
 const GROUP_COUNT = 8;
-const EXIT_WINDOW = APPROACH.exit!.frames;
-const VIRTUAL_EXIT_WINDOW: [number, number] = [0, APPROACH.virtualExitFrames ?? 0];
 
 // Popup follows the same dialogRef/showModal pattern as HeroLayer.tsx
 // and GlanceLayer.tsx's own video dialogs. "Watch the Highlights"
@@ -98,7 +97,10 @@ export default function ApproachLayer() {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
+    const timedApproach = sectionTimingForMode(APPROACH, mode);
+    const exitWindow = timedApproach.exit?.frames ?? [timedApproach.settledFrame, timedApproach.settledFrame];
+    const virtualExitWindow: [number, number] = [0, timedApproach.virtualExitFrames ?? 0];
     currentFrameRef.current = frame;
     const openedAt = dialogOpenedAtFrameRef.current;
     if (
@@ -131,25 +133,28 @@ export default function ApproachLayer() {
     if (reducedMotionRef.current) return;
 
     const virtualExit = virtualExitProgressAtScrollPx(
-      APPROACH,
+      timedApproach,
       scrollPx,
-      readPxPerFrame()
+      readPxPerFrame(),
+      mode,
     );
-    const entering = virtualExit === null && frame < EXIT_WINDOW[0];
+    const entering = virtualExit === null && frame < exitWindow[0];
     const sharedExitProgress = virtualExit !== null
       ? 1 - staggerProgressAt(
           0,
           1,
-          virtualExit * VIRTUAL_EXIT_WINDOW[1],
-          VIRTUAL_EXIT_WINDOW,
-        )
-      : 1 - staggerProgressAt(0, 1, frame, EXIT_WINDOW);
+           virtualExit * virtualExitWindow[1],
+           virtualExitWindow,
+         )
+      : 1 - staggerProgressAt(0, 1, frame, exitWindow);
     for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
       const element = wordRefs.current[index];
       if (!element) continue;
-      const t = entering
-        ? staggerProgressAt(index, TITLE_WORD_COUNT, frame, CHAR_WINDOW)
-        : sharedExitProgress;
+       const t = entering
+         ? staggerProgressAt(index, TITLE_WORD_COUNT, frame, CHAR_WINDOW)
+         : mode === "desktop" && virtualExit !== null
+         ? 1 - staggerProgressAt(TITLE_WORD_COUNT - 1 - index, TITLE_WORD_COUNT, virtualExit * virtualExitWindow[1], virtualExitWindow)
+         : sharedExitProgress;
       element.style.opacity = String(t);
       element.style.transform = `translateY(${12 * (1 - t)}px)`;
     }
@@ -157,9 +162,11 @@ export default function ApproachLayer() {
     for (let index = 0; index < GROUP_COUNT; index += 1) {
       const element = groupRefs.current[index];
       if (!element) continue;
-      const t = entering
-        ? staggerProgressAt(index, GROUP_COUNT, frame, GROUP_WINDOW)
-        : sharedExitProgress;
+       const t = entering
+         ? staggerProgressAt(index, GROUP_COUNT, frame, GROUP_WINDOW)
+         : mode === "desktop" && virtualExit !== null
+         ? 1 - staggerProgressAt(GROUP_COUNT - 1 - index, GROUP_COUNT, virtualExit * virtualExitWindow[1], virtualExitWindow)
+         : sharedExitProgress;
       element.style.opacity = String(t);
       element.style.transform = `translateY(${18 * (1 - t)}px)`;
     }

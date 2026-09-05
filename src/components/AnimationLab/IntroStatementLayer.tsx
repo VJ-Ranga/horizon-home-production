@@ -70,7 +70,7 @@ export default function IntroStatementLayer() {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     if (mobileSolidRef.current) {
       for (let index = 0; index < WORD_COUNT; index += 1) {
         const word = wordRefs.current[index];
@@ -82,12 +82,14 @@ export default function IntroStatementLayer() {
     const virtualEnter = virtualEnterProgressAtScrollPx(
       INTRO,
       scrollPx,
-      readPxPerFrame()
+      readPxPerFrame(),
+      mode,
     );
     const virtualExit = virtualExitProgressAtScrollPx(
       INTRO,
       scrollPx,
-      readPxPerFrame()
+      readPxPerFrame(),
+      mode,
     );
     const entering = virtualEnter !== null || frame < INTRO.settledFrame;
     const animationFrame = virtualEnter === null

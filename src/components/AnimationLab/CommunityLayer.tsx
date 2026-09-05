@@ -150,8 +150,8 @@ export default function CommunityLayer() {
     dialogRef.current?.showModal();
   };
 
-  useFrameEffect((_frame, _phase, scrollPx) => {
-    const startPx = scrollPxForFrame(COMMUNITY.settledFrame, readPxPerFrame());
+  useFrameEffect((_frame, _phase, scrollPx, mode) => {
+    const startPx = scrollPxForFrame(COMMUNITY.settledFrame, readPxPerFrame(), mode);
     const rail = railRef.current;
     const viewport = viewportRef.current;
     if (!rail || !viewport) return;

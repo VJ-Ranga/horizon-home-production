@@ -50,7 +50,7 @@ export default function NonFinancialLayer() {
   const toggleCard = (index: number) =>
     setOpenCard((current) => (current === index ? null : index));
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     const element = ref.current;
     if (!element) return;
 
@@ -75,6 +75,7 @@ export default function NonFinancialLayer() {
       NONFINANCIAL,
       scrollPx,
       readPxPerFrame(),
+      mode,
     );
     const revealed =
       virtualExit === null &&

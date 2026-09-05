@@ -86,7 +86,7 @@ export default function OceanBannerLayer() {
     mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     if (mobileSolidRef.current) {
       for (let index = 0; index < WORD_COUNT; index += 1) {
         const word = wordRefs.current[index];
@@ -95,8 +95,8 @@ export default function OceanBannerLayer() {
       return;
     }
 
-    const virtualEnter = virtualEnterProgressAtScrollPx(OCEAN, scrollPx, readPxPerFrame());
-    const virtualExit = virtualExitProgressAtScrollPx(OCEAN, scrollPx, readPxPerFrame());
+    const virtualEnter = virtualEnterProgressAtScrollPx(OCEAN, scrollPx, readPxPerFrame(), mode);
+    const virtualExit = virtualExitProgressAtScrollPx(OCEAN, scrollPx, readPxPerFrame(), mode);
     const entering = virtualEnter !== null || frame < EXIT_START;
     const animationFrame = virtualEnter === null
       ? frame

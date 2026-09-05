@@ -145,14 +145,14 @@ export default function LeadershipLayer() {
   // Mobile scroll-through glide (mirrors StrategyLayer). Only runs on
   // phones; the >700px paths are untouched. It consumes the shared frame
   // driver's scrollPx so the panel and background cannot drift apart.
-  useFrameEffect((_frame, _phase, scrollPx) => {
+  useFrameEffect((_frame, _phase, scrollPx, mode) => {
     if (!mobileThrough) {
       if (bodyRef.current) bodyRef.current.style.transform = "";
       mobileCurrentRef.current = 0;
       return;
     }
     const pxPerFrame = readPxPerFrame();
-    const startPx = scrollPxForFrame(LEADERSHIP.settledFrame, pxPerFrame);
+    const startPx = scrollPxForFrame(LEADERSHIP.settledFrame, pxPerFrame, mode);
     // The section's frame is pinned at settledFrame across holdFrames +
     // virtualExitFrames of scroll — that stretch is the glide budget.
     const budgetPx =

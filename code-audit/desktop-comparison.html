@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Side-by-side desktop animation audit for Horizon Home.">
+  <link rel="icon" href="data:,">
+  <title>Horizon Home | Desktop Animation Comparison</title>
+  <style>
+    :root {
+      --ink: #13262c;
+      --muted: #5d7378;
+      --paper: #f5f8f7;
+      --panel: #fff;
+      --line: #d8e4e2;
+      --current: #087989;
+      --current-soft: #e4f4f3;
+      --old: #7448a8;
+      --old-soft: #f1e9fb;
+      --ok: #087a55;
+      --warn: #a26100;
+      --danger: #b3363e;
+      --max: 1440px;
+      --shadow: 0 16px 45px rgba(17, 50, 58, .09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font: 15px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    a { color: var(--current); }
+    a:focus-visible, button:focus-visible { outline: 3px solid #50d8d0; outline-offset: 3px; }
+    code, .mono { font: 500 .9em/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { padding: 2px 6px; border-radius: 5px; background: #edf2f1; }
+    .hero { color: #fff; background: linear-gradient(135deg, #062e39, #087989 64%, #7448a8); }
+    .hero-inner, main, footer { width: min(calc(100% - 40px), var(--max)); margin: auto; }
+    .hero-inner { padding: 64px 0 52px; }
+    .eyebrow { margin: 0 0 12px; color: #62e1d9; font-size: 11px; font-weight: 850; letter-spacing: .16em; text-transform: uppercase; }
+    h1, h2, h3 { margin: 0; line-height: 1.13; letter-spacing: -.035em; }
+    h1 { max-width: 900px; font-size: clamp(38px, 6vw, 72px); }
+    h2 { font-size: clamp(27px, 4vw, 42px); }
+    h3 { font-size: 18px; }
+    .hero-copy { max-width: 820px; margin: 20px 0 0; color: #d9f4f1; font-size: 18px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 24px; }
+    .chip, .badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; font-size: 12px; font-weight: 750; }
+    .chip { padding: 7px 11px; border: 1px solid rgba(255,255,255,.25); color: #efffff; }
+    .chip strong { color: #62e1d9; }
+    .toc { position: sticky; top: 0; z-index: 3; border-bottom: 1px solid var(--line); background: rgba(245,248,247,.94); backdrop-filter: blur(14px); }
+    .toc-inner { display: flex; gap: 4px; width: min(calc(100% - 40px), var(--max)); margin: auto; overflow-x: auto; }
+    .toc a { flex: 0 0 auto; padding: 13px 10px; color: var(--muted); font-size: 12px; font-weight: 750; text-decoration: none; white-space: nowrap; }
+    .toc a:hover { color: var(--current); box-shadow: inset 0 -3px var(--current); }
+    main { padding: 48px 0 76px; }
+    section { scroll-margin-top: 62px; margin-top: 56px; }
+    section:first-child { margin-top: 0; }
+    .intro { max-width: 850px; margin: 12px 0 22px; color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+    .card { grid-column: span 4; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); box-shadow: var(--shadow); }
+    .card.wide, .card.full { grid-column: 1 / -1; }
+    .card h3 { margin-bottom: 8px; }
+    .card p:last-child { margin-bottom: 0; }
+    .stat { display: block; color: var(--current); font-size: 35px; font-weight: 900; line-height: 1; }
+    .stat-label { color: var(--muted); font-size: 12px; }
+    .notice { padding: 16px 18px; border-left: 4px solid var(--warn); border-radius: 10px; background: #fff5df; }
+    .notice strong { color: #7c4b00; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: var(--shadow); }
+    table { width: 100%; min-width: 1120px; border-collapse: collapse; }
+    th, td { padding: 14px 15px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); background: #edf4f2; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    .section-col { width: 14%; font-weight: 800; }
+    .current-col { width: 29%; background: linear-gradient(90deg, rgba(228,244,243,.45), transparent); }
+    .old-col { width: 29%; background: linear-gradient(90deg, rgba(241,233,251,.45), transparent); }
+    .action-col { width: 28%; }
+    .current-head { color: var(--current); }
+    .old-head { color: var(--old); }
+    .badge { padding: 3px 8px; margin-bottom: 6px; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+    .badge.current { color: var(--current); background: var(--current-soft); }
+    .badge.old { color: var(--old); background: var(--old-soft); }
+    .badge.ok { color: var(--ok); background: #e5f6ee; }
+    .badge.warn { color: var(--warn); background: #fff2d8; }
+    .badge.danger { color: var(--danger); background: #ffeaec; }
+    .frame { display: inline-block; margin: 2px 0 4px; padding: 3px 7px; border-radius: 5px; color: #fff; background: #183f47; font: 700 12px/1.2 ui-monospace, monospace; }
+    .small { color: var(--muted); font-size: 12px; }
+    ul { margin: 8px 0 0; padding-left: 19px; }
+    li + li { margin-top: 5px; }
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+    .flow-step { position: relative; min-height: 125px; padding: 16px; border: 1px solid var(--line); border-radius: 13px; background: #fff; box-shadow: var(--shadow); }
+    .flow-step:not(:last-child)::after { content: "→"; position: absolute; top: 42px; right: -18px; z-index: 1; color: var(--current); font-size: 22px; }
+    .flow-step strong { display: block; margin-bottom: 5px; }
+    .roadmap { display: grid; gap: 11px; }
+    .roadmap-row { display: grid; grid-template-columns: 45px 1fr 1fr; gap: 14px; align-items: start; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .number { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 50%; color: #fff; background: var(--current); font-weight: 900; }
+    .roadmap-row h3 { font-size: 16px; }
+    footer { padding: 0 0 38px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 800px) {
+      .hero-inner, main, footer { width: min(calc(100% - 28px), var(--max)); }
+      .hero-inner { padding: 46px 0 38px; }
+      .card { grid-column: 1 / -1; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step:not(:last-child)::after { top: auto; right: auto; bottom: -21px; left: 20px; transform: rotate(90deg); }
+      .roadmap-row { grid-template-columns: 38px 1fr; }
+      .roadmap-row > :last-child { grid-column: 2; }
+      .toc-inner { width: calc(100% - 28px); }
+    }
+    @media print {
+      body { background: #fff; font-size: 10px; }
+      .hero { color: #000; background: #fff; border-bottom: 2px solid var(--current); }
+      .hero-copy, .chip { color: #000; }
+      .toc { display: none; }
+      main { padding-top: 25px; }
+      .card, .table-wrap, .flow-step { box-shadow: none; break-inside: avoid; }
+      table { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Desktop animation audit · 05 September 2026</p>
+      <h1>Current desktop vs old desktop</h1>
+      <p class="hero-copy">A section-by-section map of the frame timeline, holds, timing, scroll method, loading behavior, and cleanup needed to make both desktop builds behave the same.</p>
+      <div class="meta">
+        <span class="chip"><strong>Current</strong> horizon-home-production</span>
+        <span class="chip"><strong>Old</strong> new project/horizon-home · port 3100</span>
+        <span class="chip"><strong>Source of truth</strong> timeline.ts</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Report sections">
+    <div class="toc-inner">
+      <a href="#verdict">Verdict</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="#timeline">Timeline</a>
+      <a href="#sections">Sections</a>
+      <a href="#cleanup">Cleanup</a>
+      <a href="#plan">Plan</a>
+    </div>
+  </nav>
+
+  <main>
+    <section id="verdict">
+      <p class="eyebrow">01 · Read this first</p>
+      <h2>The frame plan is shared. The clocks are not.</h2>
+      <p class="intro">Both desktop builds use the same 1–1125 frame timeline and the same section definitions. The main behavioral difference is how scroll smoothing and frame sampling are scheduled. The current build has the single-clock correction; the old 3100 build still runs Lenis and the frame driver in separate animation loops.</p>
+      <div class="grid">
+        <article class="card"><span class="stat">1–1125</span><span class="stat-label">Shared desktop frame range</span><p>Do not merge the old 720 or 840 documentation values into the live timeline.</p></article>
+        <article class="card"><span class="stat">50</span><span class="stat-label">Entry handoff / hero settled frame</span><p>Frames 1–50 autoplay before scroll becomes active.</p></article>
+        <article class="card"><span class="stat">19</span><span class="stat-label">Timeline sections</span><p>Sections use settled frames, enter/exit windows, holds, carousels, or scroll-through behavior.</p></article>
+        <article class="card wide"><div class="notice"><strong>Important:</strong> “Old” below means the older desktop implementation, not necessarily a different frame number. Where both builds read the same <code>timeline.ts</code>, the frame values are intentionally marked shared.</div></article>
+      </div>
+    </section>
+
+    <section id="pipeline">
+      <p class="eyebrow">02 · Runtime pipeline</p>
+      <h2>What happens from scroll to canvas</h2>
+      <div class="flow">
+        <div class="flow-step"><strong>1. Scroll input</strong><span class="small">Browser scroll position is read after the entry phase unlocks.</span></div>
+        <div class="flow-step"><strong>2. Timeline mapping</strong><span class="small">Piecewise legs convert scroll pixels into logical frames and virtual holds.</span></div>
+        <div class="flow-step"><strong>3. Shared frame</strong><span class="small">Section layers and the background canvas receive the same frame value.</span></div>
+        <div class="flow-step"><strong>4. File resolution</strong><span class="small">The logical frame resolves to a frame asset, including dense routes.</span></div>
+        <div class="flow-step"><strong>5. Canvas paint</strong><span class="small">The decoded image is drawn, with crossfades for declared background transitions.</span></div>
+      </div>
+      <div class="table-wrap" style="margin-top:20px">
+        <table>
+          <thead><tr><th>Area</th><th class="current-head">Current desktop</th><th class="old-head">Old desktop · 3100</th><th>Difference / decision</th></tr></thead>
+          <tbody>
+            <tr><td class="section-col">Frame clock</td><td class="current-col"><span class="badge current">Corrected</span>Lenis is advanced before the frame is sampled in the same driver cycle.</td><td class="old-col"><span class="badge old">Older</span>Lenis has its own rAF and the frame driver has another rAF.</td><td>Port the single-clock ownership into the old build if it becomes the desktop source.</td></tr>
+            <tr><td class="section-col">Scroll mapping</td><td class="current-col"><span class="frame">50 → 1125</span><br>Uses <code>frameForScrollPx()</code> and the shared piecewise legs.</td><td class="old-col"><span class="frame">50 → 1125</span><br>Uses the same logical timeline and piecewise mapping.</td><td class="small">Keep the timeline. Do not duplicate section frame numbers in components.</td></tr>
+            <tr><td class="section-col">Smooth scroll</td><td class="current-col"><span class="badge current">Single owner</span>Frame driver owns the sampling order; Lenis cannot get ahead of it.</td><td class="old-col"><span class="badge warn">Drift risk</span>Independent Lenis updates can be sampled one frame behind or ahead.</td><td>One rAF must own both scroll advancement and frame emission.</td></tr>
+            <tr><td class="section-col">Entry</td><td class="current-col"><span class="frame">1 → 50</span><br>Scroll locked until entry frames decode; autoplay starts only when ready.</td><td class="old-col"><span class="frame">1 → 50</span><br>Same entry contract in the inspected source.</td><td>Keep the ready gate and exact frame-50 handoff in both builds.</td></tr>
+            <tr><td class="section-col">Frame files</td><td class="current-col"><span class="badge current">Current routes</span>Default, HQ, 4K, dense 2x/4x, and mobile directories are resolved from one logical frame.</td><td class="old-col"><span class="badge old">Older loader</span>Uses the same density formula but retains the older loader/fallback behavior.</td><td>Keep logical frames stable; change only the file resolver and loader strategy.</td></tr>
+            <tr><td class="section-col">Fallback</td><td class="current-col"><span class="badge warn">Measure</span>Last-painted or bounded fallback behavior is the target for production validation.</td><td class="old-col"><span class="badge danger">Nearest loaded</span>Searches backward/forward and may paint a future frame while the target decodes.</td><td>Prefer last-painted for temporal correctness; never show a future frame as if it were current.</td></tr>
+            <tr><td class="section-col">Holds</td><td class="current-col">Virtual holds keep the background pinned while content is readable or a carousel advances.</td><td class="old-col">Same timeline hold definitions, but timing can feel inconsistent if the two clocks disagree.</td><td>Validate hold start/end at 60 Hz and 120 Hz after clock unification.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="timeline">
+      <p class="eyebrow">03 · Global timing</p>
+      <h2>Shared frame and timing contract</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Phase</th><th class="current-head">Current desktop</th><th class="old-head">Old desktop · 3100</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td class="section-col">Initial handoff</td><td class="current-col"><span class="frame">frame 1</span><br>First decoded post-intro frame.</td><td class="old-col"><span class="frame">frame 1</span><br>Same handoff frame.</td><td>Keep identical.</td></tr>
+            <tr><td class="section-col">Hero autoplay</td><td class="current-col"><span class="frame">1 → 50</span><br>Duration is calculated from <code>SET_C_FPS</code> and <code>ENTRY_SPEED</code>.</td><td class="old-col"><span class="frame">1 → 50</span><br>Same frame window and entry gate.</td><td>Compare actual elapsed time, then lock the same value.</td></tr>
+            <tr><td class="section-col">Scroll phase</td><td class="current-col"><span class="frame">50 → 1125</span><br><code>14px/frame</code> default, adjustable by <code>?px=</code>.</td><td class="old-col"><span class="frame">50 → 1125</span><br>Same default pace and debug override.</td><td>Do not change pacing while fixing clock ownership.</td></tr>
+            <tr><td class="section-col">End behavior</td><td class="current-col">Downward boundary can run the one-way loop transition back to frame 50.</td><td class="old-col">Same loop contract is present in the older implementation.</td><td>Test the boundary separately from normal section timing.</td></tr>
+            <tr><td class="section-col">Frame-to-file</td><td class="current-col"><code>round(frame * density - (density - 1))</code></td><td class="old-col"><code>round(frame * density - (density - 1))</code></td><td>Keep this formula shared and tested.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 style="margin:28px 0 10px">Virtual frame ledger</h3>
+      <p class="intro">These are not extra image files. They are extra scroll-time units while the background stays pinned or moves at a declared special pace. The old and current builds should use the same values when they share the same timeline.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Section</th><th class="current-head">Current desktop · virtual frames</th><th class="old-head">Old desktop · virtual frames</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="section-col">01 · Hero</td><td class="current-col"><span class="frame">start 0 · hold 20 · exit 0</span></td><td class="old-col"><span class="frame">start 0 · hold 10 · exit 0</span></td><td>Current hero hold is doubled.</td></tr>
+            <tr><td class="section-col">02 · Main bridge</td><td class="current-col"><span class="frame">start 0 · hold 20 · exit 0</span></td><td class="old-col"><span class="frame">start 0 · hold 10 · exit 0</span></td><td>Current hold is doubled; the 4-frame ramp is a speed ramp, not a virtual enter/exit.</td></tr>
+            <tr><td class="section-col">03 · Approach</td><td class="current-col"><span class="frame">start 0 · hold 20 · exit 20</span></td><td class="old-col"><span class="frame">start 0 · hold 10 · exit 10</span></td><td>Current hold and virtual exit are both doubled.</td></tr>
+            <tr><td class="section-col">04 · Digital</td><td class="current-col"><span class="frame">start 0 · hold 20 · exit 0</span></td><td class="old-col"><span class="frame">start 0 · hold 10 · exit 0</span></td><td>Current hold is doubled; current exit ends at 181 instead of 176.</td></tr>
+            <tr><td class="section-col">05 · Intro statement</td><td class="current-col"><span class="frame">start 10 · hold 20 · exit 14</span></td><td class="old-col"><span class="frame">start 10 · hold 10 · exit 14</span></td><td>Current readable hold is doubled.</td></tr>
+            <tr><td class="section-col">06 · Key data</td><td class="current-col"><span class="frame">start 0 · hold 20 · exit 0</span></td><td class="old-col"><span class="frame">start 0 · hold 10 · exit 0</span></td><td>Current hold is doubled; the 9-frame crawl is separate.</td></tr>
+            <tr><td class="section-col">07 · City banner</td><td class="current-col"><span class="frame">start 10 · hold 20 · exit 10</span></td><td class="old-col"><span class="frame">start 10 · hold 10 · exit 10</span></td><td>Current readable hold is doubled.</td></tr>
+            <tr><td class="section-col">08 · Financial</td><td class="current-col"><span class="frame">start 0 · hold 20 · exit 20</span></td><td class="old-col"><span class="frame">start 0 · hold 20 · exit 20</span></td><td>Longer reading time for the dense dashboard.</td></tr>
+            <tr><td class="section-col">09 · Governance intro</td><td class="current-col"><span class="frame">start 10 · hold 20 · exit 20</span></td><td class="old-col"><span class="frame">start 10 · hold 10 · exit 20</span></td><td>Current hold is doubled on the shared lighthouse shot.</td></tr>
+            <tr><td class="section-col">10 · Governance</td><td class="current-col"><span class="frame">start 15 · hold 30 · exit 20</span></td><td class="old-col"><span class="frame">start 15 · hold 10 · exit 20</span></td><td>Current hold is 20 frames longer.</td></tr>
+            <tr><td class="section-col">11 · Governance cards</td><td class="current-col"><span class="frame">start 20 · hold 40 · exit 20</span></td><td class="old-col"><span class="frame">start 20 · hold 10 · exit 20</span></td><td>Current hold is 30 frames longer.</td></tr>
+            <tr><td class="section-col">12 · Leadership</td><td class="current-col"><span class="frame">start 0 · hold 60 · exit 20</span></td><td class="old-col"><span class="frame">start 20 · hold 10 · exit 10</span></td><td>Current model removes virtual enter and replaces the old short hold with a long pinned hold.</td></tr>
+            <tr><td class="section-col">13 · Ocean banner</td><td class="current-col"><span class="frame">start 20 · hold 20 · exit 20</span></td><td class="old-col"><span class="frame">start 20 · hold 10 · exit 20</span></td><td>Current hold is doubled.</td></tr>
+            <tr><td class="section-col">14 · Financial capital</td><td class="current-col"><span class="frame">start 20 · carousel px budget · exit 20</span></td><td class="old-col"><span class="frame">start 20 · carousel px budget · exit 20</span></td><td>Background pins at frame 675 while 7 cards advance. The exact px budget is 90 + 2,880 + 240.</td></tr>
+            <tr><td class="section-col">15 · River banner</td><td class="current-col"><span class="frame">start 40 · hold 20 · exit 0</span></td><td class="old-col"><span class="frame">start 0 · hold 10 · exit 0</span></td><td>Current version uses a 40-frame animated virtual enter and a different settled frame.</td></tr>
+            <tr><td class="section-col">16 · Non-financial</td><td class="current-col"><span class="frame">start 0 · hold 60 · exit 20</span></td><td class="old-col"><span class="frame">start 20 · hold 10 · exit 20</span></td><td>Current version uses a long park-and-reveal hold instead of the old enter/hold/exit shape.</td></tr>
+            <tr><td class="section-col">17 · Strategy</td><td class="current-col"><span class="frame">start 0 · pin glide 60 · exit 30</span></td><td class="old-col"><span class="frame">start 0 · pin glide 60 · exit 30</span></td><td>Scroll-through: advances 43 real frames to pin 933, then the panel glides for 60 virtual frames and exits over 30.</td></tr>
+            <tr><td class="section-col">18 · Community</td><td class="current-col"><span class="frame">start 10 · carousel 168 + 3,504 sweep + 84 tail · exit 10</span></td><td class="old-col"><span class="frame">start 10 · carousel 168 + 3,504 sweep + 84 tail · exit 10</span></td><td>Background pins at frame 1020 while 7 cards advance through 6 gaps.</td></tr>
+            <tr><td class="section-col">19 · End screen</td><td class="current-col"><span class="frame">start 10 · hold 10 · exit 10</span></td><td class="old-col"><span class="frame">start 10 · hold 10 · exit 10</span></td><td>Word reveal, 10-frame pinned hold, then 10 virtual exit frames. A 20-frame half-speed crawl is separate.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="sections">
+      <p class="eyebrow">04 · Section-by-section map</p>
+      <h2>Every section, its frame window, and the cleanup</h2>
+      <p class="intro">The current and old columns show the logical timeline. “Shared” means both builds should use the same frame values; the behavior column identifies the special hold or scroll method that must be preserved.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="section-col">Section</th><th class="current-col current-head">Current desktop · frame / timing / method</th><th class="old-col old-head">Old desktop · frame / timing / method</th><th class="action-col">Difference and cleanup</th></tr></thead>
+          <tbody>
+            <tr><td class="section-col">01 · Hero</td><td class="current-col"><span class="frame">settled 50</span><br>Entry <code>1–50</code>; exit <code>50–70</code>; 20-frame virtual hold. Autoplay, then scroll.</td><td class="old-col"><span class="frame">settled 50</span><br>Entry <code>1–50</code>; exit <code>50–70</code>; 10-frame virtual hold.</td><td>Current hold is doubled; keep frame 50 as the exact handoff.</td></tr>
+            <tr><td class="section-col">02 · Main bridge</td><td class="current-col"><span class="frame">settled 90</span><br>Enter <code>70–90</code>; exit <code>91–105</code>; 20-frame hold at 2x slowdown with short ramp.</td><td class="old-col"><span class="frame">settled 90</span><br>Enter <code>70–90</code>; exit <code>91–105</code>; 10-frame hold at 2x slowdown with short ramp.</td><td>Restore current hold to 10 to match the smoother old timing.</td></tr>
+            <tr><td class="section-col">03 · Approach</td><td class="current-col"><span class="frame">settled 134</span><br>Enter <code>114–134</code>; exit <code>145–158</code>; hold 20 plus virtual exit 20.</td><td class="old-col"><span class="frame">settled 134</span><br>Enter <code>114–134</code>; exit <code>145–158</code>; hold 10 plus virtual exit 10.</td><td>Restore both values to 10; keep the scrollable content buffer.</td></tr>
+            <tr><td class="section-col">04 · Digital</td><td class="current-col"><span class="frame">settled 161</span><br>Enter <code>141–161</code>; exit <code>161–181</code>; 20-frame hold.</td><td class="old-col"><span class="frame">settled 161</span><br>Enter <code>141–161</code>; exit <code>161–176</code>; 10-frame hold.</td><td>Restore hold to 10 and exit end to 176 for the old smooth behavior.</td></tr>
+            <tr><td class="section-col">05 · Intro statement</td><td class="current-col"><span class="frame">settled 255</span><br>Enter <code>245–255</code>; exit <code>255–269</code>; virtual enter/hold/exit.</td><td class="old-col"><span class="frame">settled 255</span><br>Same current timeline values in the inspected old source.</td><td>Remove any component-local legacy windows. Read this entry from <code>SECTIONS</code>.</td></tr>
+            <tr><td class="section-col">06 · Key data</td><td class="current-col"><span class="frame">settled 275</span><br>Enter <code>263–275</code>; exit <code>279–302</code>; 10-frame hold; 9-frame crawl; light panel.</td><td class="old-col"><span class="frame">settled 275</span><br>Same logical timing; old cut references around 266–273 are historical, not live values.</td><td>Do not restore old cut values. Keep the measured current values.</td></tr>
+            <tr><td class="section-col">07 · City banner</td><td class="current-col"><span class="frame">settled 335</span><br>Enter <code>322–335</code>; exit <code>335–371</code>; virtual enter/hold/exit.</td><td class="old-col"><span class="frame">settled 335</span><br>Same live timeline; old cut preview was around frame 320.</td><td>Use the live current frame map, not the old template still number.</td></tr>
+            <tr><td class="section-col">08 · Financial</td><td class="current-col"><span class="frame">settled 436</span><br>Enter <code>410–436</code>; exit <code>448–454</code>; 20-frame hold plus virtual exit.</td><td class="old-col"><span class="frame">settled 436</span><br>Same live timing; older source comments contain earlier cut references.</td><td>Keep the extended reading hold and verify opacity plateau.</td></tr>
+            <tr><td class="section-col">09 · Governance intro</td><td class="current-col"><span class="frame">settled 511</span><br>Enter <code>490–511</code>; exit <code>511–520</code>; virtual hold on shared lighthouse shot.</td><td class="old-col"><span class="frame">settled 511</span><br>Same current section sequence in the old source; older implementation risk is clock drift.</td><td>Keep opacity-only sequencing on the shared shot.</td></tr>
+            <tr><td class="section-col">10 · Governance</td><td class="current-col"><span class="frame">settled 533</span><br>Enter <code>520–533</code>; exit <code>533–540</code>; virtual hold.</td><td class="old-col"><span class="frame">settled 533</span><br>Same logical frame window.</td><td>Keep overlap and avoid moving the background for this content sequence.</td></tr>
+            <tr><td class="section-col">11 · Governance cards</td><td class="current-col"><span class="frame">settled 540</span><br>Enter <code>535–540</code>; exit <code>540–550</code>; virtual hold.</td><td class="old-col"><span class="frame">settled 540</span><br>Same logical frame window.</td><td>Keep the crossfade; verify card entry does not wait on a new video frame.</td></tr>
+            <tr><td class="section-col">12 · Leadership</td><td class="current-col"><span class="frame">settled 555</span><br>Enter <code>543–555</code>; exit <code>555–575</code>; virtual hold.</td><td class="old-col"><span class="frame">settled 555</span><br>Same logical frame window.</td><td>Keep shared lighthouse sequencing and cleanup any local old frame constants.</td></tr>
+            <tr><td class="section-col">13 · Ocean banner</td><td class="current-col"><span class="frame">settled 650</span><br>Enter <code>642–650</code>; exit <code>650–665</code>; virtual hold.</td><td class="old-col"><span class="frame">settled 650</span><br>Same live timing; old cut references around 485/503 are historical.</td><td>Use current timeline values; do not map from old artboard labels.</td></tr>
+            <tr><td class="section-col">14 · Financial capital</td><td class="current-col"><span class="frame">settled 675</span><br>Enter <code>665–675</code>; exit <code>675–693</code>; 7-card carousel freezes the background.</td><td class="old-col"><span class="frame">settled 675</span><br>Same carousel model in the older source, but its independent Lenis loop can affect freeze feel.</td><td>Unify clocks first. Then verify carousel zero-point and resume frame.</td></tr>
+            <tr><td class="section-col">15 · River banner</td><td class="current-col"><span class="frame">settled 830</span><br>Enter <code>816–830</code>; exit <code>830–841</code>; 10-frame hold.</td><td class="old-col"><span class="frame">settled 830</span><br>Same live timing; old cut reference was around 613.</td><td>Keep current new-cut value and remove old artboard references from operational docs.</td></tr>
+            <tr><td class="section-col">16 · Non-financial</td><td class="current-col"><span class="frame">settled 860</span><br>Enter <code>850–860</code>; exit <code>860–875</code>; hold with virtual enter/exit.</td><td class="old-col"><span class="frame">settled 860</span><br>Same live timing; old cut reference was around 635.</td><td>Preserve virtual entry/exit; validate content does not reveal early.</td></tr>
+            <tr><td class="section-col">17 · Strategy</td><td class="current-col"><span class="frame">settled 890</span><br>Enter <code>870–890</code>; pin at <code>933</code>; 60 virtual glide frames plus 30 virtual exit frames.</td><td class="old-col"><span class="frame">settled 890</span><br>Same scroll-through design in the inspected source.</td><td>Keep the invariant: pin minus settled = 43 frames; exit starts at pin.</td></tr>
+            <tr><td class="section-col">18 · Community</td><td class="current-col"><span class="frame">settled 1020</span><br>Enter <code>1015–1020</code>; 7-card carousel; exit <code>1038–1054</code>.</td><td class="old-col"><span class="frame">settled 1020</span><br>Same carousel and frame window; older transform/clock interactions are higher risk.</td><td>Keep one transform owner and one frame clock. Test fast wheel stopping.</td></tr>
+            <tr><td class="section-col">19 · End screen</td><td class="current-col"><span class="frame">settled 1055</span><br>Enter <code>1035–1055</code>; exit <code>1055–1080</code>; 10-frame hold and 20-frame crawl.</td><td class="old-col"><span class="frame">settled 1055</span><br>Same current timeline; old cut reference was around 1100.</td><td>Keep <code>LAB_LAST_FRAME = 1125</code>; do not shorten the asset range to the exit.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="cleanup">
+      <p class="eyebrow">05 · Cleanup decisions</p>
+      <h2>What to clean up before making them match</h2>
+      <div class="grid">
+        <article class="card"><span class="badge danger">Priority 1</span><h3>Unify the animation clock</h3><p>Move the old Lenis advancement into the frame-driver loop. The same loop must advance smooth scroll, read the resulting scroll position, map the frame, and notify subscribers.</p></article>
+        <article class="card"><span class="badge danger">Priority 1</span><h3>Keep one timeline source</h3><p>Remove operational references to 720/840-frame plans where the live code uses 1–1125. Components should read <code>SECTIONS</code>, not copy frame windows.</p></article>
+        <article class="card"><span class="badge warn">Priority 2</span><h3>Correct the fallback</h3><p>Use the last painted image when the exact target is not decoded. A nearest future frame can make the background appear to jump ahead of the scroll position.</p></article>
+        <article class="card"><span class="badge warn">Priority 2</span><h3>Separate timing from file density</h3><p>Keep logical frame numbers and section timing unchanged when switching between default, HQ, 2x, 4x, and mobile assets.</p></article>
+        <article class="card"><span class="badge ok">Keep</span><h3>Virtual holds</h3><p>They are the correct method for readable content, carousels, and shared-background sequences. They add time without duplicating video frames.</p></article>
+        <article class="card"><span class="badge ok">Keep</span><h3>Shared frame subscribers</h3><p>Canvas, section layers, HUD, and content interactions should continue consuming one emitted frame value.</p></article>
+      </div>
+    </section>
+
+    <section id="plan">
+      <p class="eyebrow">06 · Recommended path</p>
+      <h2>How to make the old desktop behave like current</h2>
+      <div class="roadmap">
+        <div class="roadmap-row"><div class="number">1</div><div><h3>Freeze the shared contract</h3><p class="small">Keep <code>LAB_LAST_FRAME = 1125</code>, <code>HERO_SETTLED_FRAME = 50</code>, the 19 section windows, and <code>14px/frame</code>.</p></div><div><span class="badge ok">No timeline redesign</span><p class="small">This prevents a clock fix from changing content timing.</p></div></div>
+        <div class="roadmap-row"><div class="number">2</div><div><h3>Port the single-clock driver</h3><p class="small">Advance Lenis inside the frame driver before calculating <code>frameForScrollPx()</code>.</p></div><div><span class="badge danger">Desktop behavior</span><p class="small">This is the main change required for matching current desktop.</p></div></div>
+        <div class="roadmap-row"><div class="number">3</div><div><h3>Make loading temporally safe</h3><p class="small">Keep decoded images outside React, but use last-painted fallback and report logical integer frames.</p></div><div><span class="badge warn">Visual stability</span><p class="small">Prevents future-frame jumps while assets decode.</p></div></div>
+        <div class="roadmap-row"><div class="number">4</div><div><h3>Run section checkpoints</h3><p class="small">At every settled frame, test entry, hold start, hold end, exit, carousel freeze, and loop boundary.</p></div><div><span class="badge current">60 Hz + 120 Hz</span><p class="small">Record actual frame, scrollY, and painted file at each checkpoint.</p></div></div>
+        <div class="roadmap-row"><div class="number">5</div><div><h3>Update documentation</h3><p class="small">Mark 720/840 documents historical, link this report, and keep <code>timeline.ts</code> as the source of truth.</p></div><div><span class="badge ok">Release hygiene</span><p class="small">Prevents the two desktop builds from drifting again.</p></div></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Prepared from <code>src/components/AnimationLab/timeline.ts</code>, <code>useFrameTimeline.ts</code>, <code>LabScrubber.tsx</code>, and the older desktop project at port 3100. This report records the implementation comparison; it does not replace runtime device validation.</footer>
+</body>
+</html>

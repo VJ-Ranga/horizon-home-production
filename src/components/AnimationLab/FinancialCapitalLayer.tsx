@@ -231,9 +231,9 @@ export default function FinancialCapitalLayer() {
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const currentRef = useRef<number | null>(null);
 
-  useFrameEffect((_frame, _phase, scrollPx) => {
+  useFrameEffect((_frame, _phase, scrollPx, mode) => {
     const pxPerFrame = readPxPerFrame();
-    const startPx = scrollPxForFrame(FINCAP.settledFrame, pxPerFrame);
+    const startPx = scrollPxForFrame(FINCAP.settledFrame, pxPerFrame, mode);
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;

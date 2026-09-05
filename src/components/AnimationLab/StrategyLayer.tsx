@@ -117,7 +117,7 @@ export default function StrategyLayer() {
   const panelRef = useRef<HTMLDivElement>(null);
   const currentRef = useRef<number | null>(null);
 
-  useFrameEffect((_frame, _phase, scrollPx) => {
+  useFrameEffect((_frame, _phase, scrollPx, mode) => {
     const panel = panelRef.current;
     if (!panel) return;
     const pxPerFrame = readPxPerFrame();
@@ -143,6 +143,7 @@ export default function StrategyLayer() {
     const startPx = scrollPxForFrame(
       mobile ? STRATEGY.settledFrame : pinFrame,
       pxPerFrame,
+      mode,
     );
     const sweepPx = mobile
       ? (STRATEGY.scrollThrough!.scrollPx - exitPx) * MOBILE_SLOWDOWN

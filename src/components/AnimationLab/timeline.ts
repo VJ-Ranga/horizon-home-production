@@ -70,6 +70,26 @@
    same moment in the video, named by two sets of different density.
    ========================================================= */
 
+export type TimelineMode = "desktop" | "compact";
+
+export interface TimelinePolicy {
+  mode: TimelineMode;
+  frameStepLimit: number;
+}
+
+/**
+ * The mode boundary for timeline behavior. Compact deliberately mirrors the
+ * current values until its mobile timeline is redesigned independently.
+ */
+export function timelinePolicy(mode: TimelineMode): TimelinePolicy {
+  switch (mode) {
+    case "compact":
+      return { mode, frameStepLimit: 2 };
+    case "desktop":
+      return { mode, frameStepLimit: Infinity };
+  }
+}
+
 /** Set-C frame the intro hands over to. Measured — see above. */
 export const HANDOFF_FRAME = 1;
 
@@ -296,10 +316,11 @@ type Stop = CrawlStop | CarouselStop | ScrollThroughStop;
     declared further down this file; by the time anything calls
     totalScrollPx/frameForScrollPx/scrollPxForFrame, the whole module
     has finished loading. */
-let stopsCache: Stop[] | null = null;
-function stops(): Stop[] {
-  if (!stopsCache) {
-    const crawlStops: Stop[] = SECTIONS.filter(
+const stopsCache: Partial<Record<TimelineMode, Stop[]>> = {};
+function stops(mode: TimelineMode = "desktop"): Stop[] {
+  if (!stopsCache[mode]) {
+    const timedSections = SECTIONS.map((section) => sectionTimingForMode(section, mode));
+    const crawlStops: Stop[] = timedSections.filter(
       (section) =>
         !section.carousel &&
         !section.scrollThrough &&
@@ -315,7 +336,7 @@ function stops(): Stop[] {
       virtualExitFrames: section.virtualExitFrames ?? 0,
       virtualEnterFrames: section.virtualEnterFrames ?? 0,
     }));
-    const carouselStops: Stop[] = SECTIONS.filter((section) => section.carousel).map(
+    const carouselStops: Stop[] = timedSections.filter((section) => section.carousel).map(
       (section) => ({
         kind: "carousel",
         sectionId: section.id,
@@ -325,7 +346,7 @@ function stops(): Stop[] {
         virtualExitFrames: section.virtualExitFrames ?? 0,
       })
     );
-    const scrollThroughStops: Stop[] = SECTIONS.filter(
+    const scrollThroughStops: Stop[] = timedSections.filter(
       (section) => section.scrollThrough
     ).map((section) => ({
       kind: "scrollThrough",
@@ -340,11 +361,11 @@ function stops(): Stop[] {
       pinFrame: section.scrollThrough!.pinFrame,
       virtualExitFrames: section.scrollThrough!.virtualExitFrames ?? 0,
     }));
-    stopsCache = [...crawlStops, ...carouselStops, ...scrollThroughStops].sort(
+    stopsCache[mode] = [...crawlStops, ...carouselStops, ...scrollThroughStops].sort(
       (a, b) => a.frame - b.frame
     );
   }
-  return stopsCache;
+  return stopsCache[mode]!;
 }
 
 /** How many short linear steps a speed ramp is built from. Each step
@@ -385,11 +406,21 @@ interface Leg {
     `pxPerFrame` parameter — same as the original HOLD_SCROLL_PX did.
     It's a content-pacing choice, not something that should quietly
     change because someone loaded the page with a ?px= override. */
-function buildLegs(pxPerFrame: number): Leg[] {
+function buildLegs(pxPerFrame: number, mode: TimelineMode = "desktop"): Leg[] {
+  // Keep the mode in the mapping boundary even while both modes use the
+  // current piecewise values. Compact gets its own branch for future policy.
+  const policy = timelinePolicy(mode);
+  if (policy.mode === "compact") {
+    return buildCurrentLegs(pxPerFrame, mode);
+  }
+  return buildCurrentLegs(pxPerFrame, mode);
+}
+
+function buildCurrentLegs(pxPerFrame: number, mode: TimelineMode = "desktop"): Leg[] {
   const legs: Leg[] = [];
   let frame = SCROLL_FIRST_FRAME;
 
-  for (const stop of stops()) {
+  for (const stop of stops(mode)) {
     if (stop.kind === "carousel") {
       // Bug fix, 2026-08-24 (VJ: "start point need to fix... it have
       // 1 or 2 fram issue so fully stop"): scrolling in at full,
@@ -654,9 +685,13 @@ function buildLegs(pxPerFrame: number): Leg[] {
 /** Scroll position (px into phase 2) -> frame. Walks buildLegs' flat
     list, each leg at its own constant pace (a carousel leg pins its
     frame for the whole of its span instead). */
-export function frameForScrollPx(px: number, pxPerFrame: number): number {
+export function frameForScrollPx(
+  px: number,
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
+): number {
   let consumed = 0;
-  for (const leg of buildLegs(pxPerFrame)) {
+  for (const leg of buildLegs(pxPerFrame, mode)) {
     const pinned = leg.frameStart === leg.frameEnd;
     const span = pinned ? leg.pxSpan ?? 0 : (leg.frameEnd - leg.frameStart) * leg.pxPerFrame;
     if (px <= consumed + span) {
@@ -672,7 +707,8 @@ export function frameForScrollPx(px: number, pxPerFrame: number): number {
     values express that extra scroll distance as frame-equivalent time. */
 export function virtualHoldAtScrollPx(
   px: number,
-  pxPerFrame: number
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
 ): {
   frame: number;
   totalFrames: number;
@@ -680,7 +716,7 @@ export function virtualHoldAtScrollPx(
   remainingFrames: number;
 } | null {
   let consumed = 0;
-  for (const leg of buildLegs(pxPerFrame)) {
+  for (const leg of buildLegs(pxPerFrame, mode)) {
     const pinned = leg.frameStart === leg.frameEnd;
     const span = pinned
       ? leg.pxSpan ?? 0
@@ -708,10 +744,12 @@ export function virtualHoldAtScrollPx(
 export function virtualExitProgressAtScrollPx(
   section: SectionTimeline,
   px: number,
-  pxPerFrame: number
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
 ): number | null {
+  const timedSection = sectionTimingForMode(section, mode);
   let consumed = 0;
-  for (const leg of buildLegs(pxPerFrame)) {
+  for (const leg of buildLegs(pxPerFrame, mode)) {
     const pinned = leg.frameStart === leg.frameEnd;
     const span = pinned
       ? leg.pxSpan ?? 0
@@ -722,8 +760,8 @@ export function virtualExitProgressAtScrollPx(
       }
       if (
         px >= consumed + span &&
-        section.exit &&
-        frameForScrollPx(px, pxPerFrame) < section.exit.frames[1]
+        timedSection.exit &&
+        frameForScrollPx(px, pxPerFrame, mode) < timedSection.exit.frames[1]
       ) {
         return 1;
       }
@@ -738,10 +776,11 @@ export function virtualExitProgressAtScrollPx(
 export function virtualEnterProgressAtScrollPx(
   section: SectionTimeline,
   px: number,
-  pxPerFrame: number
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
 ): number | null {
   let consumed = 0;
-  for (const leg of buildLegs(pxPerFrame)) {
+  for (const leg of buildLegs(pxPerFrame, mode)) {
     const pinned = leg.frameStart === leg.frameEnd;
     const span = pinned ? leg.pxSpan ?? 0 : (leg.frameEnd - leg.frameStart) * leg.pxPerFrame;
     if (leg.virtualEnter?.sectionId === section.id) {
@@ -759,9 +798,13 @@ export function virtualEnterProgressAtScrollPx(
     of each other. A carousel leg's own frame (frameStart===frameEnd)
     resolves to the px where that leg BEGINS — the start of the lock,
     since a pinned frame has no single "position" within the leg. */
-export function scrollPxForFrame(frame: number, pxPerFrame: number): number {
+export function scrollPxForFrame(
+  frame: number,
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
+): number {
   let consumed = 0;
-  for (const leg of buildLegs(pxPerFrame)) {
+  for (const leg of buildLegs(pxPerFrame, mode)) {
     const pinned = leg.frameStart === leg.frameEnd;
     if (frame <= leg.frameEnd) {
       return pinned ? consumed : consumed + (frame - leg.frameStart) * leg.pxPerFrame;
@@ -777,8 +820,11 @@ export function scrollPxForFrame(frame: number, pxPerFrame: number): number {
     instead of a separate formula that could drift out of sync with
     it (the crawl reshuffles how much of the normal-pace budget each
     hold "spends", so a hand-derived total is easy to get wrong). */
-export function totalScrollPx(pxPerFrame: number): number {
-  return scrollPxForFrame(SCROLL_LAST_FRAME, pxPerFrame);
+export function totalScrollPx(
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
+): number {
+  return scrollPxForFrame(SCROLL_LAST_FRAME, pxPerFrame, mode);
 }
 
 /** Every frame file the lab needs: the entry's plus the scroll's. */
@@ -998,6 +1044,46 @@ export interface ElementState {
   y: number;
   /** False once faded, so the layer leaves hit-testing and tab order. */
   interactive: boolean;
+}
+
+/**
+ * Device-specific timing overrides. Content and asset frame numbers remain
+ * shared; only interaction pacing is allowed to vary by mode.
+ *
+ * Desktop keeps the smoother legacy timing for sections 2-4. Compact keeps
+ * the current values until its redesigned mobile sections are ready.
+ */
+const DESKTOP_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
+  "02-main-02": { holdFrames: 10 },
+  "03-approach": { holdFrames: 10, virtualExitFrames: 10 },
+  "04-digital": {
+    holdFrames: 10,
+    enter: { frames: [141, 161], from: { y: 5 } },
+    exit: { frames: [161, 176], to: { y: -5 } },
+  },
+};
+
+export function sectionTimingForMode(
+  section: SectionTimeline,
+  mode: TimelineMode = "desktop",
+): SectionTimeline {
+  if (mode !== "desktop") return section;
+  const override = DESKTOP_TIMING_OVERRIDES[section.id];
+  return override ? { ...section, ...override } : section;
+}
+
+/**
+ * Virtual exit time is UI time, not video-frame time. The background stays
+ * pinned at the section's settled frame while this progress walks the
+ * section's existing exit window, then real frame scrolling resumes.
+ */
+export function sectionExitFrameAtVirtualProgress(
+  section: SectionTimeline,
+  progress: number,
+): number {
+  const [start, end] = section.exit?.frames ?? [section.settledFrame, section.settledFrame];
+  const t = Math.min(1, Math.max(0, progress));
+  return start + (end - start) * t;
 }
 
 export const SECTIONS: SectionTimeline[] = [
@@ -1616,29 +1702,30 @@ export function sectionLayerStateAt(
   section: SectionTimeline,
   frame: number,
   scrollPx: number,
-  pxPerFrame: number
+  pxPerFrame: number,
+  mode: TimelineMode = "desktop",
 ): ElementState {
-  const virtualEnter = virtualEnterProgressAtScrollPx(section, scrollPx, pxPerFrame);
-  const virtualExit = virtualExitProgressAtScrollPx(section, scrollPx, pxPerFrame);
-  const [exitStart, exitEnd] = section.exit?.frames ?? [frame, frame];
+  const timedSection = sectionTimingForMode(section, mode);
+  const virtualEnter = virtualEnterProgressAtScrollPx(timedSection, scrollPx, pxPerFrame, mode);
+  const virtualExit = virtualExitProgressAtScrollPx(timedSection, scrollPx, pxPerFrame, mode);
 
-  if (virtualExit !== null && section.exit) {
+  if (virtualExit !== null && timedSection.exit) {
     return sectionStateAt(
-      section,
-      exitStart + (exitEnd - exitStart) * virtualExit
+      timedSection,
+      sectionExitFrameAtVirtualProgress(timedSection, virtualExit)
     );
   }
 
-  if (virtualEnter !== null && section.virtualEnterFrames && frame <= section.settledFrame) {
+  if (virtualEnter !== null && timedSection.virtualEnterFrames && frame <= timedSection.settledFrame) {
     // The real enter already reaches the settled frame. A virtual enter is
     // extra scroll/read time, not a second half-opacity entrance.
     return sectionStateAt(
-      section,
-      section.settledFrame
+      timedSection,
+      timedSection.settledFrame
     );
   }
 
-  return sectionStateAt(section, frame);
+  return sectionStateAt(timedSection, frame);
 }
 
 /* =========================================================

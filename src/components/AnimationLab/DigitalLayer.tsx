@@ -35,17 +35,29 @@
 
  import { useRef } from "react";
  import {
+  progressBetween,
   SECTIONS,
   readPxPerFrame,
-  sectionStateAt,
+  sectionTimingForMode,
+  staggerProgressAt,
   virtualEnterProgressAtScrollPx,
-} from "./timeline";
-import { useFrameEffect } from "./useFrameTimeline";
+ } from "./timeline";
+import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 import LottieIcon from "./LottieIcon";
 import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
 const DIGITAL = SECTIONS[3];
 const TITLE_TEXT = "The Next Horizon of Intelligent Reporting";
+const TITLE_TOKENS = TITLE_TEXT.split(/(\s+)/);
+const TITLE_WORD_COUNT = TITLE_TOKENS.filter((token) => token.trim() !== "").length;
+const WORD_INDEX_BY_TOKEN = TITLE_TOKENS.map((token, tokenIndex) =>
+  token.trim() === ""
+    ? -1
+    : TITLE_TOKENS.slice(0, tokenIndex).filter((item) => item.trim() !== "").length,
+);
+const CHAR_WINDOW: [number, number] = [141, 161];
+const GROUP_WINDOW: [number, number] = [141, 161];
+const GROUP_COUNT = 9;
 
 const FEATURES = [
   {
@@ -160,31 +172,45 @@ const PROFILES = [
 ];
 
 export default function DigitalLayer() {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useSectionLayer(DIGITAL);
+  const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const groupRefs = useRef<Array<HTMLElement | null>>([]);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
-    const element = ref.current;
-    if (!element) return;
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
+    const timedDigital = sectionTimingForMode(DIGITAL, mode);
+    if (mode !== "desktop") return;
 
     const virtualEnter = virtualEnterProgressAtScrollPx(
-      DIGITAL,
+      timedDigital,
       scrollPx,
       readPxPerFrame(),
+      mode,
     );
-    const enterFrames = DIGITAL.enter?.frames ?? [DIGITAL.settledFrame, DIGITAL.settledFrame];
-    const animationFrame =
-      virtualEnter === null
-        ? frame >= enterFrames[0] &&
-          frame <= (DIGITAL.exit?.frames[0] ?? DIGITAL.settledFrame)
-          ? enterFrames[1]
-          : frame
-        : enterFrames[0] + virtualEnter * (enterFrames[1] - enterFrames[0]);
-    const state = sectionStateAt(DIGITAL, animationFrame);
+    const realEnter = progressBetween(frame, CHAR_WINDOW[0], CHAR_WINDOW[1]);
+    const enterProgress = timedDigital.virtualEnterFrames
+      ? virtualEnter === null ? realEnter * 0.5 : 0.5 + virtualEnter * 0.5
+      : realEnter;
+    const animationFrame = CHAR_WINDOW[0] + (CHAR_WINDOW[1] - CHAR_WINDOW[0]) * enterProgress;
+    const exitWindow = timedDigital.exit?.frames ?? [timedDigital.settledFrame, timedDigital.settledFrame];
+    const entering = virtualEnter !== null || frame < exitWindow[0];
 
-    element.style.opacity = String(state.opacity);
-    element.style.transform = `translate3d(${state.x}vw, ${state.y}vh, 0)`;
-    element.style.pointerEvents = state.interactive ? "auto" : "none";
-    element.style.visibility = state.opacity <= 0.001 ? "hidden" : "visible";
+    for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
+      const element = wordRefs.current[index];
+      if (!element) continue;
+      const progress = entering
+        ? staggerProgressAt(index, TITLE_WORD_COUNT, animationFrame, CHAR_WINDOW)
+        : 1 - staggerProgressAt(TITLE_WORD_COUNT - 1 - index, TITLE_WORD_COUNT, frame, exitWindow);
+      element.style.opacity = String(progress);
+    }
+
+    for (let index = 0; index < GROUP_COUNT; index += 1) {
+      const element = groupRefs.current[index];
+      if (!element) continue;
+      const progress = entering
+        ? staggerProgressAt(index, GROUP_COUNT, animationFrame, GROUP_WINDOW)
+        : 1 - staggerProgressAt(GROUP_COUNT - 1 - index, GROUP_COUNT, frame, exitWindow);
+      element.style.opacity = String(progress);
+    }
   });
 
   return (
@@ -198,10 +224,20 @@ export default function DigitalLayer() {
       <div className="s-digital2__stage">
         <article className="s-digital2__panel" data-lenis-prevent>
           <h2 className="s-digital2__title" id="digital2-title">
-            {TITLE_TEXT}
+            {TITLE_TOKENS.map((token, tokenIndex) => {
+              if (token.trim() === "") {
+                return <span key={tokenIndex}>{token}</span>;
+              }
+              const index = WORD_INDEX_BY_TOKEN[tokenIndex];
+              return (
+                <span key={tokenIndex} ref={(node) => { wordRefs.current[index] = node; }}>
+                  {token}
+                </span>
+              );
+            })}
           </h2>
 
-          <p className="s-digital2__lead">
+          <p className="s-digital2__lead" ref={(node) => { groupRefs.current[0] = node; }}>
             Reimagining the Annual Report as an intelligent digital experience
             that transforms how stakeholders discover, explore and engage with
             information through AI, personalisation, interactive visualisation
@@ -209,10 +245,11 @@ export default function DigitalLayer() {
           </p>
 
           <ul className="s-digital2__features">
-            {FEATURES.map((feature) => (
+            {FEATURES.map((feature, index) => (
               <li
                   key={feature.label}
                   className="s-digital2__feature"
+                  ref={(node) => { groupRefs.current[index + 1] = node; }}
                 >
                 <span className="s-digital2__icon" aria-hidden="true">
                   <img

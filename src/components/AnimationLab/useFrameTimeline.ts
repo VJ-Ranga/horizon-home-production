@@ -49,12 +49,14 @@ import {
   partStateAt,
   sectionLayerStateAt,
   type SectionTimeline,
+  type TimelineMode,
+  timelinePolicy,
 } from "./timeline";
 import { limitMobileFrame } from "./mobileFrameGuard";
 
 export type Phase = "entry" | "scroll";
 
-type Listener = (frame: number, phase: Phase, scrollPx: number) => void;
+type Listener = (frame: number, phase: Phase, scrollPx: number, mode: TimelineMode) => void;
 
 export interface FrameDriver {
   subscribe: (listener: Listener) => () => void;
@@ -62,13 +64,15 @@ export interface FrameDriver {
   current: () => number;
   /** Current phase, likewise. */
   phase: () => Phase;
+  mode: () => TimelineMode;
 }
 
 export const FrameContext = createContext<FrameDriver | null>(null);
 
 /** The driver's write side. Only useFrameDriver's loop calls this. */
 interface WritableFrameDriver extends FrameDriver {
-  emit: (frame: number, phase: Phase, scrollPx: number) => void;
+  emit: (frame: number, phase: Phase, scrollPx: number, mode: TimelineMode) => void;
+  setMode: (mode: TimelineMode) => void;
 }
 
 function useFrameDriverOrThrow(): FrameDriver {
@@ -94,6 +98,7 @@ export function useFrameDriver(
   skipEntry: boolean,
   ready: boolean,
   beforeScrollRead?: (time: number) => void,
+  mode: TimelineMode = "desktop",
 ): FrameDriver {
   // useState's lazy initialiser, not useRef: this object is read
   // during render (it goes into context), and a ref must not be.
@@ -104,24 +109,29 @@ export function useFrameDriver(
     let frame = ENTRY_FRAMES[0];
     let phase: Phase = "entry";
     let scrollPx = 0;
+    let currentMode = mode;
 
     return {
       subscribe: (listener) => {
         listeners.add(listener);
         // Push current values immediately, so an element mounting
         // mid-entry is never left in its default state for a tick.
-        listener(frame, phase, scrollPx);
+        listener(frame, phase, scrollPx, currentMode);
         return () => {
           listeners.delete(listener);
         };
       },
       current: () => frame,
       phase: () => phase,
-      emit: (nextFrame, nextPhase, nextScrollPx) => {
+      mode: () => currentMode,
+      setMode: (nextMode) => {
+        currentMode = nextMode;
+      },
+      emit: (nextFrame, nextPhase, nextScrollPx, nextMode) => {
         frame = nextFrame;
         phase = nextPhase;
         scrollPx = nextScrollPx;
-        for (const listener of listeners) listener(nextFrame, nextPhase, nextScrollPx);
+        for (const listener of listeners) listener(nextFrame, nextPhase, nextScrollPx, nextMode);
       },
     };
   });
@@ -130,6 +140,10 @@ export function useFrameDriver(
   useEffect(() => {
     beforeScrollReadRef.current = beforeScrollRead;
   }, [beforeScrollRead]);
+
+  useEffect(() => {
+    driver.setMode(mode);
+  }, [driver, mode]);
 
   useEffect(() => {
     let rafId = 0;
@@ -147,10 +161,9 @@ export function useFrameDriver(
     // own useState(readPxPerFrame) — both must agree or the spacer
     // height and the frame this loop computes fall out of sync.
     const pxPerFrame = readPxPerFrame();
-    const isCompactViewport = window.matchMedia("(max-width: 1100px)").matches;
-
     const tick = (now: number) => {
       rafId = requestAnimationFrame(tick);
+      const policy = timelinePolicy(driver.mode());
 
       let frame: number;
       let scrollPx = 0;
@@ -159,7 +172,7 @@ export function useFrameDriver(
         // Hold on the handoff frame until the entry's frames are
         // decoded. The clock does not start until they are.
         if (!ready) {
-          driver.emit(ENTRY_FRAMES[0], phase, scrollPx);
+          driver.emit(ENTRY_FRAMES[0], phase, scrollPx, policy.mode);
           return;
         }
 
@@ -185,22 +198,22 @@ export function useFrameDriver(
           scrollable > 0
             ? Math.min(Math.max(window.scrollY / scrollable, 0), 1)
             : 0;
-        scrollPx = progress * totalScrollPx(pxPerFrame);
-        frame = frameForScrollPx(scrollPx, pxPerFrame);
+        scrollPx = progress * totalScrollPx(pxPerFrame, policy.mode);
+        frame = frameForScrollPx(scrollPx, pxPerFrame, policy.mode);
 
         // A mobile touch flick can move the page across several short
         // section windows between rAF samples. Limit only the emitted
         // frame so every section gets a chance to settle; the browser's
         // actual scroll position and the visual progress bar stay native.
         if (
-          isCompactViewport &&
+           policy.mode === "compact" &&
           phase === lastPhase &&
           Number.isFinite(lastFrame)
         ) {
-          const limitedFrame = limitMobileFrame(lastFrame, frame);
+          const limitedFrame = limitMobileFrame(lastFrame, frame, policy.frameStepLimit);
           if (limitedFrame !== frame) {
             frame = limitedFrame;
-            scrollPx = scrollPxForFrame(frame, pxPerFrame);
+            scrollPx = scrollPxForFrame(frame, pxPerFrame, policy.mode);
           }
         }
       }
@@ -217,7 +230,7 @@ export function useFrameDriver(
       lastScrollPx = scrollPx;
       lastPhase = phase;
 
-      driver.emit(frame, phase, scrollPx);
+      driver.emit(frame, phase, scrollPx, policy.mode);
     };
 
     rafId = requestAnimationFrame(tick);
@@ -229,7 +242,7 @@ export function useFrameDriver(
 
 /** Run `fn` on every frame change. `fn` is read from a ref, so the
     caller need not memoise it. */
-export function useFrameEffect(fn: Listener): void {
+export function useFrameEffect(fn: Listener, mode?: TimelineMode): void {
   const driver = useFrameDriverOrThrow();
   const held = useRef(fn);
 
@@ -242,10 +255,10 @@ export function useFrameEffect(fn: Listener): void {
 
   useEffect(
     () =>
-      driver.subscribe((frame, phase, scrollPx) =>
-        held.current(frame, phase, scrollPx)
+      driver.subscribe((frame, phase, scrollPx, emittedMode) =>
+        held.current(frame, phase, scrollPx, mode ?? emittedMode)
       ),
-    [driver]
+    [driver, mode]
   );
 }
 
@@ -259,15 +272,22 @@ export function useFrameEffect(fn: Listener): void {
  */
 export function useSectionLayer(
   section: SectionTimeline,
-  options: { interactiveDuringEnter?: boolean } = {}
+  options: { interactiveDuringEnter?: boolean } = {},
+  mode?: TimelineMode,
 ): RefObject<HTMLDivElement | null> {
   const ref = useRef<HTMLDivElement>(null);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, emittedMode) => {
     const element = ref.current;
     if (!element) return;
 
-    const state = sectionLayerStateAt(section, frame, scrollPx, readPxPerFrame());
+    const state = sectionLayerStateAt(
+      section,
+      frame,
+      scrollPx,
+      readPxPerFrame(),
+      mode ?? emittedMode,
+    );
 
     element.style.opacity = String(state.opacity);
     element.style.transform = `translate3d(${state.x}vw, ${state.y}vh, 0)`;

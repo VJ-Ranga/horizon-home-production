@@ -228,14 +228,15 @@ export default function FinancialLayer() {
     };
   }, []);
 
-  useFrameEffect((frame, _phase, scrollPx) => {
+  useFrameEffect((frame, _phase, scrollPx, mode) => {
     const element = ref.current;
     if (!element) return;
 
     const virtualExit = virtualExitProgressAtScrollPx(
       FINANCIAL,
       scrollPx,
-      readPxPerFrame()
+      readPxPerFrame(),
+      mode,
     );
     const exitStart = FINANCIAL.exit!.frames[0];
 
