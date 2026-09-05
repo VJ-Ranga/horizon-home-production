@@ -167,7 +167,7 @@
       <p class="section-intro">The project shows deliberate engineering around animation timing, server rendering, mobile memory, reduced motion, and responsive interaction. The main blockers are quality-gate failures rather than a weak architectural foundation.</p>
       <div class="grid">
         <article class="card"><span class="stat">0</span><span class="stat-label">Actionable lint errors</span><p>The five React correctness errors were fixed; 28 non-blocking warnings remain for cleanup.</p></article>
-        <article class="card"><span class="stat">33</span><span class="stat-label">Direct tests passing</span><p>All current tests pass when run with Node's TypeScript stripping flag.</p></article>
+        <article class="card"><span class="stat">34</span><span class="stat-label">Direct tests passing</span><p>All current tests pass when run with Node's TypeScript stripping flag.</p></article>
         <article class="card"><span class="stat">21</span><span class="stat-label">Lines in <code>lab.css</code></span><p>The stylesheet now imports shared, layout, and section-owned CSS files.</p></article>
         <article class="card full"><span class="status warn">Release status · Conditional</span><p><strong>Recommendation:</strong> Add a standard test script, exclude vendor assets from linting, clean the remaining warnings, and run real desktop/mobile performance validation before release.</p></article>
       </div>
@@ -182,9 +182,9 @@
           <thead><tr><th>Check</th><th>Result</th><th>Meaning</th></tr></thead>
           <tbody>
             <tr><td><code>pnpm exec tsc --noEmit --incremental false</code></td><td><span class="status pass">Pass</span></td><td>Strict TypeScript compilation succeeds. Tests are excluded from <code>tsconfig.json</code>.</td></tr>
-            <tr><td><code>pnpm lint</code></td><td><span class="status blocker">Fail</span></td><td>10 errors and 731 warnings. Vendor code creates most of the noise; 8 errors remain in source/tests scope.</td></tr>
+            <tr><td><code>npm run lint</code></td><td><span class="status blocker">Fail</span></td><td>2 errors and 723 warnings remain in the full repository lint. Vendor code creates most of the noise; targeted animation files have no errors.</td></tr>
             <tr><td><code>pnpm exec eslint src tests</code></td><td><span class="status pass">Pass</span></td><td>0 errors and 27 warnings in actionable project files.</td></tr>
-            <tr><td><code>node --experimental-strip-types --test tests/*.test.ts</code></td><td><span class="status pass">33 pass</span></td><td>All current tests pass, with a Node module-type warning.</td></tr>
+            <tr><td><code>node --experimental-strip-types --test tests/*.test.ts</code></td><td><span class="status pass">34 pass</span></td><td>All current tests pass, with a Node module-type warning.</td></tr>
             <tr><td><code>pnpm run</code></td><td><span class="status warn">Gap</span></td><td>No <code>test</code> script exists. The test suite is not part of the normal package workflow.</td></tr>
           </tbody>
         </table>
@@ -224,6 +224,11 @@
         <article class="card"><h3>Desktop</h3><ul><li>Full viewport composition.</li><li>Higher-resolution frame sets.</li><li>More decoded frames retained.</li><li>Mouse and smooth-scroll interactions.</li></ul></article>
         <article class="card"><h3>Tablet</h3><ul><li>Dedicated 701-1100px behavior.</li><li>Inner scrolling only where needed.</li><li>Reduced composition density.</li><li>Responsive media sizing.</li></ul></article>
         <article class="card"><h3>Phone</h3><ul><li>Portrait 360x640 frame assets.</li><li>Sliding decode window.</li><li>Touch-native scrolling and frame guard.</li><li>Reduced-motion fallback.</li></ul></article>
+      </div>
+      <div class="grid" style="margin-top:16px">
+        <article class="card"><span class="status pass">Suggestion · Desktop</span><h3>Protect the full-quality path</h3><p class="muted">Keep desktop on the existing full-load route for the smoothest hover and wheel experience. Measure decode time, memory, and frame pacing before adding a desktop cache or lowering quality.</p></article>
+        <article class="card"><span class="status warn">Suggestion · Tablet</span><h3>Prioritize the wider window</h3><p class="muted">Use the tablet loader independently from the phone loader: retain a wider frame window and moderate concurrency for landscape and larger screens, then re-evaluate after rotation or viewport changes.</p></article>
+        <article class="card"><span class="status pass">Suggestion · Phone</span><h3>Keep memory bounded</h3><p class="muted">Keep the phone loader on portrait assets, lower concurrency, a smaller sliding decode window, and last-painted fallback. Pause only at declared settled frames, never at arbitrary in-between frames.</p></article>
       </div>
     </section>
 
