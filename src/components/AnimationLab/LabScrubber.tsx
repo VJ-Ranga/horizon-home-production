@@ -94,9 +94,14 @@ const LOAD_CONCURRENCY = 6;
    occurred". So on a phone the loader keeps only a sliding window
    around the frame on screen and drops the rest. Desktop is unchanged:
    it still loads and retains every frame. */
-const MOBILE_WINDOW_AHEAD = 45;
-const MOBILE_WINDOW_BACK = 20;
-const MOBILE_WINDOW_KEEP = 70;
+const PHONE_WINDOW_AHEAD = 45;
+const PHONE_WINDOW_BACK = 20;
+const PHONE_WINDOW_KEEP = 70;
+const TABLET_WINDOW_AHEAD = 72;
+const TABLET_WINDOW_BACK = 36;
+const TABLET_WINDOW_KEEP = 110;
+const PHONE_LOAD_CONCURRENCY = 4;
+const TABLET_LOAD_CONCURRENCY = 6;
 
 const subscribeToViewport = (onChange: () => void) => {
   const query = window.matchMedia("(max-width: 700px)");
@@ -214,6 +219,12 @@ export default function LabScrubber({
     loaded.current = new Array(fileCount).fill(false);
 
     let disposed = false;
+    const windowAhead = phone ? PHONE_WINDOW_AHEAD : TABLET_WINDOW_AHEAD;
+    const windowBack = phone ? PHONE_WINDOW_BACK : TABLET_WINDOW_BACK;
+    const windowKeep = phone ? PHONE_WINDOW_KEEP : TABLET_WINDOW_KEEP;
+    const compactConcurrency = phone
+      ? PHONE_LOAD_CONCURRENCY
+      : TABLET_LOAD_CONCURRENCY;
 
     /* Backing store: CSS pixels (dpr 1) for the dev set, dpr 2 for
        the HQ preview.
@@ -278,8 +289,8 @@ export default function LabScrubber({
       for (let i = 0; i < fileCount; i += 1) {
         if (!images.current[i]) continue;
         if (
-          i < center - MOBILE_WINDOW_KEEP ||
-          i > center + MOBILE_WINDOW_KEEP
+          i < center - windowKeep ||
+          i > center + windowKeep
         ) {
           images.current[i] = undefined;
           loaded.current[i] = false;
@@ -287,20 +298,21 @@ export default function LabScrubber({
       }
     };
 
-    /* Phone loader: keep [center-BACK, center+AHEAD] decoded, nearest
-       first, and evict everything past KEEP on either side. `center`
+    /* Compact loader: keep a device-sized [center-BACK, center+AHEAD]
+       decoded window, nearest first, and evict everything past KEEP on
+       either side. `center`
        follows painted.current — the frame the scrubber last drew, i.e.
        where the user is. onFrameLoaded still fires the first time each
        frame decodes, so AnimationLab's scroll gate (a Set that only
        grows) still opens section by section and eviction never
        re-closes it. Re-entering an evicted stretch keeps the last drawn
        frame on the canvas for ~one tick until the window refills. */
-    const runPhoneLoader = async () => {
+    const runCompactLoader = async () => {
       while (!disposed) {
         const center = wantedOffset.current;
         evictOutsideWindow(center);
-        const lo = Math.max(0, center - MOBILE_WINDOW_BACK);
-        const hi = Math.min(fileCount - 1, center + MOBILE_WINDOW_AHEAD);
+        const lo = Math.max(0, center - windowBack);
+        const hi = Math.min(fileCount - 1, center + windowAhead);
         const missing: number[] = [];
         for (let i = lo; i <= hi; i += 1) {
           if (!images.current[i]) missing.push(i);
@@ -309,15 +321,15 @@ export default function LabScrubber({
         for (
           let i = 0;
           i < missing.length && !disposed;
-          i += LOAD_CONCURRENCY
+          i += compactConcurrency
         ) {
           const here = wantedOffset.current;
           // Moved far while filling — abandon this pass and rebuild the
           // window around the new position on the next loop.
-          if (Math.abs(here - center) > MOBILE_WINDOW_AHEAD) break;
+          if (Math.abs(here - center) > windowAhead) break;
           await Promise.all(
             missing
-              .slice(i, i + LOAD_CONCURRENCY)
+              .slice(i, i + compactConcurrency)
               .map((off) => loadFrame(off))
           );
         }
@@ -333,7 +345,7 @@ export default function LabScrubber({
       setReady(true);
 
       if (compact) {
-        await runPhoneLoader();
+        await runCompactLoader();
         return;
       }
 
@@ -410,20 +422,33 @@ export default function LabScrubber({
       Math.max(frameToFile(backgroundFrame) - LAB_FIRST_FRAME, 0),
       fileCount - 1
     );
-    const resolveOffset = (logicalFrame: number) => {
+    const resolveOffset = (logicalFrame: number, preservePainted = false) => {
       const clamped = Math.min(
         Math.max(frameToFile(logicalFrame), LAB_FIRST_FRAME),
         lastFile
       );
       const target = clamped - LAB_FIRST_FRAME;
       if (loaded.current[target]) return target;
+      if (
+        preservePainted &&
+        painted.current >= 0 &&
+        loaded.current[painted.current]
+      ) {
+        return painted.current;
+      }
+      if (compact) {
+        for (let step = 1; target - step >= 0; step += 1) {
+          if (loaded.current[target - step]) return target - step;
+        }
+        return -1;
+      }
       for (let step = 1; step < fileCount; step += 1) {
         if (target - step >= 0 && loaded.current[target - step]) return target - step;
         if (target + step < fileCount && loaded.current[target + step]) return target + step;
       }
       return -1;
     };
-    const offset = resolveOffset(backgroundFrame);
+    const offset = resolveOffset(backgroundFrame, compact);
     const fromOffset = transition ? resolveOffset(transition.from) : -1;
     if (offset < 0 || (transition === null && offset === painted.current)) return;
 

@@ -74,6 +74,16 @@ test("tablet compact mode does not fall back to desktop frames", () => {
   assert.match(timeline, /matchMedia\("\(max-width: 1100px\)"\)/);
 });
 
+test("phone frame loading uses a bounded window and last-painted fallback", () => {
+  const scrubber = source("LabScrubber.tsx");
+  assert.match(scrubber, /PHONE_WINDOW_AHEAD/);
+  assert.match(scrubber, /PHONE_WINDOW_BACK/);
+  assert.match(scrubber, /PHONE_WINDOW_KEEP/);
+  assert.match(scrubber, /painted\.current/);
+  const lab = source("AnimationLab.tsx");
+  assert.match(lab, /compact && !isSettledFrame\(rounded\)/);
+});
+
 test("digital section settles at 161 and exits over 20 frames", () => {
   const contents = readFileSync("src/components/AnimationLab/timeline.ts", "utf8");
   const digital = contents.match(

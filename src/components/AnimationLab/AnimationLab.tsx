@@ -821,6 +821,9 @@ export default function AnimationLab({
     return section?.loadBuffer ?? DEFAULT_LOAD_BUFFER;
   };
 
+  const isSettledFrame = (frame: number) =>
+    SECTIONS.some((section) => section.settledFrame === frame);
+
   const handleFrameLoaded = useCallback((frame: number) => {
     loadedFramesRef.current.add(frame);
     const range = gatedRangeRef.current;
@@ -864,6 +867,11 @@ export default function AnimationLab({
         }
 
         const isDigitalSettled = rounded === DIGITAL_SETTLED_FRAME;
+        if (compact && !isSettledFrame(rounded) && !isDigitalSettled) {
+          gatedRangeRef.current = null;
+          if (wasGated) setGated(false);
+          return;
+        }
         const buffer = isDigitalSettled
           ? DIGITAL_LOAD_BUFFER
           : loadBufferAt(rounded);
@@ -877,7 +885,7 @@ export default function AnimationLab({
         if (stillNeeded && !wasGated) setGated(true);
         else if (!stillNeeded && wasGated) setGated(false);
       }),
-    [driver]
+    [compact, driver]
   );
 
   useEffect(() => {
