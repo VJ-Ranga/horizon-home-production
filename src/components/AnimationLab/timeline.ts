@@ -1136,7 +1136,7 @@ export const SECTIONS: SectionTimeline[] = [
     settledFrame: 275,
     enter: { frames: [263, 275], from: { y: 6 } },
     exit: { frames: [279, 302], to: { y: -6 } },
-    holdFrames: 10,
+    holdFrames: 20,
     // VJ 2026-08-28: this section's reveal (238-247) went by too fast.
     // Its enter is 9 frames wide — well past the default +/-4 crawl
     // half-width (243-251), so most of the reveal was running at full
@@ -1215,7 +1215,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [490, 511], from: { y: 4 } },
     exit: { frames: [511, 520], to: { y: -4 } },
     virtualEnterFrames: 10,
-    holdFrames: 10,
+    holdFrames: 20,
     virtualExitFrames: 20,
   },
   {
@@ -1334,7 +1334,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [642, 650], from: { y: 4 } },
     exit: { frames: [650, 665], to: { y: -4 } },
     virtualEnterFrames: 20,
-    holdFrames: 10,
+    holdFrames: 20,
     virtualExitFrames: 20,
   },
   {
@@ -1399,7 +1399,8 @@ export const SECTIONS: SectionTimeline[] = [
     // 14-financial-capital is gone by 693, 16-nonfinancial does not
     // start entering until 843.
     //
-    // holdFrames: 4 is NOT for dwell — it routes buildLegs through the
+    // holdFrames: 20 provides the requested reading dwell and routes
+    // buildLegs through the
     // monotonic `holdFrames > 0` branch. Without it (virtualEnterFrames
     // set, holdFrames 0) buildLegs splices the pinned virtual-enter leg
     // BEFORE the crawl-out leg, so after the 40 text frames the footage
@@ -1420,7 +1421,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [762, 782], from: { y: 4 } },
     exit: { frames: [782, 802], to: { y: -4 } },
     virtualEnterFrames: 40,
-    holdFrames: 4,
+    holdFrames: 20,
     holdCrawlFrames: 0,
   },
   {
@@ -1543,8 +1544,7 @@ export const SECTIONS: SectionTimeline[] = [
     // match the new exit would drop the last 45 frames of footage.
     settledFrame: 1055,
     enter: { frames: [1035, 1055], from: { y: 4 } },
-    holdFrames: 10,
-    exit: { frames: [1055, 1080], to: { y: -4 } },
+    exit: { frames: [1075, 1100], to: { y: -4 } },
     // 20 crawl frames each side of settledFrame at half scroll speed,
     // instead of the shared 4-frame/6x default. The 20 after settledFrame
     // are the ask: the end screen keeps moving but takes twice the scroll
@@ -1554,12 +1554,8 @@ export const SECTIONS: SectionTimeline[] = [
     // scroll speed outside the slow zone.
     holdCrawlFrames: 20,
     holdSlowdown: 2,
-    // Virtual frames pinned at settledFrame, same pattern as 18-community:
-    // 10 held after the word-by-word reveal completes (the dark overlay
-    // finishes filling here), then 10 more that drive the reversed exit
-    // before real frame scrolling resumes.
-    virtualEnterFrames: 10,
-    virtualExitFrames: 10,
+    // The end screen stays fully loaded for real frames 1055 -> 1075 while
+    // the background continues moving; the exit starts only at frame 1075.
   },
 ];
 

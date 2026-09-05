@@ -38,6 +38,23 @@ test("financial highlights reserves a 60-frame virtual hold", () => {
   assert.deepEqual(section.enter?.frames, [408, 436]);
 });
 
+test("text bridge sections reserve 20-frame virtual holds", () => {
+  for (const id of ["09-governance-intro", "13-banner-ocean", "15-banner-river"]) {
+    const section = SECTIONS.find((item) => item.id === id);
+    assert.ok(section, `${id} should exist in the timeline`);
+    assert.equal(section.holdFrames, 20, `${id} virtual hold`);
+  }
+});
+
+test("end screen stays fully loaded for 20 real frames without virtual frames", () => {
+  const section = SECTIONS.find((item) => item.id === "19-end-screen");
+  assert.ok(section, "19-end-screen should exist in the timeline");
+  assert.equal(section.holdFrames ?? 0, 0);
+  assert.deepEqual(section.exit?.frames, [1075, 1100]);
+  assert.equal(section.virtualEnterFrames ?? 0, 0);
+  assert.equal(section.virtualExitFrames ?? 0, 0);
+});
+
 test("virtual enter does not drop a section after its real enter completes", () => {
   const section = SECTIONS.find((item) => item.id === "05-intro-statement");
   assert.ok(section);
