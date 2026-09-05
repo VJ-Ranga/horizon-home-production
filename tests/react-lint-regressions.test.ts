@@ -102,6 +102,14 @@ test("desktop frame fallback preserves the last painted frame", () => {
   assert.match(scrubber, /const offset = resolveOffset\(backgroundFrame, true\);/);
 });
 
+test("Lenis is advanced by the frame driver before scroll sampling", () => {
+  const timeline = source("useFrameTimeline.ts");
+  const lab = source("AnimationLab.tsx");
+  assert.match(timeline, /beforeScrollRead/);
+  assert.match(lab, /useFrameDriver\(\s*skipEntry,\s*entryReady && introComplete,\s*beforeScrollRead,?\s*\)/);
+  assert.doesNotMatch(lab, /const raf = \(time: number\) => \{\s*lenis\.raf\(time\)/);
+});
+
 test("digital section settles at 161 and exits over 20 frames", () => {
   const contents = readFileSync("src/components/AnimationLab/timeline.ts", "utf8");
   const digital = contents.match(

@@ -90,7 +90,11 @@ function useFrameDriverOrThrow(): FrameDriver {
  * it would simply play past it and show stale images. Until `ready`
  * the page holds on the handoff frame.
  */
-export function useFrameDriver(skipEntry: boolean, ready: boolean): FrameDriver {
+export function useFrameDriver(
+  skipEntry: boolean,
+  ready: boolean,
+  beforeScrollRead?: (time: number) => void,
+): FrameDriver {
   // useState's lazy initialiser, not useRef: this object is read
   // during render (it goes into context), and a ref must not be.
   // Its state lives in the closure, so its identity is stable and
@@ -121,6 +125,11 @@ export function useFrameDriver(skipEntry: boolean, ready: boolean): FrameDriver 
       },
     };
   });
+  const beforeScrollReadRef = useRef(beforeScrollRead);
+
+  useEffect(() => {
+    beforeScrollReadRef.current = beforeScrollRead;
+  }, [beforeScrollRead]);
 
   useEffect(() => {
     let rafId = 0;
@@ -169,6 +178,7 @@ export function useFrameDriver(skipEntry: boolean, ready: boolean): FrameDriver 
           phase = "scroll";
         }
       } else {
+        beforeScrollReadRef.current?.(now);
         const scrollable =
           document.documentElement.scrollHeight - window.innerHeight;
         const progress =

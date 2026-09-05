@@ -463,10 +463,15 @@ export default function AnimationLab({
   const [pxPerFrame] = useState(readPxPerFrame);
   const scrollPx = totalScrollPx(pxPerFrame);
 
-  const driver = useFrameDriver(skipEntry, entryReady && introComplete);
   const [phase, setPhase] = useState<Phase>(skipEntry ? "scroll" : "entry");
   const phaseRef = useRef<Phase>(phase);
   const lenisRef = useRef<Lenis | null>(null);
+  const beforeScrollRead = (time: number) => lenisRef.current?.raf(time);
+  const driver = useFrameDriver(
+    skipEntry,
+    entryReady && introComplete,
+    beforeScrollRead,
+  );
   const [loopTransition, setLoopTransition] = useState<LoopTransition | null>(null);
   const loopTransitionRef = useRef(false);
 
@@ -516,16 +521,8 @@ export default function AnimationLab({
       // continue through the loop's reset and expose its return to the hero.
     });
     lenisRef.current = lenis;
-    let rafId = 0;
-
-    const raf = (time: number) => {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    };
-    rafId = requestAnimationFrame(raf);
 
     return () => {
-      cancelAnimationFrame(rafId);
       lenis.destroy();
       lenisRef.current = null;
     };
