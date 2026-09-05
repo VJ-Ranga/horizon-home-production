@@ -84,6 +84,24 @@ test("phone frame loading uses a bounded window and last-painted fallback", () =
   assert.match(lab, /compact && !isSettledFrame\(rounded\)/);
 });
 
+test("frame-driven community rail has one transform owner", () => {
+  const community = source("CommunityLayer.tsx");
+  const styles = source("styles/18-community.css");
+  assert.match(community, /ResizeObserver/);
+  assert.doesNotMatch(styles, /\.s-community__stories[^}]*transition:\s*transform/);
+});
+
+test("compact scrolling does not start the desktop Lenis loop", () => {
+  const lab = source("AnimationLab.tsx");
+  assert.match(lab, /if \(phase !== "scroll" \|\| skipEntry \|\| compact\) return;/);
+  assert.match(lab, /window\.scrollTo\(\{ top: targetY, behavior: "smooth" \}\)/);
+});
+
+test("desktop frame fallback preserves the last painted frame", () => {
+  const scrubber = source("LabScrubber.tsx");
+  assert.match(scrubber, /const offset = resolveOffset\(backgroundFrame, true\);/);
+});
+
 test("digital section settles at 161 and exits over 20 frames", () => {
   const contents = readFileSync("src/components/AnimationLab/timeline.ts", "utf8");
   const digital = contents.match(

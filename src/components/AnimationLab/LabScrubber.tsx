@@ -448,7 +448,7 @@ export default function LabScrubber({
       }
       return -1;
     };
-    const offset = resolveOffset(backgroundFrame, compact);
+    const offset = resolveOffset(backgroundFrame, true);
     const fromOffset = transition ? resolveOffset(transition.from) : -1;
     if (offset < 0 || (transition === null && offset === painted.current)) return;
 

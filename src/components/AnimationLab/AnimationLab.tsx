@@ -507,8 +507,7 @@ export default function AnimationLab({
      to stop, resume or fight with during the entry. Same options as
      Home/HomePage.tsx. */
   useEffect(() => {
-    if (phase !== "scroll") return;
-    if (skipEntry) return; // reduced motion: leave native scrolling alone
+    if (phase !== "scroll" || skipEntry || compact) return;
 
     const lenis = new Lenis({
       lerp: 0.1,
@@ -530,7 +529,7 @@ export default function AnimationLab({
       lenis.destroy();
       lenisRef.current = null;
     };
-  }, [phase, skipEntry]);
+  }, [compact, phase, skipEntry]);
 
   /* Compact touch navigation advances one section per page swipe. Native
      touch scrolling can otherwise carry a fast flick across several section
@@ -572,7 +571,11 @@ export default function AnimationLab({
       if (targetFrame === undefined) return;
 
       const targetY = scrollYForFrame(targetFrame, pxPerFrame);
-      lenisRef.current?.scrollTo(targetY, { duration: 0.55 });
+      if (lenisRef.current) {
+        lenisRef.current.scrollTo(targetY, { duration: 0.55 });
+      } else {
+        window.scrollTo({ top: targetY, behavior: "smooth" });
+      }
     };
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });

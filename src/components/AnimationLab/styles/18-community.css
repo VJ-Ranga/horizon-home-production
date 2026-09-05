@@ -99,7 +99,6 @@
     overflow: visible;
     scrollbar-width: none;
     will-change: transform;
-    transition: transform 140ms linear;
   }
 
   .s-community__stories::-webkit-scrollbar { display: none; }

@@ -8,7 +8,7 @@
    their play button is a real <a target="_blank">; "Supporting University
    Students" has no video ("No link" in the spec) so it has no play button. */
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
@@ -95,6 +95,55 @@ export default function CommunityLayer() {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const videoFrameRef = useRef<HTMLIFrameElement | null>(null);
+  const geometryRef = useRef({
+    mobile: false,
+    travel: 0,
+    start: 0,
+    end: 0,
+  });
+
+  useEffect(() => {
+    const rail = railRef.current;
+    const viewport = viewportRef.current;
+    const firstCard = rail?.querySelector<HTMLElement>(".s-community__card");
+    if (!rail || !viewport || !firstCard) return;
+
+    const measure = () => {
+      const styles = window.getComputedStyle(rail);
+      const mobile = window.matchMedia("(max-width: 700px)").matches;
+      const padStart = parseFloat(mobile ? styles.paddingTop : styles.paddingLeft) || 0;
+      const padEnd = parseFloat(mobile ? styles.paddingBottom : styles.paddingRight) || 0;
+
+      if (mobile) {
+        geometryRef.current = {
+          mobile: true,
+          travel: Math.max(
+            rail.scrollHeight - padStart - padEnd - viewport.clientHeight,
+            0,
+          ),
+          start: 0,
+          end: 0,
+        };
+        return;
+      }
+
+      const start = viewport.clientWidth / 2 - firstCard.offsetWidth / 2 - padStart;
+      const lastCardLeft = rail.scrollWidth - padEnd - firstCard.offsetWidth;
+      const end = viewport.clientWidth / 2 - firstCard.offsetWidth / 2 - lastCardLeft;
+      geometryRef.current = {
+        mobile: false,
+        travel: 0,
+        start,
+        end,
+      };
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(rail);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, []);
 
   const openVideo = (url: string) => {
     if (videoFrameRef.current) videoFrameRef.current.src = embedSrc(url);
@@ -105,26 +154,18 @@ export default function CommunityLayer() {
     const startPx = scrollPxForFrame(COMMUNITY.settledFrame, readPxPerFrame());
     const rail = railRef.current;
     const viewport = viewportRef.current;
-    const firstCard = rail?.querySelector<HTMLElement>(".s-community__card");
-    if (!rail || !viewport || !firstCard) return;
+    if (!rail || !viewport) return;
 
     const sweepPx = Math.min(Math.max(scrollPx - startPx - LEAD_PX, 0), SWEEP_PX);
     const progress = (sweepPx / SWEEP_PX) * (CARD_COUNT - 1);
-    const styles = window.getComputedStyle(rail);
-    const mobileRail = window.matchMedia("(max-width: 700px)").matches;
+    const geometry = geometryRef.current;
 
-    if (mobileRail) {
+    if (geometry.mobile) {
       // Phones: no card-by-card slider — the 7 cards are a plain vertical
       // list the section's scroll budget pans up as one block, same feel
       // as the Leadership scroll-through. Dwell zones at both ends so the
       // list holds still as the section arrives and again on the last
       // card before it leaves — no hard cut in or out.
-      const padStart = parseFloat(styles.paddingTop) || 0;
-      const padEnd = parseFloat(styles.paddingBottom) || 0;
-      const travel = Math.max(
-        rail.scrollHeight - padStart - padEnd - viewport.clientHeight,
-        0,
-      );
       const START_HOLD_PX = 200;
       const END_HOLD_PX = 460;
       const glideRoomPx = Math.max(SWEEP_PX - START_HOLD_PX - END_HOLD_PX, 1);
@@ -132,17 +173,12 @@ export default function CommunityLayer() {
         Math.max((sweepPx - START_HOLD_PX) / glideRoomPx, 0),
         1,
       );
-      rail.style.transform = `translate3d(0, ${(-t * travel).toFixed(2)}px, 0)`;
+      rail.style.transform = `translate3d(0, ${(-t * geometry.travel).toFixed(2)}px, 0)`;
       return;
     }
 
-    const padStart = parseFloat(styles.paddingLeft) || 0;
-    const padEnd = parseFloat(styles.paddingRight) || 0;
-    const cardWidth = firstCard.offsetWidth;
-    const start = viewport.clientWidth / 2 - cardWidth / 2 - padStart;
-    const lastCardLeft = rail.scrollWidth - padEnd - cardWidth;
-    const end = viewport.clientWidth / 2 - cardWidth / 2 - lastCardLeft;
-    const x = start - (progress / (CARD_COUNT - 1)) * (start - end);
+    const x = geometry.start +
+      (progress / (CARD_COUNT - 1)) * (geometry.end - geometry.start);
     rail.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`;
   });
 
