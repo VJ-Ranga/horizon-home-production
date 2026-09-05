@@ -47,10 +47,10 @@ test("large compact gestures target only the adjacent settled section", () => {
   assert.equal(nextCompactSectionFrame(50, [50, 150, 250], -1), null);
 });
 
-test("first six compact sections use a 15fps transition budget", () => {
-  assert.equal(compactTransitionDurationMs(50, 90), 2667);
-  assert.equal(compactTransitionDurationMs(161, 255), 6267);
-  assert.equal(compactTransitionDurationMs(255, 275), 1333);
+test("normal compact section jumps use the original smooth duration", () => {
+  assert.equal(compactTransitionDurationMs(50, 90), 550);
+  assert.equal(compactTransitionDurationMs(161, 255), 550);
+  assert.equal(compactTransitionDurationMs(255, 275), 550);
   assert.equal(compactTransitionDurationMs(275, 335), 550);
 });
 

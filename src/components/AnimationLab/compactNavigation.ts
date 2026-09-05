@@ -1,5 +1,4 @@
 export const COMPACT_TRANSITION_FPS = 15;
-export const COMPACT_CONTROLLED_END_FRAME = 255;
 const DEFAULT_COMPACT_TRANSITION_MS = 550;
 const SETTLED_FRAME_EPSILON = 0.25;
 
@@ -60,13 +59,10 @@ export function nextCompactSectionFrame(
 }
 
 export function compactTransitionDurationMs(
-  currentFrame: number,
-  targetFrame: number,
-  frameRate = COMPACT_TRANSITION_FPS,
-  controlledEndFrame = COMPACT_CONTROLLED_END_FRAME,
+  _currentFrame: number,
+  _targetFrame: number,
 ): number {
-  if (Math.min(currentFrame, targetFrame) > controlledEndFrame) {
-    return DEFAULT_COMPACT_TRANSITION_MS;
-  }
-  return Math.round((Math.abs(targetFrame - currentFrame) / frameRate) * 1000);
+  void _currentFrame;
+  void _targetFrame;
+  return DEFAULT_COMPACT_TRANSITION_MS;
 }
