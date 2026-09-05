@@ -3,10 +3,17 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   compactCarouselTargetScrollPx,
+  compactSpecialTargetScrollPx,
   compactTransitionDurationMs,
   readerConsumesScroll,
   nextCompactSectionFrame,
 } from "../src/components/AnimationLab/compactNavigation.ts";
+
+test("compact navigation spends a gesture on pinned holds and scroll-through spans", () => {
+  assert.equal(compactSpecialTargetScrollPx(1_000, 1, 1_000, 2_120), 2_120);
+  assert.equal(compactSpecialTargetScrollPx(2_120, -1, 1_000, 2_120), 1_000);
+  assert.equal(compactSpecialTargetScrollPx(3_000, 1, 1_000, 2_120), null);
+});
 
 test("compact navigation spends a gesture on the financial capital carousel", () => {
   const startPx = 10_000;

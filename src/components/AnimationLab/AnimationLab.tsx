@@ -66,7 +66,7 @@ import EndScreenLayer from "./EndScreenLayer";
 import LoopTransitionOverlay from "./LoopTransitionOverlay";
 import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
 import {
-  compactCarouselTargetScrollPx,
+  compactSpecialTargetScrollPx,
   compactTransitionDurationMs,
   nextCompactSectionFrame,
   readerConsumesScroll,
@@ -575,20 +575,39 @@ export default function AnimationLab({
         pxPerFrame,
         "compact",
       );
-      const carousel = SECTIONS.find(
-        (section) => section.carousel && Math.abs(currentFrame - section.settledFrame) <= 0.25,
-      );
-      const carouselStartPx = carousel
-        ? scrollPxForFrame(carousel.settledFrame, pxPerFrame, "compact")
+      const specialSection = SECTIONS.find((section) => {
+        const startPx = scrollPxForFrame(section.settledFrame, pxPerFrame, "compact");
+        const budgetPx = section.carousel
+          ? section.carousel.scrollPx +
+            ((section.virtualEnterFrames ?? 0) + (section.virtualExitFrames ?? 0)) * pxPerFrame
+          : section.scrollThrough
+            ? section.scrollThrough.scrollPx + (section.virtualEnterFrames ?? 0) * pxPerFrame
+            :
+            ((section.virtualEnterFrames ?? 0) +
+              (section.holdFrames ?? 0) +
+              (section.virtualExitFrames ?? 0)) * pxPerFrame;
+        return budgetPx > 0 && currentScrollPx >= startPx - 1 && currentScrollPx <= startPx + budgetPx + 1;
+      });
+      const specialStartPx = specialSection
+        ? scrollPxForFrame(specialSection.settledFrame, pxPerFrame, "compact")
         : null;
-      const carouselTargetPx = carousel && carouselStartPx !== null
-        ? compactCarouselTargetScrollPx(
-            currentFrame,
+      const specialBudgetPx = specialSection
+        ? specialSection.carousel
+          ? specialSection.carousel.scrollPx +
+            ((specialSection.virtualEnterFrames ?? 0) +
+              (specialSection.virtualExitFrames ?? 0)) * pxPerFrame
+          : specialSection.scrollThrough
+            ? specialSection.scrollThrough.scrollPx + (specialSection.virtualEnterFrames ?? 0) * pxPerFrame
+            : ((specialSection.virtualEnterFrames ?? 0) +
+                (specialSection.holdFrames ?? 0) +
+                (specialSection.virtualExitFrames ?? 0)) * pxPerFrame
+        : null;
+      const specialTargetPx = specialStartPx !== null && specialBudgetPx !== null
+        ? compactSpecialTargetScrollPx(
             currentScrollPx,
             direction,
-            carousel.settledFrame,
-            carouselStartPx,
-            carousel.carousel!.scrollPx,
+            specialStartPx,
+            specialStartPx + specialBudgetPx,
           )
         : null;
       const targetFrame = nextCompactSectionFrame(
@@ -596,17 +615,17 @@ export default function AnimationLab({
         SECTIONS.map((section) => section.settledFrame),
         direction,
       );
-      if (targetFrame === null && carouselTargetPx === null) return;
+      if (targetFrame === null && specialTargetPx === null) return;
 
       compactNavigationLockRef.current = true;
-      compactNavigationTargetRef.current = carouselTargetPx === null ? targetFrame : null;
-      const targetY = carouselTargetPx === null
+      compactNavigationTargetRef.current = specialTargetPx === null ? targetFrame : null;
+      const targetY = specialTargetPx === null
         ? scrollYForFrame(targetFrame!, pxPerFrame, "compact")
-        : (carouselTargetPx / totalScrollPx(pxPerFrame, "compact")) * scrollable;
+        : (specialTargetPx / totalScrollPx(pxPerFrame, "compact")) * scrollable;
       const fromScrollY = scrollY;
-      const duration = carouselTargetPx === null
+      const duration = specialTargetPx === null
         ? compactTransitionDurationMs(currentFrame, targetFrame!)
-        : Math.max(900, Math.round((Math.abs(carouselTargetPx - currentScrollPx) / pxPerFrame / 15) * 1000));
+        : Math.max(900, Math.round((Math.abs(specialTargetPx - currentScrollPx) / pxPerFrame / 15) * 1000));
       const startedAt = performance.now();
       const animate = (now: number) => {
         const progress = Math.min((now - startedAt) / duration, 1);

@@ -3,6 +3,17 @@ export const COMPACT_CONTROLLED_END_FRAME = 255;
 const DEFAULT_COMPACT_TRANSITION_MS = 550;
 const SETTLED_FRAME_EPSILON = 0.25;
 
+export function compactSpecialTargetScrollPx(
+  currentScrollPx: number,
+  direction: 1 | -1,
+  startPx: number,
+  endPx: number,
+): number | null {
+  if (direction > 0 && currentScrollPx < endPx - 1) return endPx;
+  if (direction < 0 && currentScrollPx > startPx + 1) return startPx;
+  return null;
+}
+
 export function compactCarouselTargetScrollPx(
   currentFrame: number,
   currentScrollPx: number,
