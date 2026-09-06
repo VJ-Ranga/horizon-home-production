@@ -136,6 +136,12 @@
   pointer-events: none;
 }
 
+@media (min-width: 1101px) {
+  .s-community__card::after {
+    background: linear-gradient(180deg, rgba(3, 18, 24, 0.28), rgba(3, 18, 24, 0.92));
+  }
+}
+
 .s-community__play {
   position: absolute;
   z-index: 2;

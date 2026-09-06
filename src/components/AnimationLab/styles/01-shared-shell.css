@@ -258,6 +258,22 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   text-align: center;
 }
 
+@media (min-width: 1101px) {
+  .s-end-screen::before {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(
+      0deg,
+      rgba(3, 18, 24, 0.82) 0%,
+      rgba(3, 18, 24, 0.4) 35%,
+      transparent 72%
+    );
+    content: "";
+    pointer-events: none;
+  }
+}
+
 .s-end-screen__copy {
   position: relative;
   z-index: 1;

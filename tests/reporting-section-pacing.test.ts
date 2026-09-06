@@ -15,7 +15,7 @@ import {
 test("desktop uses the old smooth timing for sections 2-4 while compact keeps current timing", () => {
   const expectedDesktop = {
     "02-main-02": { hold: 10, exit: 0 },
-    "03-approach": { hold: 10, exit: 10 },
+    "03-approach": { hold: 10, exit: 20 },
     "04-digital": { hold: 10, exit: 0 },
   } as const;
 
@@ -93,6 +93,11 @@ test("virtual enter does not drop a section after its real enter completes", () 
 
   assert.ok(beforeVirtualEnter.opacity > 0.95);
   assert.ok(duringVirtualEnter.opacity >= beforeVirtualEnter.opacity);
+});
+
+test("intro statement does not add a slow crawl before its ten-frame enter", () => {
+  const section = SECTIONS.find((item) => item.id === "05-intro-statement");
+  assert.equal(section?.holdCrawlFrames, 0);
 });
 
 test("virtual exit uses the section exit window while the background stays pinned", () => {

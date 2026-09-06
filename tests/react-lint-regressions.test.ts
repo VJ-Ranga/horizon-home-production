@@ -36,7 +36,7 @@ test("mobile scroll-through panels do not stop short after a swipe", () => {
   const leadership = source("LeadershipLayer.tsx");
   const strategy = source("StrategyLayer.tsx");
   assert.doesNotMatch(leadership, /mobileCurrentRef\.current \+= \(targetPx - mobileCurrentRef\.current\) \* EASE/);
-  assert.match(leadership, /const exitTailPx = \(LEADERSHIP\.virtualExitFrames \?\? 0\) \* pxPerFrame/);
+  assert.match(leadership, /const glideRoomPx = Math\.max\(budgetPx - exitTailPx \/ 2, 1\);/);
   assert.match(strategy, /const ease = mobile \|\| reduceMotion \? 1 : EASE/);
 });
 

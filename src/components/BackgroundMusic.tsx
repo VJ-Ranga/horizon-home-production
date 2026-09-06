@@ -30,6 +30,8 @@ function readMuted(): boolean {
 
 export default function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const resumeAfterPopupRef = useRef(false);
+  const popupOpenRef = useRef(false);
   // Start unmuted unless the visitor muted it on a previous visit. The
   // real <audio muted> is synced in the effect below (SSR-safe).
   const [muted, setMuted] = useState(false);
@@ -56,6 +58,22 @@ export default function BackgroundMusic() {
     setReady(true);
 
     const root = document.documentElement;
+
+    const onPopupVideo = (event: Event) => {
+      const state = (event as CustomEvent<{ state?: string }>).detail?.state;
+      if (state === "open") {
+        popupOpenRef.current = true;
+        resumeAfterPopupRef.current = !audio.paused;
+        audio.pause();
+      } else if (state === "close") {
+        popupOpenRef.current = false;
+        if (resumeAfterPopupRef.current) {
+          resumeAfterPopupRef.current = false;
+          tryPlay();
+        }
+      }
+    };
+    window.addEventListener("horizon:popup-video", onPopupVideo);
 
     let started = false;
     let everLocked = false;
@@ -106,6 +124,7 @@ export default function BackgroundMusic() {
       window.removeEventListener("pointerdown", onGesture);
       window.removeEventListener("keydown", onGesture);
       window.removeEventListener("touchstart", onGesture);
+      window.removeEventListener("horizon:popup-video", onPopupVideo);
     };
   }, [tryPlay]);
 
@@ -122,12 +141,12 @@ export default function BackgroundMusic() {
     }
     // Unmuting is also a user gesture, so it's a good moment to make
     // sure the element is actually playing.
-    if (!next) tryPlay();
+    if (!next && !popupOpenRef.current) tryPlay();
   }, [tryPlay]);
 
   return (
     <>
-      <audio ref={audioRef} src={SRC} loop preload="auto" playsInline />
+      <audio ref={audioRef} data-bg-music-audio src={SRC} loop preload="auto" playsInline />
       <button
         type="button"
         data-bg-music

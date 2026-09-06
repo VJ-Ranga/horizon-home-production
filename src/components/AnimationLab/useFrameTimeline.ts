@@ -43,7 +43,6 @@ import {
   HERO_SETTLED_FRAME,
   frameForScrollPx,
   readPxPerFrame,
-  scrollPxForFrame,
   totalScrollPx,
   partById,
   partStateAt,
@@ -213,7 +212,10 @@ export function useFrameDriver(
           const limitedFrame = limitMobileFrame(lastFrame, frame, policy.frameStepLimit);
           if (limitedFrame !== frame) {
             frame = limitedFrame;
-            scrollPx = scrollPxForFrame(frame, pxPerFrame, policy.mode);
+            // Keep the raw scroll coordinate continuous. Pinned sections
+            // such as the capital carousel use it for their own progress;
+            // remapping it from the clamped frame collapses that progress
+            // back to the pin point on compact devices.
           }
         }
       }

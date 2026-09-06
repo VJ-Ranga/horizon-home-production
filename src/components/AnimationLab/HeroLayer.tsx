@@ -37,6 +37,7 @@ import {
   useRevealPart,
   useSectionLayer,
 } from "./useFrameTimeline";
+import { notifyPopupVideo } from "./popupVideoAudio";
 import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 
 const HERO = SECTIONS[0];
@@ -204,6 +205,7 @@ export default function HeroLayer() {
           onClick={() => {
             dialogOpenedAtFrameRef.current = currentFrameRef.current;
             if (videoFrameRef.current) videoFrameRef.current.src = HERO_VIDEO_SRC;
+            notifyPopupVideo("open");
             dialogRef.current?.showModal();
           }}
         >
@@ -234,6 +236,7 @@ export default function HeroLayer() {
         onClose={() => {
           dialogOpenedAtFrameRef.current = null;
           if (videoFrameRef.current) videoFrameRef.current.src = "";
+          notifyPopupVideo("close");
         }}
       >
         <h2 id="summary-video-title">Summary Video</h2>

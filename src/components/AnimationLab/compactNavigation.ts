@@ -1,12 +1,41 @@
-export const COMPACT_TRANSITION_FPS = 5.1922;
+export const COMPACT_TRANSITION_FPS = 15.5766;
+export const COMPACT_SCROLL_SUPPORT_THRESHOLD_RATIO = 0.25;
+export const COMPACT_CARD_AND_LEADERSHIP_INPUT_SCALE = 4;
 const SETTLED_FRAME_EPSILON = 0.25;
+
+export function compactScrollSupportThresholdPx(viewportHeight: number): number {
+  return Math.max(viewportHeight, 0) * COMPACT_SCROLL_SUPPORT_THRESHOLD_RATIO;
+}
+
+export function compactLeadershipScrollBudgetPx(
+  holdFrames: number,
+  virtualExitFrames: number,
+  pxPerFrame: number,
+): number {
+  return Math.max(holdFrames + virtualExitFrames, 0) * Math.max(pxPerFrame, 0);
+}
+
+export function carouselDampingForElapsedMs(baseEase: number, elapsedMs: number): number {
+  const clampedEase = Math.min(Math.max(baseEase, 0), 1);
+  const frameRatio = Math.max(elapsedMs, 0) / (1000 / 60);
+  return 1 - Math.pow(1 - clampedEase, frameRatio);
+}
+
+export function carouselContentStartPx(
+  settledScrollPx: number,
+  virtualEnterFrames: number,
+  pxPerFrame: number,
+): number {
+  return settledScrollPx + Math.max(virtualEnterFrames, 0) * Math.max(pxPerFrame, 0);
+}
 
 export function compactInputDeltaPx(
   deltaPx: number,
   elapsedMs: number,
   pxPerFrame: number,
+  inputScale = 1,
 ): number {
-  const maxDistance = Math.max(elapsedMs, 0) / 1000 * COMPACT_TRANSITION_FPS * pxPerFrame;
+  const maxDistance = Math.max(elapsedMs, 0) / 1000 * COMPACT_TRANSITION_FPS * pxPerFrame * Math.max(inputScale, 0);
   return Math.sign(deltaPx) * Math.min(Math.abs(deltaPx), maxDistance);
 }
 

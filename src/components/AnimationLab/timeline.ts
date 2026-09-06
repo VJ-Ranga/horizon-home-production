@@ -1055,11 +1055,14 @@ export interface ElementState {
  */
 const DESKTOP_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
   "02-main-02": { holdFrames: 10 },
-  "03-approach": { holdFrames: 10, virtualExitFrames: 10 },
+  "03-approach": { holdFrames: 10, virtualExitFrames: 20 },
   "04-digital": {
     holdFrames: 10,
     enter: { frames: [141, 161], from: { y: 5 } },
     exit: { frames: [161, 176], to: { y: -5 } },
+  },
+  "19-end-screen": {
+    exit: { frames: [1085, 1110], to: { y: -4 } },
   },
 };
 
@@ -1198,6 +1201,7 @@ export const SECTIONS: SectionTimeline[] = [
     exit: { frames: [255, 269], to: {} },
     virtualEnterFrames: 10,
     holdFrames: 20,
+    holdCrawlFrames: 0,
     virtualExitFrames: 14,
   },
   {
@@ -1234,8 +1238,9 @@ export const SECTIONS: SectionTimeline[] = [
     // Governance-Cards, to avoid a snap at the settle frame.
     settledFrame: 275,
     enter: { frames: [263, 275], from: { y: 6 } },
-    exit: { frames: [279, 302], to: { y: -6 } },
+    exit: { frames: [279, 280], to: { y: -6 } },
     holdFrames: 20,
+    virtualExitFrames: 20,
     // VJ 2026-08-28: this section's reveal (238-247) went by too fast.
     // Its enter is 9 frames wide — well past the default +/-4 crawl
     // half-width (243-251), so most of the reveal was running at full

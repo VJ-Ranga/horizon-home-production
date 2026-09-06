@@ -30,3 +30,8 @@ test("digital compact content remains visible while the section layer fades", ()
   assert.match(component, /if \(mode !== "desktop"\)[\s\S]*wordRefs\.current[\s\S]*style\.opacity = "1"/);
   assert.match(component, /if \(mode !== "desktop"\)[\s\S]*groupRefs\.current[\s\S]*style\.opacity = "1"/);
 });
+
+test("digital desktop exit applies a subtle zoom without changing compact mode", () => {
+  assert.match(component, /if \(mode !== "desktop"\)[\s\S]*style\.scale = "1"/);
+  assert.match(component, /style\.scale = `\$\{1 \+ 0\.12 \* progressBetween\(frame, exitWindow\[0\], exitWindow\[1\]\)\}`/);
+});

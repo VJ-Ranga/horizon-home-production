@@ -51,6 +51,7 @@ import {
   virtualExitProgressAtScrollPx,
 } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
+import { notifyPopupVideo } from "./popupVideoAudio";
 
 const APPROACH = SECTIONS[2];
 const TITLE_TEXT = "Our Approach to Reporting";
@@ -185,7 +186,7 @@ export default function ApproachLayer() {
       data-initial-hidden="true"
       aria-labelledby="approach2-title"
     >
-      <div className="s-approach2__stage" data-lenis-prevent>
+      <div className="s-approach2__stage">
         <div className="s-approach2__col">
           <h2 className="s-approach2__title" id="approach2-title">
             {TITLE_TOKENS.map((token, tokenIndex) => {
@@ -401,10 +402,11 @@ export default function ApproachLayer() {
               aria-haspopup="dialog"
               aria-controls="approach-highlights-dialog"
               aria-label="Watch Key Highlights"
-              onClick={() => {
-                dialogOpenedAtFrameRef.current = currentFrameRef.current;
-                if (videoFrameRef.current) videoFrameRef.current.src = HIGHLIGHTS_VIDEO_SRC;
-                dialogRef.current?.showModal();
+                  onClick={() => {
+                    dialogOpenedAtFrameRef.current = currentFrameRef.current;
+                    if (videoFrameRef.current) videoFrameRef.current.src = HIGHLIGHTS_VIDEO_SRC;
+                    notifyPopupVideo("open");
+                    dialogRef.current?.showModal();
               }}
             >
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -424,10 +426,11 @@ export default function ApproachLayer() {
             onClick={(event) => {
               if (event.target === dialogRef.current) dialogRef.current?.close();
             }}
-            onClose={() => {
-              dialogOpenedAtFrameRef.current = null;
-              if (videoFrameRef.current) videoFrameRef.current.src = "";
-            }}
+                onClose={() => {
+                  dialogOpenedAtFrameRef.current = null;
+                  if (videoFrameRef.current) videoFrameRef.current.src = "";
+                  notifyPopupVideo("close");
+                }}
           >
             <iframe
               ref={videoFrameRef}

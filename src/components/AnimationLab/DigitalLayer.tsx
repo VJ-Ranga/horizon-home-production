@@ -179,6 +179,7 @@ export default function DigitalLayer() {
   useFrameEffect((frame, _phase, scrollPx, mode) => {
     const timedDigital = sectionTimingForMode(DIGITAL, mode);
     if (mode !== "desktop") {
+      if (ref.current) ref.current.style.scale = "1";
       wordRefs.current.forEach((element) => {
         if (element) element.style.opacity = "1";
       });
@@ -200,6 +201,9 @@ export default function DigitalLayer() {
       : realEnter;
     const animationFrame = CHAR_WINDOW[0] + (CHAR_WINDOW[1] - CHAR_WINDOW[0]) * enterProgress;
     const exitWindow = timedDigital.exit?.frames ?? [timedDigital.settledFrame, timedDigital.settledFrame];
+    if (ref.current) {
+      ref.current.style.scale = `${1 + 0.12 * progressBetween(frame, exitWindow[0], exitWindow[1])}`;
+    }
     const entering = virtualEnter !== null || frame < exitWindow[0];
 
     for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {

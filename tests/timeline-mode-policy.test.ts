@@ -5,6 +5,7 @@ import {
   SECTIONS,
   frameForScrollPx,
   sectionLayerStateAt,
+  sectionTimingForMode,
   scrollPxForFrame,
   timelinePolicy,
   totalScrollPx,
@@ -49,6 +50,22 @@ test("compact section-layer state initially mirrors desktop state", () => {
     sectionLayerStateAt(...args, "compact"),
     sectionLayerStateAt(...args, "desktop"),
   );
+});
+
+test("desktop Section 3 keeps 20 virtual exit frames", () => {
+  const section = SECTIONS.find((item) => item.id === "03-approach");
+
+  assert.ok(section);
+  assert.equal(sectionTimingForMode(section, "desktop").virtualExitFrames, 20);
+  assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames, 20);
+});
+
+test("desktop Section 19 holds until 1085 before exiting to 1110", () => {
+  const section = SECTIONS.find((item) => item.id === "19-end-screen");
+
+  assert.ok(section);
+  assert.deepEqual(sectionTimingForMode(section, "desktop").exit?.frames, [1085, 1110]);
+  assert.deepEqual(sectionTimingForMode(section, "compact").exit?.frames, [1075, 1100]);
 });
 
 test("timeline mode is threaded through the frame driver and effects", () => {
@@ -99,4 +116,16 @@ test("direct layer timeline reads use the emitted mode", () => {
       `${file} has a frame mapping read without mode`,
     );
   }
+});
+
+test("frame readout uses the same virtual-scroll-aware section state as layers", () => {
+  const source = readFileSync(
+    new URL("../src/components/AnimationLab/AnimationLab.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /sectionLayerStateAt\(\s*section,\s*frame,\s*scrollPx,\s*pxPerFrameRef\.current,\s*mode,\s*\)/,
+  );
 });

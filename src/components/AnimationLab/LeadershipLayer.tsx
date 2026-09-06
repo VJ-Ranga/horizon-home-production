@@ -159,12 +159,11 @@ export default function LeadershipLayer() {
       ((LEADERSHIP.holdFrames ?? 0) + (LEADERSHIP.virtualExitFrames ?? 0)) *
       pxPerFrame;
     const BOTTOM_PAD = 40;
-    // Match Strategy/Risks: map the panel directly to the section's shared
-    // scroll budget. Only the virtual exit tail is reserved for the fade;
-    // custom plateaus compress the range and make a small swipe translate
-    // the panel disproportionately far.
+    // Keep half of the virtual-exit tail as a readable handoff, while using
+    // the other half for content movement so the section does not leave a
+    // full blank tail after the content reaches its bottom.
     const exitTailPx = (LEADERSHIP.virtualExitFrames ?? 0) * pxPerFrame;
-    const glideRoomPx = Math.max(budgetPx - exitTailPx, 1);
+    const glideRoomPx = Math.max(budgetPx - exitTailPx / 2, 1);
 
     const body = bodyRef.current;
     if (!body) return;
@@ -173,7 +172,7 @@ export default function LeadershipLayer() {
       0,
     );
     // Normalize the shared timeline distance to 0..1, then map it onto the
-    // full content overflow before the exit tail.
+    // content overflow before the shortened handoff tail.
     const t = Math.min(
       Math.max((scrollPx - startPx) / glideRoomPx, 0),
       1,

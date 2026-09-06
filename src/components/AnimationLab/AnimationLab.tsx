@@ -69,6 +69,9 @@ import {
   compactSpecialTargetScrollPx,
   compactSpecialTransitionDurationMs,
   compactInputDeltaPx,
+  COMPACT_CARD_AND_LEADERSHIP_INPUT_SCALE,
+  compactLeadershipScrollBudgetPx,
+  compactScrollSupportThresholdPx,
   compactTransitionDurationMs,
   nextCompactSectionFrame,
   readerConsumesScroll,
@@ -107,7 +110,7 @@ import {
   readPxPerFrame,
   SECTIONS,
   partStateAt,
-  sectionStateAt,
+  sectionLayerStateAt,
   virtualHoldAtScrollPx,
   type SectionTimeline,
   type TimelineMode,
@@ -247,7 +250,7 @@ function FrameReadout() {
     pxPerFrameRef.current = readPxPerFrame();
   }, []);
 
-  useFrameEffect((frame, phase, scrollPx) => {
+  useFrameEffect((frame, phase, scrollPx, mode) => {
     if (frameRef.current) frameRef.current.textContent = frame.toFixed(1);
     if (phaseRef.current) {
       phaseRef.current.textContent =
@@ -259,7 +262,7 @@ function FrameReadout() {
     // Lenis suppresses — so it would freeze showing a stale hold long
     // after the scroll head had left it.
     if (holdRef.current) {
-      const hold = virtualHoldAtScrollPx(scrollPx, pxPerFrameRef.current);
+      const hold = virtualHoldAtScrollPx(scrollPx, pxPerFrameRef.current, mode);
       holdRef.current.textContent = hold
         ? `hold: frame ${hold.frame} · ${hold.remainingFrames}/${hold.totalFrames} virtual frames remaining`
         : "hold: —";
@@ -269,7 +272,13 @@ function FrameReadout() {
       const element = rowRefs.current[section.id];
       if (!element) continue;
       element.textContent = `${Math.round(
-        sectionStateAt(section, frame).opacity * 100
+        sectionLayerStateAt(
+          section,
+          frame,
+          scrollPx,
+          pxPerFrameRef.current,
+          mode,
+        ).opacity * 100
       )}%`;
     }
 
@@ -484,7 +493,7 @@ export default function AnimationLab({
      so the old 34px inspection pace is one URL away. Read once — it
      sets the page height, which must not change mid-session. */
   const [pxPerFrame] = useState(readPxPerFrame);
-  const scrollPx = totalScrollPx(pxPerFrame);
+  const scrollPx = totalScrollPx(pxPerFrame, compact ? "compact" : "desktop");
 
   const [phase, setPhase] = useState<Phase>(skipEntry ? "scroll" : "entry");
   const phaseRef = useRef<Phase>(phase);
@@ -572,6 +581,24 @@ export default function AnimationLab({
     let lastSpecialInputAt = 0;
     let specialMovedDuringTouch = false;
 
+    const compactSpecialBudgetPx = (section: (typeof SECTIONS)[number]): number => {
+      if (section.carousel) {
+        return section.carousel.scrollPx +
+          ((section.virtualEnterFrames ?? 0) + (section.virtualExitFrames ?? 0)) * pxPerFrame;
+      }
+      if (section.scrollThrough) {
+        return section.scrollThrough.scrollPx + (section.virtualEnterFrames ?? 0) * pxPerFrame;
+      }
+      if (section.id === "12-leadership") {
+        return compactLeadershipScrollBudgetPx(
+          section.holdFrames ?? 0,
+          section.virtualExitFrames ?? 0,
+          pxPerFrame,
+        );
+      }
+      return 0;
+    };
+
     const clearNavigationLock = () => {
       compactNavigationLockRef.current = false;
       compactNavigationTargetRef.current = null;
@@ -599,25 +626,14 @@ export default function AnimationLab({
       );
       const specialSection = SECTIONS.find((section) => {
         const startPx = scrollPxForFrame(section.settledFrame, pxPerFrame, "compact");
-        const budgetPx = section.carousel
-          ? section.carousel.scrollPx +
-            ((section.virtualEnterFrames ?? 0) + (section.virtualExitFrames ?? 0)) * pxPerFrame
-          : section.scrollThrough
-            ? section.scrollThrough.scrollPx + (section.virtualEnterFrames ?? 0) * pxPerFrame
-            : 0;
+        const budgetPx = compactSpecialBudgetPx(section);
         return budgetPx > 0 && currentScrollPx >= startPx - 1 && currentScrollPx <= startPx + budgetPx + 1;
       });
       const specialStartPx = specialSection
         ? scrollPxForFrame(specialSection.settledFrame, pxPerFrame, "compact")
         : null;
       const specialBudgetPx = specialSection
-        ? specialSection.carousel
-          ? specialSection.carousel.scrollPx +
-            ((specialSection.virtualEnterFrames ?? 0) +
-              (specialSection.virtualExitFrames ?? 0)) * pxPerFrame
-          : specialSection.scrollThrough
-            ? specialSection.scrollThrough.scrollPx + (specialSection.virtualEnterFrames ?? 0) * pxPerFrame
-            : 0
+        ? compactSpecialBudgetPx(specialSection)
         : null;
       const specialTargetPx = specialStartPx !== null && specialBudgetPx !== null
         ? compactSpecialTargetScrollPx(
@@ -632,7 +648,10 @@ export default function AnimationLab({
         SECTIONS.map((section) => section.settledFrame),
         direction,
       );
-      if (targetFrame === null && specialTargetPx === null) return false;
+      const loopTargetFrame = direction > 0 && targetFrame === null && specialTargetPx === null
+        ? LOOP_COVER_START_FRAME
+        : null;
+      if (targetFrame === null && specialTargetPx === null && loopTargetFrame === null) return false;
 
       if (specialTargetPx !== null && inputDeltaPx !== undefined) {
         const now = performance.now();
@@ -640,7 +659,10 @@ export default function AnimationLab({
           ? 16.67
           : Math.max(now - lastSpecialInputAt, 1);
         lastSpecialInputAt = now;
-        const cappedDeltaPx = compactInputDeltaPx(inputDeltaPx, elapsedMs, pxPerFrame);
+        const inputScale = specialSection?.carousel || specialSection?.id === "12-leadership"
+          ? COMPACT_CARD_AND_LEADERSHIP_INPUT_SCALE
+          : 1;
+        const cappedDeltaPx = compactInputDeltaPx(inputDeltaPx, elapsedMs, pxPerFrame, inputScale);
         const targetY = (specialTargetPx / totalScrollPx(pxPerFrame, "compact")) * scrollable;
         const nextY = direction > 0
           ? Math.min(scrollY + cappedDeltaPx, targetY)
@@ -652,13 +674,15 @@ export default function AnimationLab({
       if (specialOnly) return false;
 
       compactNavigationLockRef.current = true;
-      compactNavigationTargetRef.current = specialTargetPx === null ? targetFrame : null;
+      compactNavigationTargetRef.current = specialTargetPx === null
+        ? targetFrame ?? loopTargetFrame
+        : null;
       const targetY = specialTargetPx === null
-        ? scrollYForFrame(targetFrame!, pxPerFrame, "compact")
+        ? scrollYForFrame(targetFrame ?? loopTargetFrame!, pxPerFrame, "compact")
         : (specialTargetPx / totalScrollPx(pxPerFrame, "compact")) * scrollable;
       const fromScrollY = scrollY;
       const duration = specialTargetPx === null
-        ? compactTransitionDurationMs(currentFrame, targetFrame!)
+        ? compactTransitionDurationMs(currentFrame, targetFrame ?? loopTargetFrame!)
         : Math.max(
             900,
             compactSpecialTransitionDurationMs(
@@ -745,7 +769,21 @@ export default function AnimationLab({
         direction,
       );
       readerElement = null;
-      if (Math.abs(delta) < 24 || (startedInsideReader && !readerAtEdge)) return;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const currentProgress = scrollable > 0
+        ? Math.min(Math.max(window.scrollY / scrollable, 0), 1)
+        : 0;
+      const currentScrollPx = currentProgress * totalScrollPx(pxPerFrame, "compact");
+      const inScrollSupportSection = SECTIONS.some((section) => {
+        if (!section.scrollThrough && section.id !== "12-leadership") return false;
+        const startPx = scrollPxForFrame(section.settledFrame, pxPerFrame, "compact");
+        const endPx = startPx + compactSpecialBudgetPx(section);
+        return currentScrollPx >= startPx - 1 && currentScrollPx <= endPx + 1;
+      });
+      const swipeThreshold = inScrollSupportSection
+        ? compactScrollSupportThresholdPx(window.innerHeight)
+        : 24;
+      if (Math.abs(delta) < swipeThreshold || (startedInsideReader && !readerAtEdge)) return;
       if (!specialMovedDuringTouch) {
         moveOneSection(delta > 0 ? 1 : -1, startScrollY, Math.abs(delta));
       }
@@ -836,6 +874,7 @@ export default function AnimationLab({
 
     let lastScrollY = window.scrollY;
     let recentering = false;
+    const timelineMode = compact ? "compact" : "desktop";
 
     const startLoopTransition = () => {
       if (loopTransitionRef.current) return;
@@ -852,7 +891,7 @@ export default function AnimationLab({
       if (event.deltaY <= 0) return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
+      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame, timelineMode);
       if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
     };
 
@@ -873,7 +912,7 @@ export default function AnimationLab({
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
+      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame, timelineMode);
       if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
     };
     const onTouchEnd = () => {
@@ -888,7 +927,7 @@ export default function AnimationLab({
       const currentScrollY = window.scrollY;
       const direction = currentScrollY >= lastScrollY ? 1 : -1;
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame);
+      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame, timelineMode);
 
       const targetFrame = loopTargetForBoundary(
         direction as -1 | 1,
@@ -926,7 +965,7 @@ export default function AnimationLab({
       window.removeEventListener("touchend", onTouchEnd);
       endFrameJump();
     };
-  }, [phase, skipEntry]);
+  }, [compact, phase, pxPerFrame, skipEntry]);
 
   useEffect(() => {
     if (!loopTransition) return;
@@ -940,7 +979,11 @@ export default function AnimationLab({
         // backwards instead of cutting to the hero. Suspend it until the
         // loop finishes; the scroll below is programmatic, not a gesture.
         beginFrameJump();
-        const revealY = scrollYForFrame(LOOP_REVEAL_START_FRAME, pxPerFrame);
+        const revealY = scrollYForFrame(
+          LOOP_REVEAL_START_FRAME,
+          pxPerFrame,
+          compact ? "compact" : "desktop",
+        );
         window.scrollTo(0, revealY);
         document.documentElement.scrollTop = revealY;
         document.body.scrollTop = revealY;
@@ -956,13 +999,14 @@ export default function AnimationLab({
     }, LOOP_TRANSITION_DURATION_MS);
 
     return () => window.clearTimeout(timer);
-  }, [loopTransition, pxPerFrame]);
+  }, [compact, loopTransition, pxPerFrame]);
 
   useEffect(() => {
     if (loopTransition?.stage !== "shade") return;
 
-    const startY = scrollYForFrame(LOOP_REVEAL_START_FRAME, pxPerFrame);
-    const endY = scrollYForFrame(HERO_SETTLED_FRAME, pxPerFrame);
+    const timelineMode = compact ? "compact" : "desktop";
+    const startY = scrollYForFrame(LOOP_REVEAL_START_FRAME, pxPerFrame, timelineMode);
+    const endY = scrollYForFrame(HERO_SETTLED_FRAME, pxPerFrame, timelineMode);
     const startedAt = performance.now();
     let frameId = 0;
 
@@ -980,7 +1024,7 @@ export default function AnimationLab({
 
     frameId = requestAnimationFrame(animateReveal);
     return () => cancelAnimationFrame(frameId);
-  }, [loopTransition, pxPerFrame]);
+  }, [compact, loopTransition, pxPerFrame]);
 
   /* ---- loading gate, phase 2 only ----
      Frames load roughly in order (1 -> LAB_LAST_FRAME) in the
@@ -1115,14 +1159,14 @@ export default function AnimationLab({
       const frame = Number(target.getAttribute("data-scroll-to"));
       if (!Number.isFinite(frame)) return;
 
-      const y = scrollYForFrame(frame, pxPerFrame);
+      const y = scrollYForFrame(frame, pxPerFrame, compact ? "compact" : "desktop");
       if (lenisRef.current) lenisRef.current.scrollTo(y, { duration: 1.4 });
       else window.scrollTo({ top: y, behavior: "smooth" });
     };
 
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
-  }, [pxPerFrame]);
+  }, [compact, phase, pxPerFrame]);
 
   return (
     <FrameContext.Provider value={driver}>

@@ -42,6 +42,7 @@
 import { useEffect, useRef } from "react";
 import { SECTIONS, progressBetween, easeOut } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
+import { notifyPopupVideo } from "./popupVideoAudio";
 
 const GLANCE = SECTIONS[5];
 const EXIT_START = GLANCE.exit!.frames[0];
@@ -295,14 +296,16 @@ export default function GlanceLayer() {
             onClick={() => {
               dialogOpenedAtFrameRef.current = currentFrameRef.current;
               if (videoFrameRef.current) videoFrameRef.current.src = SUMMARY_VIDEO_SRC;
+              notifyPopupVideo("open");
               dialogRef.current?.showModal();
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                dialogOpenedAtFrameRef.current = currentFrameRef.current;
-                if (videoFrameRef.current) videoFrameRef.current.src = SUMMARY_VIDEO_SRC;
-                dialogRef.current?.showModal();
+                    dialogOpenedAtFrameRef.current = currentFrameRef.current;
+                    if (videoFrameRef.current) videoFrameRef.current.src = SUMMARY_VIDEO_SRC;
+                    notifyPopupVideo("open");
+                    dialogRef.current?.showModal();
               }
             }}
           >
@@ -332,10 +335,11 @@ export default function GlanceLayer() {
           onClick={(event) => {
             if (event.target === dialogRef.current) dialogRef.current?.close();
           }}
-          onClose={() => {
-            dialogOpenedAtFrameRef.current = null;
-            if (videoFrameRef.current) videoFrameRef.current.src = "";
-          }}
+            onClose={() => {
+              dialogOpenedAtFrameRef.current = null;
+              if (videoFrameRef.current) videoFrameRef.current.src = "";
+              notifyPopupVideo("close");
+            }}
         >
           <iframe
             ref={videoFrameRef}

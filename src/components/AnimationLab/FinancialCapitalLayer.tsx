@@ -55,6 +55,7 @@
 
 import { useRef } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
+import { carouselContentStartPx, carouselDampingForElapsedMs } from "./compactNavigation";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
 const FINCAP = SECTIONS[13];
@@ -230,17 +231,29 @@ export default function FinancialCapitalLayer() {
   const ref = useSectionLayer(FINCAP, { interactiveDuringEnter: true });
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const currentRef = useRef<number | null>(null);
+  const lastTickAtRef = useRef<number | null>(null);
 
   useFrameEffect((_frame, _phase, scrollPx, mode) => {
     const pxPerFrame = readPxPerFrame();
-    const startPx = scrollPxForFrame(FINCAP.settledFrame, pxPerFrame, mode);
+    const startPx = carouselContentStartPx(
+      scrollPxForFrame(FINCAP.settledFrame, pxPerFrame, mode),
+      FINCAP.virtualEnterFrames ?? 0,
+      pxPerFrame,
+    );
     const reduceMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // damping toward the scroll target (1 = snap, for reduced motion).
+    // Damping toward the scroll target (1 = snap, for reduced motion). Scale
+    // it by elapsed time so the desktop motion remains consistent on compact
+    // devices, whose frame driver intentionally runs much slower.
     // Named `damp`, not `ease`, so it doesn't shadow the module-level
     // ease() curve that stateForRel() uses.
-    const damp = reduceMotion ? 1 : EASE;
+    const now = performance.now();
+    const elapsedMs = lastTickAtRef.current === null
+      ? 1000 / 60
+      : Math.max(now - lastTickAtRef.current, 1);
+    lastTickAtRef.current = now;
+    const damp = reduceMotion ? 1 : carouselDampingForElapsedMs(EASE, elapsedMs);
 
     // Dead zones on each side of the sweep keep the first and last cards
     // visible while the shared timeline moves through the section.
