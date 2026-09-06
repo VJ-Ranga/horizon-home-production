@@ -94,6 +94,8 @@
 
     .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: white; box-shadow: var(--shadow); }
     table { width: 100%; border-collapse: collapse; min-width: 620px; }
+    table.audit-table { min-width: 1180px; }
+    .audit-table td, .audit-table th { font-size: 13px; }
     th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
     th { color: var(--muted); background: #eef5f5; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
     tr:last-child td { border-bottom: 0; }
@@ -147,7 +149,8 @@
       <h1>Horizon Home<br>Code Audit Report</h1>
       <p class="hero-copy">A practical review of coding standards, TypeScript adoption, responsive architecture, accessibility, performance, security, and release readiness.</p>
       <div class="hero-meta">
-        <span class="chip"><strong>Scope</strong> Read-only repository audit</span>
+        <span class="chip"><strong>Scope</strong> Mobile + tablet remediation audit</span>
+        <span class="chip"><strong>Desktop</strong> Frozen until client feedback</span>
         <span class="chip"><strong>Stack</strong> Next.js · React · TypeScript</span>
         <span class="chip"><strong>Verdict</strong> Strong foundation, not release-ready</span>
       </div>
@@ -156,7 +159,7 @@
 
   <nav class="toc" aria-label="Report sections">
     <div class="toc-inner">
-      <a href="#summary">Summary</a><a href="#verification">Checks</a><a href="#findings">Findings</a><a href="#smooth-scroll">Smooth scroll</a><a href="#structure">Structure</a><a href="#quality">Quality</a><a href="#roadmap">Roadmap</a><a href="#practical">Practical plan</a>
+      <a href="#summary">Summary</a><a href="#verification">Checks</a><a href="#findings">Findings</a><a href="#smooth-scroll">Smooth scroll</a><a href="#responsive-audit">Device audit</a><a href="#structure">Structure</a><a href="#quality">Quality</a><a href="#roadmap">Roadmap</a><a href="#practical">Practical plan</a>
     </div>
   </nav>
 
@@ -167,9 +170,9 @@
       <p class="section-intro">The project shows deliberate engineering around animation timing, server rendering, mobile memory, reduced motion, and responsive interaction. The main blockers are quality-gate failures rather than a weak architectural foundation.</p>
       <div class="grid">
         <article class="card"><span class="stat">0</span><span class="stat-label">Actionable lint errors</span><p>The five React correctness errors were fixed; 28 non-blocking warnings remain for cleanup.</p></article>
-        <article class="card"><span class="stat">34</span><span class="stat-label">Direct tests passing</span><p>All current tests pass when run with Node's TypeScript stripping flag.</p></article>
+        <article class="card"><span class="stat">56</span><span class="stat-label">Direct tests passing</span><p>All current tests pass when run with Node's TypeScript stripping flag.</p></article>
         <article class="card"><span class="stat">21</span><span class="stat-label">Lines in <code>lab.css</code></span><p>The stylesheet now imports shared, layout, and section-owned CSS files.</p></article>
-        <article class="card full"><span class="status warn">Release status · Conditional</span><p><strong>Recommendation:</strong> Add a standard test script, exclude vendor assets from linting, clean the remaining warnings, and run real desktop/mobile performance validation before release.</p></article>
+        <article class="card full"><span class="status warn">Release status · Mobile focus</span><p><strong>Recommendation:</strong> Do not change desktop behavior until the client requests it. Use this report to validate and fix phone/tablet scrolling, frame pacing, special sections, and reader handoff only.</p></article>
       </div>
     </section>
 
@@ -184,7 +187,7 @@
             <tr><td><code>pnpm exec tsc --noEmit --incremental false</code></td><td><span class="status pass">Pass</span></td><td>Strict TypeScript compilation succeeds. Tests are excluded from <code>tsconfig.json</code>.</td></tr>
             <tr><td><code>npm run lint</code></td><td><span class="status blocker">Fail</span></td><td>2 errors and 723 warnings remain in the full repository lint. Vendor code creates most of the noise; targeted animation files have no errors.</td></tr>
             <tr><td><code>pnpm exec eslint src tests</code></td><td><span class="status pass">Pass</span></td><td>0 errors and 27 warnings in actionable project files.</td></tr>
-            <tr><td><code>node --experimental-strip-types --test tests/*.test.ts</code></td><td><span class="status pass">34 pass</span></td><td>All current tests pass, with a Node module-type warning.</td></tr>
+            <tr><td><code>node --experimental-strip-types --test tests/*.test.ts</code></td><td><span class="status pass">56 pass</span></td><td>All current tests pass, with a Node module-type warning.</td></tr>
             <tr><td><code>pnpm run</code></td><td><span class="status warn">Gap</span></td><td>No <code>test</code> script exists. The test suite is not part of the normal package workflow.</td></tr>
           </tbody>
         </table>
@@ -239,7 +242,7 @@
       <div class="grid">
         <article class="card finding pass-card" data-kind="strength"><div class="finding-head"><h3>Community carousel now has one transform owner</h3><span class="status pass">Fixed</span></div><p>The frame driver writes the rail transform directly and the desktop/tablet CSS transition has been removed, so each frame no longer restarts a competing animation.</p><span class="path">CommunityLayer.tsx · styles/18-community.css</span><div class="recommendation"><strong>Validate next</strong>Check fast wheel movement and stopping behavior on desktop and tablet at 60Hz and 120Hz.</div></article>
         <article class="card finding pass-card" data-kind="strength"><div class="finding-head"><h3>Carousel geometry is measured outside the frame loop</h3><span class="status pass">Fixed</span></div><p>Card and viewport geometry is cached and refreshed by <code>ResizeObserver</code>. The frame callback now performs interpolation and one transform write without repeated layout reads.</p><span class="path">CommunityLayer.tsx</span><div class="recommendation"><strong>Validate next</strong>Test resize, orientation changes, image loading, and browser zoom so the cached geometry refreshes correctly.</div></article>
-        <article class="card finding pass-card" data-kind="strength"><div class="finding-head"><h3>Compact devices no longer start Lenis</h3><span class="status pass">Fixed</span></div><p>Tablet and phone scrolling use native scroll behavior; compact section snaps now fall back to native <code>window.scrollTo</code> when no Lenis instance exists.</p><span class="path">AnimationLab.tsx</span><div class="recommendation"><strong>Validate next</strong>Test touch swipes and programmatic section navigation on iOS Safari and Android Chrome.</div></article>
+        <article class="card finding pass-card" data-kind="strength"><div class="finding-head"><h3>Compact devices no longer start Lenis</h3><span class="status pass">Fixed</span></div><p>Tablet and phone scrolling do not start Lenis. Outer compact gestures use a guarded native <code>window.scrollTo</code> controller for the one-section rule, while inner readers retain native overflow scrolling.</p><span class="path">AnimationLab.tsx</span><div class="recommendation"><strong>Validate next</strong>Test touch swipes and programmatic section navigation on iOS Safari and Android Chrome.</div></article>
         <article class="card finding pass-card" data-kind="strength"><div class="finding-head"><h3>Frame fallback preserves the last painted image</h3><span class="status pass">Fixed</span></div><p>The scrubber keeps the last successfully painted frame while a requested frame decodes, avoiding forward jumps caused by selecting a future cached frame.</p><span class="path">LabScrubber.tsx</span><div class="recommendation"><strong>Validate next</strong>Use throttled network and fast scrolling to confirm the canvas remains visually stable while decoding catches up.</div></article>
         <article class="card finding pass-card" data-kind="strength"><div class="finding-head"><h3>Mobile reader gesture handoff improved</h3><span class="status pass">Fixed</span></div><p>Glance and Financial now claim the first touch before the page timeline advances, then release Lenis prevention at the reader's top or bottom edge. Mobile scroll-through panels also land directly on the latest frame sample instead of stopping short.</p><span class="path">GlanceLayer.tsx · FinancialLayer.tsx · LeadershipLayer.tsx · StrategyLayer.tsx</span><div class="recommendation"><strong>Still required</strong>Validate on real iOS Safari and Android Chrome. Desktop emulation cannot reproduce touch arbitration, browser toolbar resizing, or mobile bitmap memory pressure.</div></article>
         <article class="card finding" data-kind="warning"><div class="finding-head"><h3>Multiple scroll paths are intentional, but tightly coupled</h3><span class="status warn">Warning</span></div><p><strong>Why it exists:</strong> Lenis smooths desktop wheel input, native touch scrolling is deliberately kept on phones, inner panels allow long content to be read, and programmatic scroll is required for the infinite loop transition.</p><p><strong>Actual risk:</strong> these are not independent animation systems, but they can all read or write related scroll state. Direct <code>window.scrollTo</code>, document scroll assignments, Lenis <code>scrollTo</code>, nested overflow areas, and section rAF effects can race during a loop, resize, or gesture.</p><span class="path">AnimationLab.tsx:451-479, 581-613 · LeadershipLayer.tsx:165-186 · globals.css:193-200</span><div class="recommendation"><strong>Keep the reason, fix the boundary</strong>Keep one page-scroll owner per mode: Lenis for desktop wheel smoothing, native scroll for touch, and a guarded loop controller for programmatic jumps. Sections should consume one canonical progress value and never rewrite page scroll themselves.</div></article>
@@ -256,8 +259,57 @@
       </div>
     </section>
 
+    <section class="section" id="responsive-audit">
+      <p class="eyebrow">06 · Mobile and tablet timeline audit</p>
+      <h2>Every section has a different scroll contract</h2>
+      <p class="section-intro">This matrix is derived from <code>timeline.ts</code> and smoke-checked against the running animation lab at phone <code>390×844</code>, tablet <code>768×1024</code>, and wide tablet <code>1024×768</code>. Compact mode is active at all three widths. The important distinction is that compact input is currently controlled: wheel and touch gestures are intercepted, one adjacent section is targeted, and special sections receive extra scroll budget.</p>
+      <div class="card full" style="margin-bottom:16px">
+        <h3>Scroll ownership and pacing</h3>
+        <ul>
+          <li><strong>Desktop over 1100px:</strong> Lenis owns wheel smoothing; the frame driver samples the resulting page position.</li>
+          <li><strong>Phone and tablet up to 1100px:</strong> <code>AnimationLab.tsx</code> intercepts outer wheel/touch input and moves one adjacent settled section at a time. Inner readers release the gesture only at their directional edge.</li>
+          <li><strong>Normal section jump:</strong> fixed <code>550ms</code> smooth transition, independent of the distance between frame numbers. This avoids short frame ranges feeling artificially fast or long ranges feeling artificially slow.</li>
+          <li><strong>Special section:</strong> the gesture spends its own scroll budget on a hold, carousel, or continuous panel before the next section can begin.</li>
+          <li><strong>Source frame rate:</strong> the footage is measured at <code>5.1922fps</code>. Scroll pacing uses <code>14px/frame</code> plus per-section crawl/slowdown rules; it is not a single universal playback speed.</li>
+          <li><strong>Frame rate:</strong> the logical frame count is not the same as scroll speed. A section with five visible frames can still have a 60-frame virtual hold; a section with 100 frames can still be intentionally paced through a slower timeline leg.</li>
+        </ul>
+      </div>
+      <div class="card full" style="margin-bottom:16px"><span class="status pass">Desktop scope frozen</span><p>Desktop behavior is intentionally excluded from remediation. The matrix below covers compact phone/tablet mode only. Existing desktop notes elsewhere in this report are reference context, not change requests.</p></div>
+      <div class="table-wrap">
+        <table class="audit-table">
+          <thead><tr><th>#</th><th>Section</th><th>Settled</th><th>Enter</th><th>Hold / special budget</th><th>Exit</th><th>Compact behavior</th></tr></thead>
+          <tbody>
+            <tr><td>01</td><td>Hero</td><td>50</td><td>Entry autoplay</td><td>20-frame hold</td><td>50–70</td><td>First normal section target</td></tr>
+            <tr><td>02</td><td>Main bridge</td><td>90</td><td>70–90</td><td>20-frame hold; slowdown 2</td><td>91–105</td><td>Normal one-section target</td></tr>
+            <tr><td>03</td><td>Approach / physical report</td><td>134</td><td>114–134</td><td>20-frame hold + 20 virtual exit</td><td>145–158</td><td>Normal target plus pinned exit budget</td></tr>
+            <tr><td>04</td><td>Digital reporting</td><td>161</td><td>141–161</td><td>20-frame hold</td><td>161–181</td><td>Normal target; heading visibility verified</td></tr>
+            <tr><td>05</td><td>Intro statement</td><td>255</td><td>245–255</td><td>10 virtual enter + 20 hold + 14 virtual exit</td><td>255–269</td><td>Pinned content budget</td></tr>
+            <tr><td>06</td><td>Key data points</td><td>275</td><td>263–275</td><td>20-frame hold</td><td>279–302</td><td>Normal target plus hold</td></tr>
+            <tr><td>07</td><td>City banner</td><td>335</td><td>322–335</td><td>10 virtual enter + 20 hold + 10 virtual exit</td><td>335–371</td><td>Pinned text budget</td></tr>
+            <tr><td>08</td><td>Financial highlights</td><td>436</td><td>408–436</td><td>60 hold + 20 virtual exit</td><td>448–454</td><td>Requires a dedicated readable hold</td></tr>
+            <tr><td>09</td><td>Governance intro</td><td>511</td><td>490–511</td><td>10 virtual enter + 20 hold + 20 virtual exit</td><td>511–520</td><td>Pinned content budget</td></tr>
+            <tr><td>10</td><td>Corporate governance</td><td>533</td><td>520–533</td><td>15 virtual enter + 30 hold + 20 virtual exit</td><td>533–540</td><td>Pinned content budget</td></tr>
+            <tr><td>11</td><td>Governance cards</td><td>540</td><td>535–540</td><td>20 virtual enter + 40 hold + 20 virtual exit</td><td>540–550</td><td>Pinned content budget</td></tr>
+            <tr><td>12</td><td>Leadership / reporting approach</td><td>555</td><td>553–555</td><td>60 hold + 20 virtual exit</td><td>555–575</td><td>Requires a dedicated readable hold</td></tr>
+            <tr><td>13</td><td>Ocean banner</td><td>650</td><td>642–650</td><td>20 virtual enter + 20 hold + 20 virtual exit</td><td>650–665</td><td>Pinned banner budget</td></tr>
+            <tr><td>14</td><td>Financial capitals</td><td>675</td><td>665–675</td><td>7-card carousel: 3,210px + 20 virtual enter + 20 virtual exit</td><td>675–693</td><td>Carousel must consume its own gesture budget</td></tr>
+            <tr><td>15</td><td>River banner</td><td>782</td><td>762–782</td><td>40 virtual enter + 20 hold</td><td>782–802</td><td>Pinned text budget</td></tr>
+            <tr><td>16</td><td>Non-Financials</td><td>845</td><td>843–845</td><td>60 hold + 20 virtual exit</td><td>857–863</td><td>Long readable hold; candidate for mobile scroll-through</td></tr>
+            <tr><td>17</td><td>Strategy, risks and opportunities</td><td>890</td><td>870–890</td><td>1,862px scroll-through; slowdown 2; pin 933; 30 virtual exit</td><td>933–963</td><td>Continuous panel scroll; panel must finish before fade</td></tr>
+            <tr><td>18</td><td>Community impact</td><td>1020</td><td>1015–1020</td><td>7-card carousel: 3,756px + 10 virtual enter + 10 virtual exit</td><td>1038–1054</td><td>Second carousel; same edge and budget rules as Section 14</td></tr>
+            <tr><td>19</td><td>End screen</td><td>1055</td><td>1035–1055</td><td>20-frame crawl; slowdown 2</td><td>1075–1100</td><td>Final normal scroll-through</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid" style="margin-top:16px">
+        <article class="card finding pass-card" data-kind="strength"><div class="finding-head"><h3>Phone and tablet coverage completed</h3><span class="status pass">Checked</span></div><p>Source and browser checks confirm the compact breakpoint is active at 390px, 768px, and 1024px. The frame driver, mobile asset resolver, one-section gesture controller, reader edge handoff, special budgets, and Strategy panel path are all separate concerns.</p><span class="path">AnimationLab.tsx · timeline.ts · compactNavigation.ts · StrategyLayer.tsx</span></article>
+        <article class="card finding" data-kind="warning"><div class="finding-head"><h3>Compact mode is not fully native</h3><span class="status warn">Decision required</span></div><p>At phone and tablet widths, outer wheel and touch gestures are prevented and routed through the one-section controller. This guarantees the one-section rule, but it also means native browser momentum is not the final authority on speed.</p><div class="recommendation"><strong>Decision</strong>Keep the one-section rule, but validate the fixed transition duration and special-section budgets on real iOS Safari and Android Chrome before changing ownership again.</div></article>
+        <article class="card finding" data-kind="warning"><div class="finding-head"><h3>Real-device audit still required</h3><span class="status warn">Open</span></div><p>Browser emulation cannot prove touch inertia, browser toolbar resizing, frame decode pressure, or actual 5–15fps behavior. The next test pass must record gesture duration, first/last painted frame, dropped frames, and whether each section stays readable.</p><span class="path">Phone: iOS Safari + Android Chrome · Tablet: iPadOS Safari + Android tablet Chrome</span></article>
+      </div>
+    </section>
+
     <section class="section" id="structure">
-      <p class="eyebrow">06 · File structure and coding method</p>
+      <p class="eyebrow">07 · File structure and coding method</p>
       <h2>Current versus optimized structure</h2>
       <p class="section-intro">The current structure is understandable, but the animation coordinator is doing too much. The recommended structure keeps timing, assets, layout, and content separate so a mobile change cannot silently damage desktop behavior.</p>
       <div class="grid">
@@ -312,7 +364,7 @@ tests/
     </section>
 
     <section class="section" id="quality">
-      <p class="eyebrow">07 · Detailed practice review</p>
+      <p class="eyebrow">08 · Detailed practice review</p>
       <h2>Quality areas to strengthen</h2>
       <div class="grid">
         <details class="card wide" open><summary><h3>TypeScript and React</h3> <span class="status pass">Strong base</span></summary><div class="detail-body"><ul><li><code>strict: true</code>, path aliases, ES module interoperability, and bundler resolution are configured.</li><li>React 19 and Next.js App Router patterns are used consistently.</li><li>Improve purity and hook dependency compliance until source lint passes.</li><li><code>tests</code> is excluded from TypeScript compilation, so add a separate type-check path if tests grow.</li></ul></div></details>
@@ -325,7 +377,7 @@ tests/
     </section>
 
     <section class="section" id="roadmap">
-      <p class="eyebrow">08 · Recommended roadmap</p>
+      <p class="eyebrow">09 · Recommended roadmap</p>
       <h2>Four steps toward release readiness</h2>
       <div class="card full">
         <div class="roadmap-item"><span class="number">1</span><div><h3>Keep the quality gate green</h3><p class="muted">The actionable source lint errors are fixed. Remove stale suppressions, clean the remaining warnings, and ignore <code>public/vendor/**</code> so <code>pnpm lint</code> stays readable.</p></div></div>
@@ -338,7 +390,7 @@ tests/
     </section>
 
     <section class="section" id="practical">
-      <p class="eyebrow">09 · Practical decision guide</p>
+      <p class="eyebrow">10 · Practical decision guide</p>
       <h2>Stabilize first. Refactor only where it pays.</h2>
       <p class="section-intro">A perfect architecture is not required for a client delivery. Keep intentional behavior that users need, fix issues that cause visible breakage, and postpone expensive cleanup when it does not reduce current risk.</p>
       <div class="table-wrap">

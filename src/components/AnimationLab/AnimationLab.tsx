@@ -165,10 +165,18 @@ const subscribeToCompactViewport = (onChange: () => void) => {
   query.addEventListener("change", onChange);
   return () => query.removeEventListener("change", onChange);
 };
+const subscribeToReducedMotion = (onChange: () => void) => {
+  const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
 const getPhoneViewportSnapshot = () => isPhoneViewport();
 const getServerPhoneViewportSnapshot = () => false;
 const getCompactViewportSnapshot = () => isCompactViewport();
 const getServerCompactViewportSnapshot = () => false;
+const getReducedMotionSnapshot = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const getServerReducedMotionSnapshot = () => false;
 const getMountedSnapshot = () => true;
 const getServerMountedSnapshot = () => false;
 const DEFAULT_LOAD_BUFFER = { behind: 2, ahead: 2 };
@@ -375,15 +383,13 @@ export default function AnimationLab({
   const compact = mounted && compactSnapshot;
   const phone = mounted && phoneSnapshot;
   const frameDir = resolveFrameDir(densify, hq, fourK, phone, compact);
-  /* Reduced motion: no intro, no entry motion — the page opens
-     already settled at frame 50 with scroll live. Read once, in a
-     lazy initialiser, because the driver needs it on its very first
-     tick. It affects no rendered output, so it cannot cause a
-     hydration mismatch. */
-  const [skipEntry] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  /* Reduced motion: no intro, no entry motion — the page opens already
+     settled at frame 50 with scroll live. useSyncExternalStore keeps the
+     server's first render identical to the browser's hydration render. */
+  const skipEntry = useSyncExternalStore(
+    subscribeToReducedMotion,
+    getReducedMotionSnapshot,
+    getServerReducedMotionSnapshot,
   );
 
   /* Preload AND DECODE the entry's frames before the autoplay starts.
@@ -396,7 +402,7 @@ export default function AnimationLab({
      decode then happens inside the first drawImage, on the main
      thread, mid-animation. That is exactly the first-run stutter.
      img.decode() resolves only once the bitmap is ready. */
-  const [entryReady, setEntryReady] = useState(skipEntry);
+  const [entryReady, setEntryReady] = useState(false);
   const [mobileLoadProgress, setMobileLoadProgress] = useState(0);
 
   /* Load screen + intro (LabIntro). Only on the -full / -intro /
@@ -405,6 +411,10 @@ export default function AnimationLab({
      same entry gate as entryReady, so this reuses the existing hold
      rather than adding a new phase. */
   const runIntro = intro && !skipEntry;
+
+  useEffect(() => {
+    if (skipEntry) setEntryReady(true);
+  }, [skipEntry]);
 
   /* The intro is a once-per-visit welcome, not a gate on every page view:
      leaving for /ai-assistant or any other feature page and coming back to
@@ -548,7 +558,9 @@ export default function AnimationLab({
   const compactNavigationTargetRef = useRef<number | null>(null);
   const compactNavigationTimerRef = useRef<number | null>(null);
   useEffect(() => {
-    if (phase !== "scroll" || skipEntry || !compact) return;
+    // skipEntry is the normal compact path after the intro has been seen;
+    // navigation interception must still be installed in that case.
+    if (phase !== "scroll" || !compact) return;
 
     let startY: number | null = null;
     let startScrollY = 0;
@@ -583,10 +595,7 @@ export default function AnimationLab({
             ((section.virtualEnterFrames ?? 0) + (section.virtualExitFrames ?? 0)) * pxPerFrame
           : section.scrollThrough
             ? section.scrollThrough.scrollPx + (section.virtualEnterFrames ?? 0) * pxPerFrame
-            :
-            ((section.virtualEnterFrames ?? 0) +
-              (section.holdFrames ?? 0) +
-              (section.virtualExitFrames ?? 0)) * pxPerFrame;
+            : 0;
         return budgetPx > 0 && currentScrollPx >= startPx - 1 && currentScrollPx <= startPx + budgetPx + 1;
       });
       const specialStartPx = specialSection
@@ -599,9 +608,7 @@ export default function AnimationLab({
               (specialSection.virtualExitFrames ?? 0)) * pxPerFrame
           : specialSection.scrollThrough
             ? specialSection.scrollThrough.scrollPx + (specialSection.virtualEnterFrames ?? 0) * pxPerFrame
-            : ((specialSection.virtualEnterFrames ?? 0) +
-                (specialSection.holdFrames ?? 0) +
-                (specialSection.virtualExitFrames ?? 0)) * pxPerFrame
+            : 0
         : null;
       const specialTargetPx = specialStartPx !== null && specialBudgetPx !== null
         ? compactSpecialTargetScrollPx(

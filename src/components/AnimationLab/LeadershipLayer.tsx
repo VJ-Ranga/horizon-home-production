@@ -159,18 +159,12 @@ export default function LeadershipLayer() {
       ((LEADERSHIP.holdFrames ?? 0) + (LEADERSHIP.virtualExitFrames ?? 0)) *
       pxPerFrame;
     const BOTTOM_PAD = 40;
-    // Dwell zones carved out of the pinned budget. The first START_HOLD_PX
-    // of scroll past the settle just holds the content still at its top;
-    // the last END_HOLD_PX holds it still, fully glided, at the footer,
-    // covering the ~280px exit fade plus a small opaque beat. Without
-    // them the glide consumes the whole budget and is still finishing as
-    // the section fades — the footer never gets a still beat and a small
-    // flick slips the whole section away. The section design is fixed, so
-    // the glide compresses to fit whatever room is left (the content is
-    // taller than the budget); that trade buys the top/bottom hold.
-    const START_HOLD_PX = 50;
-    const END_HOLD_PX = 300;
-    const glideRoomPx = Math.max(budgetPx - START_HOLD_PX - END_HOLD_PX, 1);
+    // Match Strategy/Risks: map the panel directly to the section's shared
+    // scroll budget. Only the virtual exit tail is reserved for the fade;
+    // custom plateaus compress the range and make a small swipe translate
+    // the panel disproportionately far.
+    const exitTailPx = (LEADERSHIP.virtualExitFrames ?? 0) * pxPerFrame;
+    const glideRoomPx = Math.max(budgetPx - exitTailPx, 1);
 
     const body = bodyRef.current;
     if (!body) return;
@@ -178,10 +172,10 @@ export default function LeadershipLayer() {
       body.scrollHeight - window.innerHeight + BOTTOM_PAD,
       0,
     );
-    // Normalise the shared timeline distance to 0..1, then map onto the
-    // full content overflow. The end hold keeps the final content visible.
+    // Normalize the shared timeline distance to 0..1, then map it onto the
+    // full content overflow before the exit tail.
     const t = Math.min(
-      Math.max((scrollPx - startPx - START_HOLD_PX) / glideRoomPx, 0),
+      Math.max((scrollPx - startPx) / glideRoomPx, 0),
       1,
     );
     const targetPx = t * overflow;

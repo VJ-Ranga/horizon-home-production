@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Phone and tablet animation scroll audit for Horizon Home.">
+  <title>Horizon Home | Mobile and Tablet Animation Audit</title>
+  <style>
+    :root{--ink:#102a32;--muted:#58717a;--paper:#f4f8f8;--panel:#fff;--line:#d7e4e5;--teal:#087989;--dark:#073d48;--cyan:#49d7d0;--green:#087a55;--green-bg:#e7f7ef;--amber:#a26100;--amber-bg:#fff3d8;--red:#b3363e;--red-bg:#ffeaec;--shadow:0 18px 55px rgba(7,61,72,.1);--radius:18px;--max:1220px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font:400 15px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}a{color:var(--teal)}a:focus-visible,button:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}code,.mono{font:500 .88em/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}code{padding:2px 6px;border-radius:6px;background:#edf3f3;color:var(--dark)}
+    .hero{color:#fff;background:linear-gradient(135deg,#062f3a,#087989 65%,#0a5966)}.hero-inner,main,footer{width:min(calc(100% - 40px),var(--max));margin:auto}.hero-inner{padding:68px 0 54px}.eyebrow{margin:0 0 12px;color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}h1,h2,h3{margin:0;line-height:1.15;letter-spacing:-.035em}h1{max-width:850px;font-size:clamp(38px,7vw,76px)}h2{font-size:clamp(26px,4vw,40px)}h3{font-size:19px}.hero-copy{max-width:780px;margin:22px 0 0;color:#d8f3f2;font-size:18px}.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}.chip{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid rgba(255,255,255,.25);border-radius:999px;color:#e7ffff;font-size:12px}.chip strong{color:var(--cyan)}
+    .toc{position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line);background:rgba(244,248,248,.94);backdrop-filter:blur(14px)}.toc-inner{display:flex;gap:6px;width:min(calc(100% - 40px),var(--max));margin:auto;overflow-x:auto}.toc a{flex:0 0 auto;padding:14px 10px;color:var(--muted);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}.toc a:hover{color:var(--teal);box-shadow:inset 0 -3px var(--teal)}
+    main{padding:52px 0 80px}.section{scroll-margin-top:70px;margin-top:58px}.section:first-child{margin-top:0}.section-intro{max-width:850px;margin:12px 0 24px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.card{grid-column:span 4;padding:23px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow)}.card.wide{grid-column:span 6}.card.full{grid-column:1/-1}.card h3{margin-bottom:10px}.card p:last-child{margin-bottom:0}.muted{color:var(--muted)}
+    .status{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}.status.pass{color:var(--green);background:var(--green-bg)}.status.warn{color:var(--amber);background:var(--amber-bg)}.status.blocker{color:var(--red);background:var(--red-bg)}.finding{position:relative;border-left:5px solid var(--amber)}.finding.pass-card{border-left-color:var(--green)}.finding.blocker-card{border-left-color:var(--red)}.finding-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}.finding p{margin:9px 0}.path{display:inline-block;margin-top:5px;color:var(--teal);font-size:12px;word-break:break-word}.recommendation{margin-top:14px;padding:12px 14px;border-radius:10px;background:#f0f7f7;color:var(--dark);font-size:13px}.recommendation strong{display:block;margin-bottom:3px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}table{width:100%;min-width:720px;border-collapse:collapse}th,td{padding:13px 15px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--muted);background:#eef5f5;font-size:11px;letter-spacing:.08em;text-transform:uppercase}tr:last-child td{border-bottom:0}.timeline-table{min-width:1120px}.timeline-table td,.timeline-table th{font-size:13px}.timeline-table td:first-child{font-weight:800;color:var(--teal-dark)}
+    .filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.filter{cursor:pointer;padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font:inherit;font-size:12px;font-weight:750}.filter.active,.filter:hover{border-color:var(--teal);color:#fff;background:var(--teal)}.filter-note{color:var(--muted);font-size:13px}.detail{grid-column:span 6}.detail[data-hidden="true"]{display:none}.detail dl{display:grid;grid-template-columns:130px 1fr;gap:7px 14px;margin:0}.detail dt{color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase}.detail dd{margin:0}.code-block{overflow:auto;padding:18px;border-radius:12px;color:#d8f3f2;background:#073d48}
+    .checklist{padding-left:20px}.checklist li+li{margin-top:7px}.no-edit{padding:17px 20px;border:1px solid #b8e5d0;border-radius:var(--radius);color:var(--green);background:var(--green-bg)}footer{padding:0 0 42px;color:var(--muted);font-size:12px}
+    @media(max-width:760px){.hero-inner,main,footer{width:min(calc(100% - 28px),var(--max))}.hero-inner{padding:48px 0 40px}.hero-copy{font-size:16px}.card,.card.wide,.detail{grid-column:1/-1}.toc-inner{width:calc(100% - 28px)}.detail dl{grid-template-columns:1fr}.detail dt{margin-top:6px}}
+    @media print{body{background:#fff;font-size:11px}.hero{color:#000;background:#fff;border-bottom:2px solid var(--teal)}.hero-copy,.chip{color:#000}.toc,.filter-bar{display:none}.card,.table-wrap{box-shadow:none;break-inside:avoid}.section{margin-top:30px}}
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Engineering review · 05 September 2026</p>
+      <h1>Mobile and Tablet<br>Animation Audit</h1>
+      <p class="hero-copy">A focused audit of why phone and tablet sections scroll too quickly, disappear, or feel inconsistent. Desktop is reference-only and frozen until client feedback.</p>
+      <div class="hero-meta">
+        <span class="chip"><strong>Phone</strong> <=700px · /frames-mobile</span>
+        <span class="chip"><strong>Tablet</strong> 701-1100px · /frames-tablet</span>
+        <span class="chip"><strong>Shared</strong> 19 section timeline</span>
+        <span class="chip"><strong>Desktop</strong> no changes in this audit</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Audit sections"><div class="toc-inner">
+    <a href="#summary">Summary</a><a href="#model">Device model</a><a href="#timeline">Timeline</a><a href="#ownership">Ownership</a><a href="#findings">Problems</a><a href="#special">Special sections</a><a href="#validation">Validation</a><a href="#plan">Best practice</a>
+  </div></nav>
+
+  <main>
+    <section class="section" id="summary">
+      <p class="eyebrow">01 · Executive summary</p>
+      <h2>Mobile is not one animation rule</h2>
+      <p class="section-intro">The project has one shared logical frame timeline, but phone and tablet use different assets and responsive layouts. The current compact gesture controller adds a one-section rule on top of native page coordinates. The visible problems come from several section contracts being mixed together: short frame windows, pinned holds, carousels, scroll-through content, inner readers, frame limiting, and browser momentum.</p>
+      <div class="grid">
+        <article class="card finding blocker-card"><div class="finding-head"><h3>Highest risk</h3><span class="status blocker">Mobile</span></div><p>Native touch momentum, compact frame limiting, and the one-section controller can disagree about how far the page moved. The document can travel farther than the frame driver allows, so the background lags behind the page and sections may appear to skip, disappear, or move too fast.</p><div class="recommendation"><strong>What to verify</strong>Compare <code>window.scrollY</code>, emitted frame, painted frame, and active section during the same fast phone swipe.</div></article>
+        <article class="card finding"><div class="finding-head"><h3>Most important distinction</h3><span class="status warn">Shared vs separate</span></div><p>Section frame numbers and timing data are shared. Frame assets, intro videos, carve geometry, layout density, and phone/tablet card geometry are separate.</p></article>
+        <article class="card finding pass-card"><div class="finding-head"><h3>Desktop scope</h3><span class="status pass">Frozen</span></div><p>Desktop Lenis, desktop timing overrides, desktop assets, and desktop visual behavior are not part of the remediation work unless the client requests it.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="model">
+      <p class="eyebrow">02 · Data model</p>
+      <h2>What is shared and what is different?</h2>
+      <p class="section-intro">The source of truth is the section timeline. The device layer chooses assets and layout behavior; it does not currently define a separate phone or tablet timing table.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Concern</th><th>Shared with desktop</th><th>Phone only</th><th>Tablet only</th><th>Current risk</th></tr></thead>
+        <tbody>
+          <tr><td>Section data</td><td>19 IDs, settled frames, enter/exit windows, holds and special budgets.</td><td>Uses the same logical section values.</td><td>Uses the same logical section values.</td><td>Shared timing changes can affect all modes.</td></tr>
+          <tr><td>Frame source</td><td>Desktop frame directories.</td><td><code>/frames-mobile</code>, portrait 360x640 set.</td><td><code>/frames-tablet</code>, landscape tablet set.</td><td>Decode speed and memory differ by device.</td></tr>
+          <tr><td>Intro video</td><td><code>/hero/intro.mp4</code>.</td><td><code>/video-mobile/intro-540x960.mp4</code>.</td><td><code>/video-tablet/intro-1280x800.mp4</code>.</td><td>Wrong asset branch can cause layout or loading pressure.</td></tr>
+          <tr><td>Scroll owner</td><td>Lenis smooths desktop wheel.</td><td colspan="2">Compact controller intercepts outer wheel/touch, enforces one adjacent section, and leaves inner readers at edges.</td><td>Native momentum is not the only authority.</td></tr>
+          <tr><td>Frame guard</td><td>Desktop has no compact step limit.</td><td colspan="2">Compact emitted frame step is limited to 2 per driver tick.</td><td>Document scroll can move farther than the painted frame.</td></tr>
+          <tr><td>Layout</td><td>Full viewport composition.</td><td>Portrait geometry, vertical community list, tighter sections.</td><td>Wider compact geometry, tablet card/grid rules.</td><td>One breakpoint rule cannot describe both devices.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="card full" style="margin-top:16px"><h3>Frame rate versus scroll rate</h3><p>The source footage is measured at <code>5.1922fps</code>. The timeline maps scroll using <code>14px/frame</code>, crawl slowdowns, virtual frame-equivalent budgets, and special section legs. Therefore “five frames per second” is not a safe universal mobile scroll speed. A section with a small frame range may still need a long hold; a section with many frames may intentionally move slowly.</p></div>
+    </section>
+
+    <section class="section" id="timeline">
+      <p class="eyebrow">03 · Section data</p>
+      <h2>Every mobile/tablet scroll contract</h2>
+      <p class="section-intro">The overview below is generated from one data array. Filter by device impact or risk, then use the detail cards for the plain-language problem and recommendation.</p>
+      <div class="filter-bar" aria-label="Filter section audit"><button class="filter active" data-filter="all" aria-pressed="true">All</button><button class="filter" data-filter="phone" aria-pressed="false">Phone</button><button class="filter" data-filter="tablet" aria-pressed="false">Tablet</button><button class="filter" data-filter="both" aria-pressed="false">Both</button><button class="filter" data-filter="high" aria-pressed="false">High risk</button><button class="filter" data-filter="open" aria-pressed="false">Open validation</button></div>
+      <p class="filter-note" id="filter-note">Showing all 19 sections.</p>
+      <div class="table-wrap"><table class="timeline-table"><thead><tr><th>#</th><th>Section</th><th>Settled</th><th>Enter</th><th>Hold / virtual</th><th>Special mode</th><th>Compact ownership</th><th>Status</th></tr></thead><tbody id="timeline-body"></tbody></table></div>
+      <div class="grid" id="detail-grid" style="margin-top:16px"></div>
+    </section>
+
+    <section class="section" id="ownership">
+      <p class="eyebrow">04 · Scroll ownership</p>
+      <h2>Why scrolling is not fully native today</h2>
+      <div class="grid">
+        <article class="card wide"><h3>Desktop reference path</h3><p>Desktop creates Lenis during the scroll phase. Lenis smooths wheel input, the frame driver advances it, then the driver samples page position and emits one canonical frame/scroll value.</p><pre class="code-block">desktop wheel -> Lenis -> frame driver -> timeline -> layers + canvas</pre></article>
+        <article class="card wide"><h3>Phone/tablet current path</h3><p>Compact does not create Lenis. The coordinator listens at the window, checks reader edges, prevents outer wheel/touch momentum, calculates the next section or special budget, then writes a controlled native <code>window.scrollTo</code> path.</p><pre class="code-block">touch/wheel -> compact controller -> one section or special budget -> frame driver</pre></article>
+        <article class="card"><h3>Why it can feel too fast</h3><p>A native flick can move the document many pixels between animation ticks. The compact frame guard limits the emitted frame, but it does not rewind the document. The frame and page can temporarily disagree.</p></article>
+        <article class="card"><h3>Why a section can disappear</h3><p>Short enter/exit windows can be crossed before the layer has enough readable dwell. Pinned sections solve this with virtual budgets, but only if the controller recognizes the budget and the layer stays visible until the panel finishes.</p></article>
+        <article class="card"><h3>Why readers are different</h3><p>Inner readers need native overflow scrolling. They should consume the gesture while they have room, then release the outer page only at the top or bottom edge.</p></article>
+        <article class="card"><h3>What should remain one owner</h3><p>Each mode should have one outer scroll owner, one frame scheduler, and one section-specific transform owner. Avoid adding another Lenis, rAF, CSS transition, or scroll listener to solve one section.</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="findings">
+      <p class="eyebrow">05 · Problems and root causes</p>
+      <h2>What needs improvement</h2>
+      <div class="grid">
+        <article class="card finding blocker-card"><div class="finding-head"><h3>Document/frame desynchronization</h3><span class="status blocker">High</span></div><p><strong>Symptom:</strong> a fast flick appears to skip or make a section vanish.</p><p><strong>Cause:</strong> browser momentum can move <code>window.scrollY</code> farther than the compact frame guard allows the emitted frame to move.</p><div class="recommendation"><strong>Best practice</strong>Choose one controlled compact scroll owner. If one-section behavior is mandatory, cap the page movement itself rather than only capping painted frames.</div><span class="path">AnimationLab.tsx · useFrameTimeline.ts · mobileFrameGuard.ts</span></article>
+        <article class="card finding"><div class="finding-head"><h3>Short windows are easy to outrun</h3><span class="status warn">Medium</span></div><p><strong>Symptom:</strong> governance and bridge sections appear briefly or disappear before content can be read.</p><p><strong>Cause:</strong> a 20-40 frame visual window can be smaller than one high-velocity touch flick.</p><div class="recommendation"><strong>Best practice</strong>Use explicit compact hold budgets for readable sections. Do not solve this by globally slowing every section.</div><span class="path">timeline.ts · sectionLayerStateAt()</span></article>
+        <article class="card finding"><div class="finding-head"><h3>Special content has different geometry</h3><span class="status warn">Medium</span></div><p><strong>Symptom:</strong> carousels or long panels feel too fast, stop short, or fade before the last card/content.</p><p><strong>Cause:</strong> carousel and scroll-through sections are not ordinary frame windows; they need raw scroll budgets and their own completion checks.</p><div class="recommendation"><strong>Best practice</strong>Keep carousel and scroll-through budgets explicit and test their start, middle, end, and reverse paths separately.</div><span class="path">FinancialCapitalLayer.tsx · CommunityLayer.tsx · StrategyLayer.tsx</span></article>
+        <article class="card finding"><div class="finding-head"><h3>Phone/tablet timing is not independently authored</h3><span class="status warn">Decision</span></div><p><strong>Symptom:</strong> the same compact timing can feel acceptable on a tablet but too aggressive on a phone.</p><p><strong>Cause:</strong> phone and tablet share compact timing and the frame step limit; only assets and some layout geometry differ.</p><div class="recommendation"><strong>Best practice</strong>Keep shared defaults, then add narrow phone/tablet overrides only where real-device evidence proves the content needs different dwell.</div><span class="path">timeline.ts · frameDirMobile.ts</span></article>
+        <article class="card finding"><div class="finding-head"><h3>Real-device evidence is missing</h3><span class="status warn">Open</span></div><p><strong>Symptom:</strong> desktop emulation can look correct while iOS Safari or Android Chrome still feels too quick.</p><p><strong>Cause:</strong> toolbar resizing, touch inertia, bitmap decode pressure, and browser memory behavior are not reproduced by a desktop viewport.</p><div class="recommendation"><strong>Best practice</strong>Record actual gesture duration, frames painted, dropped frames, scroll owner, and active section on real devices before changing desktop or global timing.</div><span class="path">Validation matrix below</span></article>
+        <article class="card finding pass-card"><div class="finding-head"><h3>Strategy panel disappearance was isolated</h3><span class="status pass">Fixed</span></div><p>The mobile Strategy panel runway was longer than its available scroll-through budget, so the parent fade started while content was only partly moved. The mobile mapping now completes the panel before the virtual exit fade.</p><div class="recommendation"><strong>Regression</strong>Keep the mobile panel-completion test and verify the fade boundary on phone and tablet.</div><span class="path">StrategyLayer.tsx · tests/react-lint-regressions.test.ts</span></article>
+      </div>
+    </section>
+
+    <section class="section" id="special">
+      <p class="eyebrow">06 · Special section deep dives</p>
+      <h2>Do not force these into one generic rule</h2>
+      <div class="grid">
+        <article class="card detail"><h3>08 · Financial Highlights</h3><dl><dt>Type</dt><dd>Park-and-hold</dd><dt>Budget</dt><dd>60 hold + 20 virtual exit</dd><dt>Reason</dt><dd>Content needs a readable dwell after a long 408-436 entrance.</dd><dt>Mobile risk</dt><dd>A fast flick can cross the 436-454 visual exit window without a controlled hold.</dd><dt>Recommendation</dt><dd>Keep its special budget. Validate card readability and reverse entry on phone/tablet.</dd></dl></article>
+        <article class="card detail"><h3>12 · Leadership</h3><dl><dt>Type</dt><dd>Park-and-hold</dd><dt>Budget</dt><dd>60 hold + 20 virtual exit</dd><dt>Reason</dt><dd>Its two-frame entrance is intentionally soft, then the content needs time to read.</dd><dt>Mobile risk</dt><dd>Old wide enter timing made it look complete then kick backward; current compact path must preserve the park.</dd><dt>Recommendation</dt><dd>Keep the short enter and explicit hold; test portrait and tablet two-column layout separately.</dd></dl></article>
+        <article class="card detail"><h3>14 · Financial Capitals</h3><dl><dt>Type</dt><dd>7-card carousel</dd><dt>Budget</dt><dd>90 lead + 2,880 sweep + 240 tail = 3,210px</dd><dt>Reason</dt><dd>Background frame freezes while cards move one by one.</dd><dt>Mobile risk</dt><dd>Skipping the budget loses cards; too-short controlled duration makes all cards race.</dd><dt>Recommendation</dt><dd>Test first card, middle card, last card, reverse direction, and edge handoff on both compact tiers.</dd></dl></article>
+        <article class="card detail"><h3>16 · Non-Financials</h3><dl><dt>Type</dt><dd>Park-and-hold with cards</dd><dt>Budget</dt><dd>60 hold + 20 virtual exit</dd><dt>Reason</dt><dd>CSS card reveal and hover/read behavior should not be fought by frame-by-frame text animation.</dd><dt>Mobile risk</dt><dd>The content is taller than a viewport and may be better as a Strategy-style continuous mobile panel.</dd><dt>Recommendation</dt><dd>Do not change until the Section 17 fix is validated; then test a mobile-only scroll-through design.</dd></dl></article>
+        <article class="card detail"><h3>17 · Strategy and Risks</h3><dl><dt>Type</dt><dd>Continuous scroll-through</dd><dt>Budget</dt><dd>1,862px; slowdown 2; pin 933; 30 virtual exit frames</dd><dt>Reason</dt><dd>One tall panel contains pillars, risks, opportunities, and actions.</dd><dt>Mobile risk</dt><dd>The panel previously disappeared halfway because its mobile runway exceeded the available fade budget.</dd><dt>Recommendation</dt><dd>Keep the completed-panel-before-fade rule and validate its scroll distance on both phone and tablet.</dd></dl></article>
+        <article class="card detail"><h3>18 · Community Impact</h3><dl><dt>Type</dt><dd>7-card carousel</dd><dt>Budget</dt><dd>168 lead + 3,504 sweep + 84 tail = 3,756px</dd><dt>Reason</dt><dd>Desktop rail and phone vertical list have different visual mechanics.</dd><dt>Mobile risk</dt><dd>Phone list, tablet cards, and carousel budget can disagree if one transform owner is not maintained.</dd><dt>Recommendation</dt><dd>Test phone vertical list separately from tablet carousel geometry and reverse edge handoff.</dd></dl></article>
+      </div>
+    </section>
+
+    <section class="section" id="validation">
+      <p class="eyebrow">07 · Validation plan</p>
+      <h2>What must be checked on real devices</h2>
+      <p class="section-intro">Browser emulation confirms source wiring and layout branches, but it cannot prove touch inertia, browser toolbar changes, or bitmap memory. These checks should be recorded before changing global mobile pacing.</p>
+      <div class="table-wrap"><table><thead><tr><th>Device class</th><th>Viewport</th><th>Scenarios</th><th>Record</th><th>Status</th></tr></thead><tbody>
+        <tr><td>Phone</td><td>360-430px portrait</td><td>Fast flick, slow swipe, reverse swipe, Section 08, 12, 14, 16, 17, 18</td><td>Gesture ms, first/last frame, dropped frames, active section, reader edge</td><td><span class="status warn">Open</span></td></tr>
+        <tr><td>Phone landscape</td><td>640-932px wide</td><td>Rotate while loaded, rotate during hold, browser toolbar collapse</td><td>Asset branch, carve, card overflow, scroll owner</td><td><span class="status warn">Open</span></td></tr>
+        <tr><td>Tablet</td><td>768x1024 portrait</td><td>Sections 08, 12, 14, 16, 17, 18; inner reader edges</td><td>Frame pace, card geometry, content completion before fade</td><td><span class="status warn">Open</span></td></tr>
+        <tr><td>Wide tablet</td><td>1024x768 landscape</td><td>Carousel geometry, community layout, Strategy panel, reverse navigation</td><td>Tablet frame source, grid layout, scroll ownership</td><td><span class="status warn">Open</span></td></tr>
+        <tr><td>Reduced motion</td><td>Phone and tablet</td><td>Entry, section movement, carousel, dialogs</td><td>No unnecessary autoplay; content remains readable</td><td><span class="status warn">Open</span></td></tr>
+        <tr><td>Slow network</td><td>Phone and tablet</td><td>Cold load, fast scroll during decode</td><td>Last painted frame, loading gate, white flashes, tab stability</td><td><span class="status warn">Open</span></td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="section" id="plan">
+      <p class="eyebrow">08 · Best-practice plan</p>
+      <h2>Recommended order of work</h2>
+      <div class="grid">
+        <article class="card wide"><span class="status blocker">1 · First</span><h3>Choose the compact scroll owner</h3><p>Keep the one-gesture/one-section requirement, but make the page movement and frame movement share one controlled source. Do not add Lenis, another rAF, or a second scroll writer to patch one section.</p></article>
+        <article class="card wide"><span class="status warn">2 · Then</span><h3>Validate special budgets</h3><p>Test Sections 08, 12, 14, 16, 17, and 18 independently. A generic “slow all mobile” value will make some sections too slow and others still too fast.</p></article>
+        <article class="card wide"><span class="status warn">3 · Measure</span><h3>Separate phone from tablet only with evidence</h3><p>Start with shared compact timing. Add phone-specific or tablet-specific dwell only when real device measurements show a meaningful difference in decode, content height, or touch behavior.</p></article>
+        <article class="card wide"><span class="status pass">4 · Protect</span><h3>Freeze desktop</h3><p>Do not change desktop timeline, Lenis, desktop assets, or desktop layout while mobile/tablet remediation is underway. Keep separate commits and verify desktop remains untouched.</p></article>
+      </div>
+      <div class="no-edit" style="margin-top:16px"><strong>Audit boundary:</strong> This report documents the mobile/tablet problem and recommended fixes. It does not claim real-device validation has passed, and it does not authorize desktop changes.</div>
+    </section>
+  </main>
+  <footer>Horizon Home mobile/tablet animation audit · Source: AnimationLab timeline and runtime smoke checks · Desktop intentionally frozen.</footer>
+  <script>
+    const sections = [
+      {n:'01',id:'01-hero',label:'Hero',settled:'50',enter:'entry autoplay',hold:'20 hold',special:'none',owner:'one-section jump',device:'both',risk:'medium',status:'Open',symptom:'Entry or first handoff feels abrupt on cold load.',cause:'Entry decode and compact handoff meet at the same boundary.',fix:'Measure cold-load handoff on phone and tablet.'},
+      {n:'02',id:'02-main-02',label:'Main bridge',settled:'90',enter:'70-90',hold:'20 hold; slowdown 2',special:'none',owner:'one-section jump',device:'both',risk:'medium',status:'Open',symptom:'Short bridge can pass quickly.',cause:'Small frame window plus touch velocity.',fix:'Validate before adding a compact-only hold.'},
+      {n:'03',id:'03-approach',label:'Approach / physical report',settled:'134',enter:'114-134',hold:'20 hold + 20 virtual exit',special:'reader/dialog',owner:'reader edge + one-section',device:'both',risk:'medium',status:'Open',symptom:'Inner content can compete with page movement.',cause:'Nested reader and outer gesture ownership.',fix:'Test reader top/bottom handoff in both directions.'},
+      {n:'04',id:'04-digital',label:'Digital reporting',settled:'161',enter:'141-161',hold:'20 hold',special:'none',owner:'one-section jump',device:'both',risk:'medium',status:'Open',symptom:'Heading visibility can regress at the transition.',cause:'Layer opacity and compact timing meet at frame 161.',fix:'Keep heading visibility regression coverage.'},
+      {n:'05',id:'05-intro-statement',label:'Intro statement',settled:'255',enter:'245-255',hold:'10 virtual enter + 20 hold + 14 virtual exit',special:'pinned',owner:'one-section + pinned budget',device:'both',risk:'medium',status:'Open',symptom:'Text can appear too briefly.',cause:'Virtual time is easy to skip with native momentum.',fix:'Verify pinned budget is consumed before exit.'},
+      {n:'06',id:'06-key-data-points',label:'Key data points',settled:'275',enter:'263-275',hold:'20 hold',special:'reader/video',owner:'reader edge + one-section',device:'both',risk:'medium',status:'Open',symptom:'Reader and page can feel stuck at an edge.',cause:'Nested overflow and outer scroll handoff.',fix:'Test edge release and reverse entry.'},
+      {n:'07',id:'07-banner-city',label:'City banner',settled:'335',enter:'322-335',hold:'10 virtual enter + 20 hold + 10 virtual exit',special:'pinned',owner:'one-section + pinned budget',device:'both',risk:'medium',status:'Open',symptom:'Banner can flash between nearby sections.',cause:'Short neighboring windows and virtual spans.',fix:'Record frame and opacity at both boundaries.'},
+      {n:'08',id:'08-financial',label:'Financial highlights',settled:'436',enter:'408-436',hold:'60 hold + 20 virtual exit',special:'park-and-hold',owner:'one-section + pinned budget',device:'both',risk:'high',status:'Open',symptom:'Financial content can be skipped or unreadable.',cause:'Long readable hold must beat native flick velocity.',fix:'Validate full hold and reverse navigation.'},
+      {n:'09',id:'09-governance-intro',label:'Governance intro',settled:'511',enter:'490-511',hold:'10 virtual enter + 20 hold + 20 virtual exit',special:'pinned',owner:'one-section + pinned budget',device:'both',risk:'medium',status:'Open',symptom:'Small section may disappear quickly.',cause:'Only a narrow 30-frame visual window.',fix:'Use explicit compact dwell; do not slow all sections.'},
+      {n:'10',id:'10-governance',label:'Corporate governance',settled:'533',enter:'520-533',hold:'15 virtual enter + 30 hold + 20 virtual exit',special:'pinned',owner:'one-section + pinned budget',device:'both',risk:'medium',status:'Open',symptom:'Numbers may not remain long enough to read.',cause:'Shared lighthouse shot with multiple layers.',fix:'Measure readability on phone and tablet.'},
+      {n:'11',id:'11-governance-cards',label:'Governance cards',settled:'540',enter:'535-540',hold:'20 virtual enter + 40 hold + 20 virtual exit',special:'pinned',owner:'one-section + pinned budget',device:'both',risk:'medium',status:'Open',symptom:'Cards may enter while the previous layer is leaving.',cause:'Overlapping short frame windows.',fix:'Test crossfade and complete card dwell.'},
+      {n:'12',id:'12-leadership',label:'Leadership / reporting approach',settled:'555',enter:'553-555',hold:'60 hold + 20 virtual exit',special:'park-and-hold',owner:'one-section + pinned budget',device:'both',risk:'high',status:'Open',symptom:'Content can vanish or feel rushed.',cause:'Two-frame enter followed by a long readable hold.',fix:'Test the hold independently from the shared lighthouse shot.'},
+      {n:'13',id:'13-banner-ocean',label:'Ocean banner',settled:'650',enter:'642-650',hold:'20 virtual enter + 20 hold + 20 virtual exit',special:'pinned',owner:'one-section + pinned budget',device:'both',risk:'medium',status:'Open',symptom:'Banner timing can feel uneven.',cause:'Virtual spans around a short frame window.',fix:'Compare phone and tablet gesture duration.'},
+      {n:'14',id:'14-financial-capital',label:'Financial capitals',settled:'675',enter:'665-675',hold:'20 virtual enter + 20 virtual exit',special:'carousel 3,210px',owner:'carousel + one-section',device:'both',risk:'high',status:'Open',symptom:'Cards race, skip, or fail to release to the next section.',cause:'Frame is pinned while raw scroll drives seven cards.',fix:'Test first/middle/last card and reverse edge.'},
+      {n:'15',id:'15-banner-river',label:'River banner',settled:'782',enter:'762-782',hold:'40 virtual enter + 20 hold',special:'pinned text',owner:'one-section + pinned budget',device:'both',risk:'medium',status:'Open',symptom:'Text may animate too quickly on a flick.',cause:'Virtual enter is not a real frame range.',fix:'Check text completion before exit.'},
+      {n:'16',id:'16-nonfinancial',label:'Non-Financials',settled:'845',enter:'843-845',hold:'60 hold + 20 virtual exit',special:'park-and-hold',owner:'one-section + pinned budget',device:'both',risk:'high',status:'Open',symptom:'Tall cards need more natural mobile reading time.',cause:'Fixed viewport and long content conflict with frame hold.',fix:'Evaluate Strategy-style mobile scroll-through after Section 17 is stable.'},
+      {n:'17',id:'17-strategy',label:'Strategy and risks',settled:'890',enter:'870-890',hold:'none',special:'scroll-through 1,862px; slowdown 2; pin 933',owner:'continuous panel + pinned exit',device:'both',risk:'high',status:'Open',symptom:'Panel previously disappeared halfway.',cause:'Mobile panel runway exceeded its fade budget.',fix:'Keep panel completion before fade; test both compact widths.'},
+      {n:'18',id:'18-community',label:'Community impact',settled:'1020',enter:'1015-1020',hold:'10 virtual enter + 10 virtual exit',special:'carousel 3,756px',owner:'carousel/list + one-section',device:'both',risk:'high',status:'Open',symptom:'Phone list and tablet carousel can feel inconsistent.',cause:'Different layouts share the same section budget.',fix:'Validate phone vertical list separately from tablet geometry.'},
+      {n:'19',id:'19-end-screen',label:'End screen',settled:'1055',enter:'1035-1055',hold:'20-frame crawl; slowdown 2',special:'none',owner:'one-section jump',device:'both',risk:'medium',status:'Open',symptom:'Final message may move faster than expected.',cause:'Half-speed crawl is separate from a pinned hold.',fix:'Verify final content stays loaded through 1075.'}
+    ];
+
+    const body = document.querySelector('#timeline-body');
+    const details = document.querySelector('#detail-grid');
+    const detailCard = (s) => `<article class="card detail finding ${s.risk === 'high' ? '' : s.status === 'Fixed' ? 'pass-card' : ''}" data-device="${s.device}" data-risk="${s.risk}" data-status="${s.status.toLowerCase()}"><div class="finding-head"><h3>${s.n} · ${s.label}</h3><span class="status ${s.status === 'Fixed' ? 'pass' : s.risk === 'high' ? 'blocker' : 'warn'}">${s.status}</span></div><dl><dt>Symptom</dt><dd>${s.symptom}</dd><dt>Root cause</dt><dd>${s.cause}</dd><dt>Recommended fix</dt><dd>${s.fix}</dd><dt>Phone</dt><dd>Mobile frames, portrait layout, compact controller, frame step guard.</dd><dt>Tablet</dt><dd>Tablet frames, wider compact layout, same compact timing until evidence supports an override.</dd><dt>Validation</dt><dd>Open real-device check.</dd></dl><span class="path">${s.id} · timeline.ts · compact controller</span></article>`;
+    body.innerHTML = sections.map(s => `<tr data-device="${s.device}" data-risk="${s.risk}" data-status="${s.status.toLowerCase()}"><td>${s.n}</td><td>${s.label}</td><td>${s.settled}</td><td>${s.enter}</td><td>${s.hold}</td><td>${s.special}</td><td>${s.owner}</td><td><span class="status ${s.risk === 'high' ? 'blocker' : 'warn'}">${s.status}</span></td></tr>`).join('');
+    details.innerHTML = sections.map(detailCard).join('');
+    const filters = document.querySelectorAll('[data-filter]');
+    const note = document.querySelector('#filter-note');
+    filters.forEach(button => button.addEventListener('click', () => {
+      filters.forEach(item => { item.classList.remove('active'); item.setAttribute('aria-pressed', 'false'); });
+      button.classList.add('active'); button.setAttribute('aria-pressed', 'true');
+      const filter = button.dataset.filter;
+      let visible = 0;
+      document.querySelectorAll('#timeline-body tr, #detail-grid article').forEach(item => {
+        const deviceMatch = filter === 'phone' || filter === 'tablet'
+          ? item.dataset.device === filter || item.dataset.device === 'both'
+          : item.dataset.device === filter;
+        const matches = filter === 'all' || deviceMatch || item.dataset.risk === filter || item.dataset.status === filter;
+        item.dataset.hidden = String(!matches); item.style.display = matches ? '' : 'none'; if (matches && item.tagName === 'TR') visible += 1;
+      });
+      note.textContent = filter === 'all' ? 'Showing all 19 sections.' : `Showing ${visible} matching section${visible === 1 ? '' : 's'}.`;
+    }));
+  </script>
+</body>
+</html>

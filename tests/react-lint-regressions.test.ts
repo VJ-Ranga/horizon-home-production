@@ -36,6 +36,7 @@ test("mobile scroll-through panels do not stop short after a swipe", () => {
   const leadership = source("LeadershipLayer.tsx");
   const strategy = source("StrategyLayer.tsx");
   assert.doesNotMatch(leadership, /mobileCurrentRef\.current \+= \(targetPx - mobileCurrentRef\.current\) \* EASE/);
+  assert.match(leadership, /const exitTailPx = \(LEADERSHIP\.virtualExitFrames \?\? 0\) \* pxPerFrame/);
   assert.match(strategy, /const ease = mobile \|\| reduceMotion \? 1 : EASE/);
 });
 
@@ -102,6 +103,13 @@ test("compact scrolling does not start the desktop Lenis loop", () => {
   const lab = source("AnimationLab.tsx");
   assert.match(lab, /if \(phase !== "scroll" \|\| skipEntry \|\| compact\) return;/);
   assert.match(lab, /window\.requestAnimationFrame\(animate\)/);
+});
+
+test("compact navigation remains active when entry is skipped", () => {
+  const lab = source("AnimationLab.tsx");
+  assert.match(lab, /if \(phase !== "scroll" \|\| !compact\) return;/);
+  assert.match(lab, /window\.addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
+  assert.match(lab, /event\.preventDefault\(\);\s*moveOneSection\(direction, window\.scrollY\)/);
 });
 
 test("desktop frame fallback preserves the last painted frame", () => {
