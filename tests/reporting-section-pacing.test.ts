@@ -42,6 +42,13 @@ test("desktop uses the old smooth timing for sections 2-4 while compact keeps cu
   assert.deepEqual(sectionTimingForMode(SECTIONS[3], "compact").enter?.frames, [141, 161]);
 });
 
+test("compact Approach removes the extra virtual exit tail", () => {
+  const section = SECTIONS.find((item) => item.id === "03-approach");
+  assert.ok(section, "03-approach should exist in the timeline");
+  assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames ?? 0, 0);
+  assert.equal(sectionTimingForMode(section, "desktop").virtualExitFrames, 20);
+});
+
 test("banner city reserves a 20-frame virtual hold", () => {
   const section = SECTIONS.find((item) => item.id === "07-banner-city");
   assert.ok(section, "07-banner-city should exist in the timeline");

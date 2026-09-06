@@ -1150,7 +1150,6 @@ export const SECTIONS: SectionTimeline[] = [
     // Finish this section's UI while the background remains pinned at 134.
     // The next section enters at frame 141, so it cannot visibly overlap the
     // Approach panel during its own enter window.
-    virtualExitFrames: 20,
     exit: {
       // FRAME-MAP: window 118 -> 135, camera holds 123-128.
       frames: [145, 158],

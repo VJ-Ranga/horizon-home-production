@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mobile Animation Audit | Haycarb</title>
+  <style>
+    :root { color-scheme: dark; --bg:#11151b; --panel:#1b222b; --line:#35414f; --text:#eaf0f5; --muted:#a9b6c3; --accent:#7bd6c1; --warn:#f0b56b; --bad:#f17d83; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 Inter, ui-sans-serif, system-ui, sans-serif; }
+    main { max-width:1500px; margin:auto; padding:42px 24px 80px; }
+    h1,h2,h3 { line-height:1.15; letter-spacing:-.02em; }
+    h1 { font-size:clamp(2rem,4vw,4rem); margin:0 0 12px; }
+    h2 { margin:42px 0 14px; font-size:1.65rem; }
+    h3 { margin:24px 0 6px; font-size:1.05rem; color:var(--accent); }
+    p { max-width:1000px; color:var(--muted); }
+    .kicker { color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.14em; font-size:.75rem; }
+    .meta { color:var(--muted); margin-bottom:32px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; }
+    .metric { font-size:1.8rem; font-weight:800; color:var(--text); }
+    .label { color:var(--muted); font-size:.85rem; }
+    .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:12px; }
+    table { width:100%; min-width:1120px; border-collapse:collapse; background:var(--panel); }
+    th,td { padding:10px 12px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); }
+    th { color:var(--accent); font-size:.78rem; text-transform:uppercase; letter-spacing:.06em; position:sticky; top:0; background:#202a34; }
+    td:first-child { color:var(--accent); font-weight:800; }
+    .risk { border-left:4px solid var(--bad); padding-left:14px; margin:18px 0; }
+    .risk strong { color:var(--bad); }
+    .note { border-left:4px solid var(--warn); padding:12px 16px; background:#28251e; color:#e8d9bd; }
+    code { color:#b8e7dd; background:#202831; padding:2px 5px; border-radius:4px; }
+    ul { color:var(--muted); max-width:1000px; }
+    footer { margin-top:56px; color:var(--muted); font-size:.85rem; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="kicker">Haycarb Annual Report / Compact Mobile</div>
+  <h1>Mobile Animation Audit</h1>
+  <div class="meta">Audit date: 2026-09-06 | Code state: <code>main @ 9d92363</code> | Report only; no animation code changed.</div>
+
+  <section class="grid">
+    <div class="card"><div class="metric">19</div><div class="label">sections audited</div></div>
+    <div class="card"><div class="metric">4,862px</div><div class="label">largest section: Community</div></div>
+    <div class="card"><div class="metric">6.03s</div><div class="label">Digital -> Intro logical transition</div></div>
+    <div class="card"><div class="metric">10.38fps</div><div class="label">estimated startup rate</div></div>
+  </section>
+
+  <h2>What Is Wrong</h2>
+  <div class="risk"><strong>M-01: Digital -> Intro is too long.</strong> The current navigation calculates frame 161 -> 255 using logical frame distance, approximately 6.03 seconds, even though the timeline contains pinned legs. This creates stop-go-stop movement.</div>
+  <div class="risk"><strong>M-02: Startup jitter.</strong> Entry timing runs around 10.38fps because <code>ENTRY_SPEED</code> is effectively 2 while nearby comments describe a selected speed above 4.</div>
+  <div class="risk"><strong>M-03: Two clocks.</strong> Fast compact flicks limit the emitted frame but preserve raw scroll pixels. Ordinary layers and raw-scroll carousel layers can therefore disagree.</div>
+  <div class="risk"><strong>M-04: Uneven swipe policy.</strong> Virtual holds are not all treated as independent mobile stops, so some sections feel empty and others are crossed too quickly.</div>
+  <div class="risk"><strong>M-05: Long card sections.</strong> Capitals Management is about 4,442px / 6 swipes; Community is about 4,862px / 7 swipes.</div>
+
+  <h2>Section-by-Section Map</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Section</th><th>Settle</th><th>Enter</th><th>Exit</th><th>Virtual E/H/X</th><th>Special/crawl</th><th>Pixels</th><th>Swipes</th><th>Assessment</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Hero</td><td>50</td><td>Autoplay</td><td>50-70</td><td>0/20/0</td><td>none</td><td>560</td><td>1</td><td>Good one-swipe target.</td></tr>
+        <tr><td>2</td><td>Main 02</td><td>90</td><td>70-90</td><td>91-105</td><td>0/20/0</td><td>4f crawl, 2x</td><td>910</td><td>2</td><td>Short section slightly over one swipe.</td></tr>
+        <tr><td>3</td><td>Approach</td><td>134</td><td>114-134</td><td>145-158</td><td>0/20/20</td><td>4f crawl, 6x</td><td>1,736</td><td>3</td><td>Long content reader.</td></tr>
+        <tr><td>4</td><td>Digital</td><td>161</td><td>141-161</td><td>161-181</td><td>0/20/0</td><td>4f crawl, 6x</td><td>1,680</td><td>3</td><td>Handoff to section 5 needs correction.</td></tr>
+        <tr><td>5</td><td>Intro Statement</td><td>255</td><td>245-255</td><td>255-269</td><td>10/20/14</td><td>none</td><td>952</td><td>2</td><td>Startup and virtual timing risk.</td></tr>
+        <tr><td>6</td><td>Key Data Points</td><td>275</td><td>263-275</td><td>279-280</td><td>0/20/20</td><td>9f crawl, 6x</td><td>2,058</td><td>3</td><td>Large reveal crawl.</td></tr>
+        <tr><td>7</td><td>Banner City</td><td>335</td><td>322-335</td><td>335-371</td><td>10/20/10</td><td>4f crawl, 6x</td><td>1,806</td><td>3</td><td>Long for a banner.</td></tr>
+        <tr><td>8</td><td>Financial Highlights</td><td>436</td><td>408-436</td><td>448-454</td><td>0/60/20</td><td>16f crawl, 6x</td><td>4,004</td><td>6</td><td>Frame 420-436 is deliberately slow; total section is long.</td></tr>
+        <tr><td>9</td><td>Governance Intro</td><td>511</td><td>490-511</td><td>511-520</td><td>10/20/20</td><td>4f crawl, 6x</td><td>1,680</td><td>3</td><td>Virtual timing not independently navigated.</td></tr>
+        <tr><td>10</td><td>Governance</td><td>533</td><td>520-533</td><td>533-540</td><td>15/30/20</td><td>4f crawl, 6x</td><td>1,750</td><td>3</td><td>Dense hold.</td></tr>
+        <tr><td>11</td><td>Governance Cards</td><td>540</td><td>535-540</td><td>540-550</td><td>20/40/20</td><td>4f crawl, 6x</td><td>1,610</td><td>3</td><td>Dense cards, short real frame range.</td></tr>
+        <tr><td>12</td><td>Leadership</td><td>555</td><td>553-555</td><td>555-575</td><td>0/60/20</td><td>4f crawl, 6x</td><td>1,988</td><td>3</td><td>Content and handoff tail need careful test.</td></tr>
+        <tr><td>13</td><td>Banner Ocean</td><td>650</td><td>642-650</td><td>650-665</td><td>20/20/20</td><td>4f crawl, 6x</td><td>1,722</td><td>3</td><td>60 virtual frames.</td></tr>
+        <tr><td>14</td><td>Capitals Management</td><td>675</td><td>665-675</td><td>675-693</td><td>20/0/20</td><td>carousel 3,210px</td><td>4,442</td><td>6</td><td>Highest-priority card slider issue.</td></tr>
+        <tr><td>15</td><td>Banner River</td><td>782</td><td>762-782</td><td>782-802</td><td>40/20/0</td><td>none</td><td>1,400</td><td>2</td><td>40-frame virtual text entry.</td></tr>
+        <tr><td>16</td><td>Non-Financial</td><td>845</td><td>843-845</td><td>857-863</td><td>0/60/20</td><td>4f crawl, 6x</td><td>1,960</td><td>3</td><td>Long static/card hold.</td></tr>
+        <tr><td>17</td><td>Strategy</td><td>890</td><td>870-890</td><td>933-963</td><td>0/0/30</td><td>scroll-through 1,862px</td><td>2,702</td><td>4</td><td>Panel must finish before fade.</td></tr>
+        <tr><td>18</td><td>Community</td><td>1,020</td><td>1,015-1,020</td><td>1,038-1,054</td><td>10/0/10</td><td>carousel 3,756px</td><td>4,862</td><td>7</td><td>Longest section; likely unusable as one lock.</td></tr>
+        <tr><td>19</td><td>End Screen</td><td>1,055</td><td>1,035-1,055</td><td>1,075-1,100</td><td>0/0/0</td><td>20f crawl, 2x</td><td>1,470</td><td>2</td><td>Final handoff can feel stuck.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Target Swap Policy</h2>
+  <div class="note">Use one full swipe for normal section handoffs. Use controlled multiple gestures only for content that is genuinely taller than one viewport: Capitals cards, Strategy content, and Community stories. Do not make a virtual hold silently consume six or seven full swipes.</div>
+  <ul>
+    <li>Hero -> Main 02: one swipe.</li>
+    <li>Main 02 -> Approach: one swipe.</li>
+    <li>Approach -> Digital: one swipe.</li>
+    <li>Digital -> Intro: one smooth swipe, no 6-second logical-frame transition.</li>
+    <li>Capitals Management: one controlled card step per gesture, with bounded card distance.</li>
+    <li>Strategy: two to four controlled content gestures.</li>
+    <li>Community: one controlled story step per gesture, not a seven-swipe dead lock.</li>
+    <li>All section exits: one predictable handoff after content has completed.</li>
+  </ul>
+
+  <h2>Fix Order</h2>
+  <ol>
+    <li>Correct Digital -> Intro duration from actual piecewise scroll distance.</li>
+    <li>Correct startup speed and remove stop-go-stop in the first 10-20 frames.</li>
+    <li>Declare a compact policy per section: single-swipe, read-hold, card-step, or content-scroll.</li>
+    <li>Redesign Capitals and Community budgets around card/story steps.</li>
+    <li>Reconcile raw scroll and frame-limited visual state during flicks.</li>
+    <li>Add automated expected-pixels and expected-swipes tests for all 19 sections.</li>
+  </ol>
+
+  <footer>Source files: <code>timeline.ts</code>, <code>compactNavigation.ts</code>, <code>AnimationLab.tsx</code>, <code>useFrameTimeline.ts</code>, and section layer files. Estimates are based on 14px/frame and an 800px full swipe.</footer>
+</main>
+</body>
+</html>

@@ -29,8 +29,8 @@ test("compact frame mapping keeps current timing while desktop uses the legacy t
 
   assert.notEqual(compactTotal, desktopTotal);
   assert.notEqual(
-    scrollPxForFrame(161, pxPerFrame, "compact"),
-    scrollPxForFrame(161, pxPerFrame, "desktop"),
+    scrollPxForFrame(180, pxPerFrame, "compact"),
+    scrollPxForFrame(180, pxPerFrame, "desktop"),
   );
 
   for (const frame of [50, 161, 350, 700, 1125]) {
@@ -52,12 +52,12 @@ test("compact section-layer state initially mirrors desktop state", () => {
   );
 });
 
-test("desktop Section 3 keeps 20 virtual exit frames", () => {
+test("desktop Section 3 keeps its virtual exit while compact removes it", () => {
   const section = SECTIONS.find((item) => item.id === "03-approach");
 
   assert.ok(section);
   assert.equal(sectionTimingForMode(section, "desktop").virtualExitFrames, 20);
-  assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames, 20);
+  assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames, undefined);
 });
 
 test("desktop Section 19 holds until 1085 before exiting to 1110", () => {
