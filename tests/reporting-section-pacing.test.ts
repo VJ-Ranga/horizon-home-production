@@ -55,6 +55,12 @@ test("financial highlights reserves a 60-frame virtual hold", () => {
   assert.deepEqual(section.enter?.frames, [408, 436]);
 });
 
+test("financial highlights slows its final 16 entrance frames", () => {
+  const section = SECTIONS.find((item) => item.id === "08-financial");
+  assert.ok(section, "08-financial should exist in the timeline");
+  assert.equal(section.holdCrawlFrames, 16);
+});
+
 test("text bridge sections reserve 20-frame virtual holds", () => {
   for (const id of ["09-governance-intro", "13-banner-ocean", "15-banner-river"]) {
     const section = SECTIONS.find((item) => item.id === id);

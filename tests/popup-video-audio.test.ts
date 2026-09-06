@@ -28,3 +28,12 @@ for (const file of ["HeroLayer.tsx", "ApproachLayer.tsx", "GlanceLayer.tsx"]) {
     assert.match(source, /notifyPopupVideo\("close"\)/);
   });
 }
+
+test("community popup videos also pause background music", () => {
+  const source = readFileSync(
+    new URL("../src/components/AnimationLab/CommunityLayer.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /notifyPopupVideo\("open"\)/);
+  assert.match(source, /notifyPopupVideo\("close"\)/);
+});

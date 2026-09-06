@@ -11,6 +11,7 @@
 import { useEffect, useRef } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
+import { notifyPopupVideo } from "./popupVideoAudio";
 
 const COMMUNITY = SECTIONS[17];
 const CARD_COUNT = COMMUNITY.carousel!.count;
@@ -147,6 +148,7 @@ export default function CommunityLayer() {
 
   const openVideo = (url: string) => {
     if (videoFrameRef.current) videoFrameRef.current.src = embedSrc(url);
+    notifyPopupVideo("open");
     dialogRef.current?.showModal();
   };
 
@@ -229,6 +231,7 @@ export default function CommunityLayer() {
         }}
         onClose={() => {
           if (videoFrameRef.current) videoFrameRef.current.src = "";
+          notifyPopupVideo("close");
         }}
       >
         <iframe

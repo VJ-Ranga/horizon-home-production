@@ -1304,6 +1304,7 @@ export const SECTIONS: SectionTimeline[] = [
     enter: { frames: [408, 436], from: {} },
     exit: { frames: [448, 454], to: { y: -5 } },
     holdFrames: 60,
+    holdCrawlFrames: 16,
     virtualExitFrames: 20,
   },
   {
