@@ -6,13 +6,14 @@ import {
   compactSpecialTargetScrollPx,
   compactSpecialTransitionDurationMs,
   compactTransitionDurationMs,
+  compactInputDeltaPx,
   readerConsumesScroll,
   nextCompactSectionFrame,
 } from "../src/components/AnimationLab/compactNavigation.ts";
 
 test("compact scroll-through sections apply their slowdown to gesture duration", () => {
-  assert.equal(compactSpecialTransitionDurationMs(1_862, 14, 1), 8_867);
-  assert.equal(compactSpecialTransitionDurationMs(1_862, 14, 2), 17_733);
+  assert.equal(compactSpecialTransitionDurationMs(1_862, 14, 1), 25_615);
+  assert.equal(compactSpecialTransitionDurationMs(1_862, 14, 2), 51_231);
 });
 
 test("compact navigation spends a gesture on pinned holds and scroll-through spans", () => {
@@ -47,11 +48,18 @@ test("large compact gestures target only the adjacent settled section", () => {
   assert.equal(nextCompactSectionFrame(50, [50, 150, 250], -1), null);
 });
 
-test("normal compact section jumps use the original smooth duration", () => {
-  assert.equal(compactTransitionDurationMs(50, 90), 550);
-  assert.equal(compactTransitionDurationMs(161, 255), 550);
-  assert.equal(compactTransitionDurationMs(255, 275), 550);
-  assert.equal(compactTransitionDurationMs(275, 335), 550);
+test("normal compact section jumps are capped at source playback speed", () => {
+  assert.equal(compactTransitionDurationMs(50, 90), 7704);
+  assert.equal(compactTransitionDurationMs(161, 255), 18104);
+  assert.equal(compactTransitionDurationMs(255, 275), 3852);
+  assert.equal(compactTransitionDurationMs(275, 335), 11556);
+});
+
+test("special compact input is capped without creating an animation tail", () => {
+  assert.equal(compactInputDeltaPx(1_000, 1_000, 14), 72.6908);
+  assert.equal(compactInputDeltaPx(-1_000, 1_000, 14), -72.6908);
+  assert.equal(compactInputDeltaPx(20, 1_000, 14), 20);
+  assert.equal(compactInputDeltaPx(1_000, 0, 14), 0);
 });
 
 test("inner readers consume gestures only while they have room in that direction", () => {

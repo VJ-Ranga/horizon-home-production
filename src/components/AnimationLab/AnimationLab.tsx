@@ -68,6 +68,7 @@ import { beginFrameJump, endFrameJump } from "./mobileFrameGuard";
 import {
   compactSpecialTargetScrollPx,
   compactSpecialTransitionDurationMs,
+  compactInputDeltaPx,
   compactTransitionDurationMs,
   nextCompactSectionFrame,
   readerConsumesScroll,
@@ -563,10 +564,13 @@ export default function AnimationLab({
     if (phase !== "scroll" || !compact) return;
 
     let startY: number | null = null;
+    let lastTouchY: number | null = null;
     let startScrollY = 0;
     let startedInsideReader = false;
     let readerElement: HTMLElement | null = null;
     let animationFrameId: number | null = null;
+    let lastSpecialInputAt = 0;
+    let specialMovedDuringTouch = false;
 
     const clearNavigationLock = () => {
       compactNavigationLockRef.current = false;
@@ -577,10 +581,15 @@ export default function AnimationLab({
       }
     };
 
-    const moveOneSection = (direction: 1 | -1, scrollY: number) => {
-      if (compactNavigationLockRef.current) return;
+    const moveOneSection = (
+      direction: 1 | -1,
+      scrollY: number,
+      inputDeltaPx?: number,
+      specialOnly = false,
+    ): boolean => {
+      if (compactNavigationLockRef.current) return false;
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      if (scrollable <= 0) return;
+      if (scrollable <= 0) return false;
       const currentProgress = Math.min(Math.max(scrollY / scrollable, 0), 1);
       const currentScrollPx = currentProgress * totalScrollPx(pxPerFrame, "compact");
       const currentFrame = frameForScrollPx(
@@ -623,7 +632,24 @@ export default function AnimationLab({
         SECTIONS.map((section) => section.settledFrame),
         direction,
       );
-      if (targetFrame === null && specialTargetPx === null) return;
+      if (targetFrame === null && specialTargetPx === null) return false;
+
+      if (specialTargetPx !== null && inputDeltaPx !== undefined) {
+        const now = performance.now();
+        const elapsedMs = lastSpecialInputAt === 0
+          ? 16.67
+          : Math.max(now - lastSpecialInputAt, 1);
+        lastSpecialInputAt = now;
+        const cappedDeltaPx = compactInputDeltaPx(inputDeltaPx, elapsedMs, pxPerFrame);
+        const targetY = (specialTargetPx / totalScrollPx(pxPerFrame, "compact")) * scrollable;
+        const nextY = direction > 0
+          ? Math.min(scrollY + cappedDeltaPx, targetY)
+          : Math.max(scrollY - cappedDeltaPx, targetY);
+        window.scrollTo({ top: nextY, behavior: "auto" });
+        return true;
+      }
+
+      if (specialOnly) return false;
 
       compactNavigationLockRef.current = true;
       compactNavigationTargetRef.current = specialTargetPx === null ? targetFrame : null;
@@ -660,6 +686,7 @@ export default function AnimationLab({
         duration + 500,
       );
       animationFrameId = window.requestAnimationFrame(animate);
+      return false;
     };
 
     const unsubscribe = driver.subscribe((frame, nextPhase) => {
@@ -671,7 +698,10 @@ export default function AnimationLab({
 
     const onTouchStart = (event: TouchEvent) => {
       startY = event.touches[0]?.clientY ?? null;
+      lastTouchY = startY;
       startScrollY = window.scrollY;
+      lastSpecialInputAt = performance.now();
+      specialMovedDuringTouch = false;
       readerElement = (event.target as HTMLElement | null)?.closest("[data-lenis-prevent]") ?? null;
       startedInsideReader = readerElement !== null;
     };
@@ -679,19 +709,26 @@ export default function AnimationLab({
     const onTouchMove = (event: TouchEvent) => {
       if (!startedInsideReader) {
         event.preventDefault();
-        return;
-      }
-      if (!readerElement || startY === null) return;
-      const touchY = event.touches[0]?.clientY ?? startY;
-      const direction = startY - touchY > 0 ? 1 : -1;
-      if (!readerConsumesScroll(
-        readerElement.scrollTop,
-        readerElement.clientHeight,
-        readerElement.scrollHeight,
-        direction,
-      )) {
+      } else {
+        if (!readerElement || startY === null) return;
+        const touchY = event.touches[0]?.clientY ?? startY;
+        const direction = startY - touchY > 0 ? 1 : -1;
+        if (readerConsumesScroll(
+          readerElement.scrollTop,
+          readerElement.clientHeight,
+          readerElement.scrollHeight,
+          direction,
+        )) return;
         event.preventDefault();
       }
+
+      const touchY = event.touches[0]?.clientY ?? lastTouchY ?? startY ?? 0;
+      const previousTouchY = lastTouchY ?? touchY;
+      const deltaPx = Math.abs(previousTouchY - touchY);
+      if (deltaPx < 1) return;
+      const direction = previousTouchY - touchY > 0 ? 1 : -1;
+      specialMovedDuringTouch = moveOneSection(direction, window.scrollY, deltaPx, true) || specialMovedDuringTouch;
+      lastTouchY = touchY;
     };
 
     const onTouchEnd = (event: TouchEvent) => {
@@ -699,6 +736,7 @@ export default function AnimationLab({
       const endY = event.changedTouches[0]?.clientY ?? startY;
       const delta = startY - endY;
       startY = null;
+      lastTouchY = null;
       const direction = delta > 0 ? 1 : -1;
       const readerAtEdge = readerElement !== null && !readerConsumesScroll(
         readerElement.scrollTop,
@@ -708,7 +746,10 @@ export default function AnimationLab({
       );
       readerElement = null;
       if (Math.abs(delta) < 24 || (startedInsideReader && !readerAtEdge)) return;
-      moveOneSection(delta > 0 ? 1 : -1, startScrollY);
+      if (!specialMovedDuringTouch) {
+        moveOneSection(delta > 0 ? 1 : -1, startScrollY, Math.abs(delta));
+      }
+      specialMovedDuringTouch = false;
     };
 
     const onWheel = (event: WheelEvent) => {
@@ -722,7 +763,7 @@ export default function AnimationLab({
         direction,
       )) return;
       event.preventDefault();
-      moveOneSection(direction, window.scrollY);
+      moveOneSection(direction, window.scrollY, Math.abs(event.deltaY));
     };
 
     window.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -1145,9 +1186,44 @@ export default function AnimationLab({
             role="status"
             aria-live="polite"
           >
-            <span className="lab-mobile-loading__ring" aria-hidden="true" />
-            <p>Preparing mobile experience</p>
-            <span>{mobileLoadProgress}%</span>
+            <div className="lab-intro__load">
+              <div className="lab-intro__aurora" aria-hidden="true">
+                <span className="lab-intro__aurora-base" />
+                <span className="lab-intro__fluid lab-intro__fluid--1" />
+                <span className="lab-intro__fluid lab-intro__fluid--2" />
+                <span className="lab-intro__fluid lab-intro__fluid--3" />
+                <span className="lab-intro__fluid lab-intro__fluid--4" />
+                <span className="lab-intro__aurora-noise" />
+              </div>
+              <div className="lab-intro__loader">
+                <div className="lab-intro__dial">
+                  <svg className="lab-intro__ring" viewBox="0 0 260 260" aria-hidden="true">
+                    <circle className="lab-intro__ring-track" cx="130" cy="130" r="120" pathLength={100} />
+                    <circle
+                      className="lab-intro__ring-fill"
+                      cx="130"
+                      cy="130"
+                      r="120"
+                      pathLength={100}
+                      style={{ strokeDashoffset: 100 - mobileLoadProgress }}
+                    />
+                    <circle
+                      className="lab-intro__ring-head"
+                      cx="130"
+                      cy="130"
+                      r="120"
+                      pathLength={100}
+                      style={{ strokeDashoffset: 100 - mobileLoadProgress }}
+                    />
+                  </svg>
+                  <p className="lab-intro__count" aria-live="polite">
+                    {mobileLoadProgress}
+                    <span className="lab-intro__count-pct">%</span>
+                  </p>
+                </div>
+                <p className="lab-intro__label">Loading</p>
+              </div>
+            </div>
           </div>
         )}
 

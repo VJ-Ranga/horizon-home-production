@@ -530,15 +530,13 @@ html.lab-menu-open body {
   position: fixed;
   inset: 0;
   z-index: 7;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: var(--on-dark);
-  background: rgba(7, 18, 22, 0.92);
+  overflow: hidden;
+  color: #ffffff;
   pointer-events: none;
-  text-align: center;
+}
+.lab-mobile-loading .lab-intro__load {
+  display: grid;
+  opacity: 1;
 }
 
 .lab-mobile-loading p,
@@ -556,10 +554,6 @@ html.lab-menu-open body {
   border-top-color: var(--on-dark);
   border-radius: 50%;
   animation: lab-loading-spin 0.8s linear infinite;
-}
-
-@media (min-width: 701px) {
-  .lab-mobile-loading { display: none; }
 }
 
 @keyframes lab-loading-spin {

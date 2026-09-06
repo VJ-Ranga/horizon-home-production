@@ -1,6 +1,14 @@
-export const COMPACT_TRANSITION_FPS = 15;
-const DEFAULT_COMPACT_TRANSITION_MS = 550;
+export const COMPACT_TRANSITION_FPS = 5.1922;
 const SETTLED_FRAME_EPSILON = 0.25;
+
+export function compactInputDeltaPx(
+  deltaPx: number,
+  elapsedMs: number,
+  pxPerFrame: number,
+): number {
+  const maxDistance = Math.max(elapsedMs, 0) / 1000 * COMPACT_TRANSITION_FPS * pxPerFrame;
+  return Math.sign(deltaPx) * Math.min(Math.abs(deltaPx), maxDistance);
+}
 
 export function compactSpecialTargetScrollPx(
   currentScrollPx: number,
@@ -59,10 +67,10 @@ export function nextCompactSectionFrame(
 }
 
 export function compactTransitionDurationMs(
-  _currentFrame: number,
-  _targetFrame: number,
+  currentFrame: number,
+  targetFrame: number,
 ): number {
-  void _currentFrame;
-  void _targetFrame;
-  return DEFAULT_COMPACT_TRANSITION_MS;
+  return Math.round(
+    (Math.abs(targetFrame - currentFrame) / COMPACT_TRANSITION_FPS) * 1000,
+  );
 }

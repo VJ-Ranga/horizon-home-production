@@ -109,7 +109,7 @@ test("compact navigation remains active when entry is skipped", () => {
   const lab = source("AnimationLab.tsx");
   assert.match(lab, /if \(phase !== "scroll" \|\| !compact\) return;/);
   assert.match(lab, /window\.addEventListener\("wheel", onWheel, \{ passive: false \}\)/);
-  assert.match(lab, /event\.preventDefault\(\);\s*moveOneSection\(direction, window\.scrollY\)/);
+  assert.match(lab, /event\.preventDefault\(\);\s*moveOneSection\(direction, window\.scrollY, Math\.abs\(event\.deltaY\)\)/);
 });
 
 test("desktop frame fallback preserves the last painted frame", () => {
