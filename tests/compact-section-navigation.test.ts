@@ -119,7 +119,7 @@ test("compact outer navigation prevents native momentum and locks transitions", 
   assert.match(source, /event\.preventDefault\(\)/);
   assert.match(
     source,
-    /closest\(\s*"\[data-lenis-prevent\], \.s-glance2__stage, \.s-financial2__stage, \.s-fincap",\s*\)/,
+    /closest\(\s*"\[data-lenis-prevent\], \.s-glance2__stage, \.s-financial2__stage, \.s-fincap, \.s-leadership5",\s*\)/,
   );
   assert.match(source, /targetFrame[\s\S]*settledFrame/);
   assert.match(source, /compactTransitionDurationMs/);
