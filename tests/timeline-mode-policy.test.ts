@@ -10,6 +10,10 @@ import {
   timelinePolicy,
   totalScrollPx,
 } from "../src/components/AnimationLab/timeline.ts";
+const timelineSource = readFileSync(
+  new URL("../src/components/AnimationLab/timeline.ts", import.meta.url),
+  "utf8",
+);
 
 test("desktop and compact timeline policies are explicit and preserve current values", () => {
   const desktop = timelinePolicy("desktop");
@@ -70,6 +74,15 @@ test("compact Leadership enters at 553 and exits shortly after 555", () => {
   assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames, 0);
   assert.deepEqual(sectionTimingForMode(section, "desktop").enter?.frames, [553, 555]);
   assert.deepEqual(sectionTimingForMode(section, "desktop").exit?.frames, [555, 575]);
+});
+
+test("compact Financial Capital removes the invisible carousel tail", () => {
+  const section = SECTIONS.find((item) => item.id === "14-financial-capital");
+
+  assert.ok(section);
+  assert.equal(sectionTimingForMode(section, "desktop").virtualExitFrames, 20);
+  assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames, 0);
+  assert.match(timelineSource, /mode === "compact"[\s\S]*14-financial-capital/);
 });
 
 test("desktop Section 19 holds until 1085 before exiting to 1110", () => {

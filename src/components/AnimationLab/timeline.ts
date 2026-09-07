@@ -336,7 +336,9 @@ function stops(mode: TimelineMode = "desktop"): Stop[] {
       virtualExitFrames: section.virtualExitFrames ?? 0,
       virtualEnterFrames: section.virtualEnterFrames ?? 0,
     }));
-    const carouselStops: Stop[] = timedSections.filter((section) => section.carousel).map(
+    const carouselStops: Stop[] = timedSections.filter(
+      (section) => section.carousel && !(mode === "compact" && section.id === "14-financial-capital")
+    ).map(
       (section) => ({
         kind: "carousel",
         sectionId: section.id,
@@ -1070,6 +1072,9 @@ const COMPACT_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
   "12-leadership": {
     enter: { frames: [553, 555], from: {} },
     exit: { frames: [555, 558], to: { y: 4 } },
+    virtualExitFrames: 0,
+  },
+  "14-financial-capital": {
     virtualExitFrames: 0,
   },
 };
