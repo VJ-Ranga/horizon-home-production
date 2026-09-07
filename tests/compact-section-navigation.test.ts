@@ -142,6 +142,10 @@ test("capital slider remains on bounded section input instead of native page pas
   assert.doesNotMatch(source, /reader\?\.matches\("\.s-fincap"\)\) return/);
 });
 
+test("Leadership edge handoff does not consume a separate outer special budget", () => {
+  assert.doesNotMatch(source, /section\.id === "12-leadership"/);
+});
+
 test("compact frame limiting preserves continuous scroll input for pinned sections", () => {
   assert.doesNotMatch(
     frameDriverSource,

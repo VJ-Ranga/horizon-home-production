@@ -71,7 +71,6 @@ import {
   compactInputDeltaPx,
   COMPACT_CARD_AND_LEADERSHIP_INPUT_SCALE,
   COMPACT_NATIVE_READER_SELECTOR,
-  compactLeadershipScrollBudgetPx,
   compactScrollSupportThresholdPx,
   compactTransitionDurationMs,
   nextCompactSectionFrame,
@@ -589,14 +588,6 @@ export default function AnimationLab({
       }
       if (section.scrollThrough) {
         return section.scrollThrough.scrollPx + (section.virtualEnterFrames ?? 0) * pxPerFrame;
-      }
-      if (section.id === "12-leadership") {
-        return compactLeadershipScrollBudgetPx(
-          section.holdFrames ?? 0,
-          section.virtualExitFrames ?? 0,
-          pxPerFrame,
-          !window.matchMedia("(max-width: 1100px)").matches,
-        );
       }
       return 0;
     };
