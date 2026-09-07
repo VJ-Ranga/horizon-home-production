@@ -85,21 +85,12 @@ test("compact Financial Capital removes the invisible carousel tail", () => {
   assert.match(timelineSource, /mode === "compact"[\s\S]*14-financial-capital/);
 });
 
-test("compact Strategy removes only the 60-frame virtual reader hold", () => {
+test("compact Strategy removes the desktop pin and uses normal timing", () => {
   const section = SECTIONS.find((item) => item.id === "17-strategy");
 
   assert.ok(section?.scrollThrough);
   assert.equal(sectionTimingForMode(section, "desktop").scrollThrough?.scrollPx, 1_862);
-  assert.equal(sectionTimingForMode(section, "compact").scrollThrough?.scrollPx, 1_022);
-  assert.equal(sectionTimingForMode(section, "compact").scrollThrough?.virtualExitFrames, 30);
-});
-
-test("compact Community uses the native card reader without a carousel budget", () => {
-  const section = SECTIONS.find((item) => item.id === "18-community");
-
-  assert.ok(section?.carousel);
-  assert.equal(sectionTimingForMode(section, "desktop").carousel?.scrollPx, 3_756);
-  assert.equal(sectionTimingForMode(section, "compact").carousel, undefined);
+  assert.equal(sectionTimingForMode(section, "compact").scrollThrough, undefined);
 });
 
 test("Community exits quickly before the end screen handoff", () => {

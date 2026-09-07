@@ -1069,6 +1069,9 @@ const DESKTOP_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
 };
 
 const COMPACT_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
+  "17-strategy": {
+    scrollThrough: undefined,
+  },
   "12-leadership": {
     enter: { frames: [553, 555], from: {} },
     exit: { frames: [555, 558], to: { y: 4 } },
@@ -1093,17 +1096,6 @@ export function sectionTimingForMode(
     : COMPACT_TIMING_OVERRIDES;
   const override = overrides[section.id];
   const timedSection = override ? { ...section, ...override } : section;
-  if (mode === "compact" && section.id === "17-strategy" && timedSection.scrollThrough) {
-    return {
-      ...timedSection,
-      scrollThrough: {
-        ...timedSection.scrollThrough,
-        // Compact readers scroll the content natively, so remove the desktop
-        // 60-frame panel hold while preserving the real approach and exit.
-        scrollPx: timedSection.scrollThrough.scrollPx - 60 * PX_PER_FRAME_DEFAULT,
-      },
-    };
-  }
   return timedSection;
 }
 

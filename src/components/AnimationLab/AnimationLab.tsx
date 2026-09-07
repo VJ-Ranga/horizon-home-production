@@ -764,6 +764,8 @@ export default function AnimationLab({
         readerElement.scrollHeight,
         direction,
       );
+      const communityAtExitEdge = readerElement?.matches(".s-community__stage") &&
+        direction > 0 && readerAtEdge;
       readerElement = null;
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
       const currentProgress = scrollable > 0
@@ -780,6 +782,11 @@ export default function AnimationLab({
         ? compactScrollSupportThresholdPx(window.innerHeight)
         : 24;
       if (Math.abs(delta) < swipeThreshold || (startedInsideReader && !readerAtEdge)) return;
+      if (communityAtExitEdge) {
+        moveOneSection(1, startScrollY);
+        specialMovedDuringTouch = false;
+        return;
+      }
       if (!specialMovedDuringTouch) {
         moveOneSection(delta > 0 ? 1 : -1, startScrollY, Math.abs(delta));
       }

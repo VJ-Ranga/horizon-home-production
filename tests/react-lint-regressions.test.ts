@@ -86,13 +86,6 @@ test("Leadership compact reader uses the full viewport", () => {
   assert.match(styles, /\.s-leadership5\s*\{[\s\S]*max-height: 100dvh/);
 });
 
-test("Community compact reader uses edge-aware native scrolling", () => {
-  const community = source("CommunityLayer.tsx");
-  assert.match(community, /data-lenis-prevent/);
-  assert.match(community, /viewport\.scrollTop < max - 1/);
-  assert.doesNotMatch(community, /s-community__stage" data-lenis-prevent/);
-});
-
 test("tablet compact mode does not fall back to desktop frames", () => {
   const scrubber = source("LabScrubber.tsx");
   const harness = source("AnimationLab.tsx");

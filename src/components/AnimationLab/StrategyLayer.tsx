@@ -120,7 +120,7 @@ export default function StrategyLayer() {
   useFrameEffect((_frame, _phase, scrollPx, mode) => {
     const panel = panelRef.current;
     if (!panel) return;
-    if (window.matchMedia("(max-width: 700px)").matches) {
+    if (mode === "compact" || window.matchMedia("(max-width: 700px)").matches) {
       panel.style.transform = "";
       currentRef.current = 0;
       return;

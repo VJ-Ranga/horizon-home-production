@@ -240,6 +240,8 @@
 .lab .s-strategy__cta svg { width: 17px; height: 17px; margin-right: 9px; }
 
 @media (max-width: 1100px) {
+  .lab .s-strategy { max-height: 100dvh; overflow-y: auto; overflow-x: hidden; padding-bottom: 40px; overscroll-behavior-y: auto; -webkit-overflow-scrolling: touch; }
+  .lab .s-strategy__panel { transform: none !important; }
   .lab .s-strategy__pillars { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 

@@ -113,59 +113,6 @@ export default function CommunityLayer() {
   }, []);
 
   useEffect(() => {
-    const stage = ref.current;
-    const viewport = viewportRef.current;
-    if (!stage || !viewport) return;
-    const compact = window.matchMedia("(max-width: 1100px)");
-    const readerConsumes = (direction: number) => {
-      const max = viewport.scrollHeight - viewport.clientHeight;
-      const horizontalMax = viewport.scrollWidth - viewport.clientWidth;
-      if (direction > 0) return compact.matches
-        ? (viewport.scrollTop < max - 1 || viewport.scrollLeft < horizontalMax - 1)
-        : false;
-      if (direction < 0) return compact.matches
-        ? (viewport.scrollTop > 1 || viewport.scrollLeft > 1)
-        : false;
-      return false;
-    };
-    const apply = (direction: number) => {
-      if (!compact.matches) {
-        stage.setAttribute("data-lenis-prevent", "");
-        viewport.removeAttribute("data-lenis-prevent");
-        return;
-      }
-      stage.removeAttribute("data-lenis-prevent");
-      if (readerConsumes(direction)) viewport.setAttribute("data-lenis-prevent", "");
-      else viewport.removeAttribute("data-lenis-prevent");
-    };
-    let touchY = 0;
-    const onTouchStart = (event: TouchEvent) => {
-      touchY = event.touches[0]?.clientY ?? 0;
-      apply(1);
-    };
-    const onTouchMove = (event: TouchEvent) => {
-      const y = event.touches[0]?.clientY ?? touchY;
-      apply(touchY - y);
-      touchY = y;
-    };
-    const onWheel = (event: WheelEvent) => apply(event.deltaY);
-    const onMediaChange = () => apply(0);
-    apply(0);
-    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
-    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
-    viewport.addEventListener("wheel", onWheel, { passive: true });
-    compact.addEventListener("change", onMediaChange);
-    return () => {
-      viewport.removeEventListener("touchstart", onTouchStart);
-      viewport.removeEventListener("touchmove", onTouchMove);
-      viewport.removeEventListener("wheel", onWheel);
-      compact.removeEventListener("change", onMediaChange);
-      stage.removeAttribute("data-lenis-prevent");
-      viewport.removeAttribute("data-lenis-prevent");
-    };
-  }, [ref]);
-
-  useEffect(() => {
     const rail = railRef.current;
     const viewport = viewportRef.current;
     const firstCard = rail?.querySelector<HTMLElement>(".s-community__card");
@@ -252,13 +199,13 @@ export default function CommunityLayer() {
 
   return (
     <div className="lab-layer s-community" ref={ref} data-section={COMMUNITY.id} data-initial-hidden="true" aria-labelledby="community-title">
-      <div className="s-community__stage">
+      <div className="s-community__stage" data-lenis-prevent>
         <header className="s-community__head">
           <h1 className="s-community__heading" id="community-title">Community Impact</h1>
           <p className="s-community__intro">Creating lasting value beyond our business, we invest in communities through initiatives that promote education, wellbeing, environmental stewardship, and sustainable development.</p>
         </header>
         <div className="s-community__story-viewport" ref={viewportRef}>
-          <div className="s-community__stories" ref={railRef} tabIndex={0} role="region" aria-label="Seven community stories, horizontally scrollable">
+          <div className="s-community__stories" ref={railRef} tabIndex={0} role="region" aria-label="Seven community stories, vertically scrollable">
             {STORIES.map((story, index) => (
               <article className="s-community__card" key={`${story.title}-${index}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
