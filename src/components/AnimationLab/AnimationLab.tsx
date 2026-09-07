@@ -726,7 +726,9 @@ export default function AnimationLab({
       startScrollY = window.scrollY;
       lastSpecialInputAt = performance.now();
       specialMovedDuringTouch = false;
-      readerElement = (event.target as HTMLElement | null)?.closest("[data-lenis-prevent]") ?? null;
+      readerElement = (event.target as HTMLElement | null)?.closest(
+        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage",
+      ) ?? null;
       startedInsideReader = readerElement !== null;
     };
 
@@ -793,7 +795,9 @@ export default function AnimationLab({
     const onWheel = (event: WheelEvent) => {
       if (Math.abs(event.deltaY) < 1) return;
       const direction = event.deltaY > 0 ? 1 : -1;
-      const reader = (event.target as HTMLElement | null)?.closest("[data-lenis-prevent]");
+      const reader = (event.target as HTMLElement | null)?.closest(
+        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage",
+      );
       if (reader && readerConsumesScroll(
         reader.scrollTop,
         reader.clientHeight,

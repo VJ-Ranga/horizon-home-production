@@ -117,7 +117,10 @@ test("inner readers consume gestures only while they have room in that direction
 test("compact outer navigation prevents native momentum and locks transitions", () => {
   assert.match(source, /compactNavigationLockRef/);
   assert.match(source, /event\.preventDefault\(\)/);
-  assert.match(source, /closest\("\[data-lenis-prevent\]"\)/);
+  assert.match(
+    source,
+    /closest\(\s*"\[data-lenis-prevent\], \.s-glance2__stage, \.s-financial2__stage",\s*\)/,
+  );
   assert.match(source, /targetFrame[\s\S]*settledFrame/);
   assert.match(source, /compactTransitionDurationMs/);
   assert.match(source, /fromScrollY[\s\S]*top: fromScrollY/);

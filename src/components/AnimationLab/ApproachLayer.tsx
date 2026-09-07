@@ -130,9 +130,9 @@ export default function ApproachLayer() {
     for (let index = 0; index < TITLE_WORD_COUNT; index += 1) {
       const element = wordRefs.current[index];
       if (!element) continue;
-       const t = entering
-         ? staggerProgressAt(index, TITLE_WORD_COUNT, frame, CHAR_WINDOW)
-         : mode === "desktop" && virtualExit !== null
+      const t = entering
+        ? staggerProgressAt(index, TITLE_WORD_COUNT, frame, CHAR_WINDOW)
+        : mode === "desktop" && virtualExit !== null
          ? 1 - staggerProgressAt(TITLE_WORD_COUNT - 1 - index, TITLE_WORD_COUNT, virtualExit * virtualExitWindow[1], virtualExitWindow)
          : sharedExitProgress;
       element.style.opacity = String(t);
@@ -142,9 +142,9 @@ export default function ApproachLayer() {
     for (let index = 0; index < GROUP_COUNT; index += 1) {
       const element = groupRefs.current[index];
       if (!element) continue;
-       const t = entering
-         ? staggerProgressAt(index, GROUP_COUNT, frame, GROUP_WINDOW)
-         : mode === "desktop" && virtualExit !== null
+      const t = entering
+        ? staggerProgressAt(index, GROUP_COUNT, frame, GROUP_WINDOW)
+        : mode === "desktop" && virtualExit !== null
          ? 1 - staggerProgressAt(GROUP_COUNT - 1 - index, GROUP_COUNT, virtualExit * virtualExitWindow[1], virtualExitWindow)
          : sharedExitProgress;
       element.style.opacity = String(t);
