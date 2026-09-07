@@ -141,6 +141,7 @@ test("compact outer navigation prevents native momentum and locks transitions", 
 test("target mobile sections share native reader ownership", () => {
   assert.match(compactNavigationSource, /s-leadership5/);
   assert.match(compactNavigationSource, /s-fincap/);
+  assert.match(compactNavigationSource, /s-fincap__cards--normal/);
   assert.match(compactNavigationSource, /s-strategy/);
   assert.match(compactNavigationSource, /s-community__stage/);
 });
