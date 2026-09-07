@@ -974,7 +974,7 @@ export default function AnimationLab({
         // loop finishes; the scroll below is programmatic, not a gesture.
         beginFrameJump();
         const revealY = scrollYForFrame(
-          LOOP_REVEAL_START_FRAME,
+          compact ? HERO_SETTLED_FRAME : LOOP_REVEAL_START_FRAME,
           pxPerFrame,
           compact ? "compact" : "desktop",
         );
@@ -999,7 +999,11 @@ export default function AnimationLab({
     if (loopTransition?.stage !== "shade") return;
 
     const timelineMode = compact ? "compact" : "desktop";
-    const startY = scrollYForFrame(LOOP_REVEAL_START_FRAME, pxPerFrame, timelineMode);
+    const startY = scrollYForFrame(
+      compact ? HERO_SETTLED_FRAME : LOOP_REVEAL_START_FRAME,
+      pxPerFrame,
+      timelineMode,
+    );
     const endY = scrollYForFrame(HERO_SETTLED_FRAME, pxPerFrame, timelineMode);
     const startedAt = performance.now();
     let frameId = 0;
