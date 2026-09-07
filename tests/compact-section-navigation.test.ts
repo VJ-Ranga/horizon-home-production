@@ -135,6 +135,11 @@ test("target mobile sections share native reader ownership", () => {
   assert.match(compactNavigationSource, /s-community__stage/);
 });
 
+test("capital slider remains on bounded section input instead of native page passthrough", () => {
+  assert.doesNotMatch(source, /readerElement\.matches\("\.s-fincap"\)\) return/);
+  assert.doesNotMatch(source, /reader\?\.matches\("\.s-fincap"\)\) return/);
+});
+
 test("compact frame limiting preserves continuous scroll input for pinned sections", () => {
   assert.doesNotMatch(
     frameDriverSource,
