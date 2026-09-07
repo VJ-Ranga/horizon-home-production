@@ -10,11 +10,11 @@ const contentSecurityPolicy = [
   `script-src 'self' 'unsafe-inline' https://dash.accessibly.app https://*.accessibly.app${
     isProduction ? "" : " 'unsafe-eval'"
   }`,
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
+  "font-src 'self' data: https://cdn.accessibly.app https://fonts.gstatic.com",
   "media-src 'self' blob:",
-  "connect-src 'self' https://*.accessibly.app",
+  "connect-src 'self' https://*.accessibly.app https://alt-tags.accessiblyapp.com",
   "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",

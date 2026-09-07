@@ -19,3 +19,9 @@ test("production CSP allows only declared third-party integrations", () => {
   assert.match(config, /frame-src 'self' https:\/\/www\.youtube\.com/);
   assert.match(config, /object-src 'none'/);
 });
+
+test("Accessibly widget CSP allows its stylesheet, icon font, and alt-tag API", () => {
+  assert.match(config, /style-src[^\n]*https:\/\/fonts\.googleapis\.com/);
+  assert.match(config, /font-src[^\n]*https:\/\/cdn\.accessibly\.app/);
+  assert.match(config, /connect-src[^\n]*https:\/\/alt-tags\.accessiblyapp\.com/);
+});

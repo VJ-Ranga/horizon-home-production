@@ -259,7 +259,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 }
 
 @media (min-width: 1101px) {
-  .s-end-screen::before {
+  .s-end-screen__overlay {
     position: absolute;
     inset: 0;
     z-index: 0;
@@ -271,6 +271,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     );
     content: "";
     pointer-events: none;
+    will-change: transform;
   }
 }
 

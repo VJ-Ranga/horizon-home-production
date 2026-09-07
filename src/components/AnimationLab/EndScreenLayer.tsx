@@ -4,6 +4,9 @@ import { useEffect, useRef } from "react";
 import {
   SECTIONS,
   readPxPerFrame,
+  easeIn,
+  progressBetween,
+  sectionTimingForMode,
   staggerProgressAt,
   virtualEnterProgressAtScrollPx,
   virtualExitProgressAtScrollPx,
@@ -23,6 +26,7 @@ const V_EXIT = END_SCREEN.virtualExitFrames ?? 0;
 
 export default function EndScreenLayer() {
   const ref = useSectionLayer(END_SCREEN);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
   // Phones: skip the per-word opacity stagger; the closing line just
   // rides the section's own fade (see GlanceLayer's mobileSolid).
@@ -32,6 +36,16 @@ export default function EndScreenLayer() {
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {
+    const overlay = overlayRef.current;
+    if (overlay) {
+      const timedEndScreen = sectionTimingForMode(END_SCREEN, mode);
+      const exit = timedEndScreen.exit;
+      const exitProgress = exit
+        ? easeIn(progressBetween(frame, exit.frames[0], exit.frames[1]))
+        : 0;
+      overlay.style.transform = `translateY(${4 * exitProgress}vh)`;
+    }
+
     if (mobileSolidRef.current) {
       for (let index = 0; index < WORD_COUNT; index += 1) {
         const word = wordRefs.current[index];
@@ -96,6 +110,7 @@ export default function EndScreenLayer() {
       data-initial-hidden="true"
       aria-label="End screen"
     >
+      <div className="s-end-screen__overlay" ref={overlayRef} aria-hidden="true" />
       <p className="s-end-screen__copy">
         {COPY_TOKENS.map((token, tokenIndex) => {
           if (token.trim() === "") {
