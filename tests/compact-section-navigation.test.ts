@@ -169,6 +169,11 @@ test("Financial Capital intro belongs to the compact reader flow", () => {
   assert.match(financialCapitalStyles, /\.s-fincap__cards--normal \.s-fincap__intro/);
 });
 
+test("compact Financial Capital exits normally after the last card", () => {
+  assert.match(source, /section\.id === "14-financial-capital"[\s\S]*return 0/);
+  assert.match(financialCapitalStyles, /margin: 0 auto clamp\(32px/);
+});
+
 test("compact frame limiting preserves continuous scroll input for pinned sections", () => {
   assert.doesNotMatch(
     frameDriverSource,

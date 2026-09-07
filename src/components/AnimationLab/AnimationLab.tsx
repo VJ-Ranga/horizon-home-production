@@ -579,10 +579,11 @@ export default function AnimationLab({
     let readerElement: HTMLElement | null = null;
     let animationFrameId: number | null = null;
     let lastSpecialInputAt = 0;
-    let specialMovedDuringTouch = false;
+        let specialMovedDuringTouch = false;
 
-    const compactSpecialBudgetPx = (section: (typeof SECTIONS)[number]): number => {
-      if (section.carousel) {
+        const compactSpecialBudgetPx = (section: (typeof SECTIONS)[number]): number => {
+          if (section.id === "14-financial-capital") return 0;
+          if (section.carousel) {
         return section.carousel.scrollPx +
           ((section.virtualEnterFrames ?? 0) + (section.virtualExitFrames ?? 0)) * pxPerFrame;
       }
