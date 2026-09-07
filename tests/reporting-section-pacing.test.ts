@@ -76,13 +76,15 @@ test("text bridge sections reserve 20-frame virtual holds", () => {
   }
 });
 
-test("end screen stays fully loaded for 20 real frames without virtual frames", () => {
+test("end screen holds on its settled frame for 20 frames before normal movement", () => {
   const section = SECTIONS.find((item) => item.id === "19-end-screen");
   assert.ok(section, "19-end-screen should exist in the timeline");
-  assert.equal(section.holdFrames ?? 0, 0);
+  assert.equal(section.holdFrames, 20);
   assert.deepEqual(section.exit?.frames, [1075, 1100]);
   assert.equal(section.virtualEnterFrames ?? 0, 0);
   assert.equal(section.virtualExitFrames ?? 0, 0);
+  assert.equal(section.holdCrawlFrames, 0);
+  assert.equal(section.holdSlowdown, undefined);
 });
 
 test("virtual enter does not drop a section after its real enter completes", () => {

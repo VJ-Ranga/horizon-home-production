@@ -8,7 +8,7 @@
    their play button is a real <a target="_blank">; "Supporting University
    Students" has no video ("No link" in the spec) so it has no play button. */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 import { notifyPopupVideo } from "./popupVideoAudio";
@@ -92,6 +92,7 @@ const embedSrc = (url: string) =>
 
 export default function CommunityLayer() {
   const ref = useSectionLayer(COMMUNITY);
+  const [isCompact, setIsCompact] = useState(false);
   const railRef = useRef<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
@@ -102,6 +103,67 @@ export default function CommunityLayer() {
     start: 0,
     end: 0,
   });
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 1100px)");
+    const update = () => setIsCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const stage = ref.current;
+    const viewport = viewportRef.current;
+    if (!stage || !viewport) return;
+    const compact = window.matchMedia("(max-width: 1100px)");
+    const readerConsumes = (direction: number) => {
+      const max = viewport.scrollHeight - viewport.clientHeight;
+      const horizontalMax = viewport.scrollWidth - viewport.clientWidth;
+      if (direction > 0) return compact.matches
+        ? (viewport.scrollTop < max - 1 || viewport.scrollLeft < horizontalMax - 1)
+        : false;
+      if (direction < 0) return compact.matches
+        ? (viewport.scrollTop > 1 || viewport.scrollLeft > 1)
+        : false;
+      return false;
+    };
+    const apply = (direction: number) => {
+      if (!compact.matches) {
+        stage.setAttribute("data-lenis-prevent", "");
+        viewport.removeAttribute("data-lenis-prevent");
+        return;
+      }
+      stage.removeAttribute("data-lenis-prevent");
+      if (readerConsumes(direction)) viewport.setAttribute("data-lenis-prevent", "");
+      else viewport.removeAttribute("data-lenis-prevent");
+    };
+    let touchY = 0;
+    const onTouchStart = (event: TouchEvent) => {
+      touchY = event.touches[0]?.clientY ?? 0;
+      apply(1);
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const y = event.touches[0]?.clientY ?? touchY;
+      apply(touchY - y);
+      touchY = y;
+    };
+    const onWheel = (event: WheelEvent) => apply(event.deltaY);
+    const onMediaChange = () => apply(0);
+    apply(0);
+    viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+    viewport.addEventListener("wheel", onWheel, { passive: true });
+    compact.addEventListener("change", onMediaChange);
+    return () => {
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
+      viewport.removeEventListener("wheel", onWheel);
+      compact.removeEventListener("change", onMediaChange);
+      stage.removeAttribute("data-lenis-prevent");
+      viewport.removeAttribute("data-lenis-prevent");
+    };
+  }, [ref]);
 
   useEffect(() => {
     const rail = railRef.current;
@@ -157,6 +219,10 @@ export default function CommunityLayer() {
     const rail = railRef.current;
     const viewport = viewportRef.current;
     if (!rail || !viewport) return;
+    if (isCompact) {
+      rail.style.transform = "";
+      return;
+    }
 
     const sweepPx = Math.min(Math.max(scrollPx - startPx - LEAD_PX, 0), SWEEP_PX);
     const progress = (sweepPx / SWEEP_PX) * (CARD_COUNT - 1);
@@ -186,7 +252,7 @@ export default function CommunityLayer() {
 
   return (
     <div className="lab-layer s-community" ref={ref} data-section={COMMUNITY.id} data-initial-hidden="true" aria-labelledby="community-title">
-      <div className="s-community__stage" data-lenis-prevent>
+      <div className="s-community__stage">
         <header className="s-community__head">
           <h1 className="s-community__heading" id="community-title">Community Impact</h1>
           <p className="s-community__intro">Creating lasting value beyond our business, we invest in communities through initiatives that promote education, wellbeing, environmental stewardship, and sustainable development.</p>

@@ -94,6 +94,14 @@ test("compact Strategy removes only the 60-frame virtual reader hold", () => {
   assert.equal(sectionTimingForMode(section, "compact").scrollThrough?.virtualExitFrames, 30);
 });
 
+test("compact Community uses the native card reader without a carousel budget", () => {
+  const section = SECTIONS.find((item) => item.id === "18-community");
+
+  assert.ok(section?.carousel);
+  assert.equal(sectionTimingForMode(section, "desktop").carousel?.scrollPx, 3_756);
+  assert.equal(sectionTimingForMode(section, "compact").carousel, undefined);
+});
+
 test("desktop Section 19 holds until 1085 before exiting to 1110", () => {
   const section = SECTIONS.find((item) => item.id === "19-end-screen");
 

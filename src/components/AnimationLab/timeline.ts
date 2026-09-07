@@ -1077,6 +1077,11 @@ const COMPACT_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
   "14-financial-capital": {
     virtualExitFrames: 0,
   },
+  "18-community": {
+    carousel: undefined,
+    virtualEnterFrames: 0,
+    virtualExitFrames: 0,
+  },
 };
 
 export function sectionTimingForMode(
@@ -1676,17 +1681,12 @@ export const SECTIONS: SectionTimeline[] = [
     settledFrame: 1055,
     enter: { frames: [1035, 1055], from: { y: 4 } },
     exit: { frames: [1075, 1100], to: { y: 0 } },
-    // 20 crawl frames each side of settledFrame at half scroll speed,
-    // instead of the shared 4-frame/6x default. The 20 after settledFrame
-    // are the ask: the end screen keeps moving but takes twice the scroll
-    // to get through 1055 -> 1075. The same 20 land on the way in, which
-    // is what the enter window [1035, 1055] already spans — per the rule
-    // that a reveal wider than crawlFrames otherwise plays out at full
-    // scroll speed outside the slow zone.
-    holdCrawlFrames: 20,
-    holdSlowdown: 2,
-    // The end screen stays fully loaded for real frames 1055 -> 1075 while
-    // the background continues moving; the exit starts only at frame 1075.
+    // Hold on the settled frame, then resume normal frame movement. This is
+    // the same pattern used by the other readable closing sections.
+    holdFrames: 20,
+    holdCrawlFrames: 0,
+    // The end screen stays fully loaded during the settled-frame hold; the
+    // exit starts only at frame 1075.
   },
 ];
 
