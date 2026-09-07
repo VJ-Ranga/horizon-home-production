@@ -1062,7 +1062,15 @@ const DESKTOP_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
     exit: { frames: [161, 176], to: { y: -5 } },
   },
   "19-end-screen": {
-    exit: { frames: [1085, 1110], to: { y: -4 } },
+    exit: { frames: [1085, 1110], to: { y: 0 } },
+  },
+};
+
+const COMPACT_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
+  "12-leadership": {
+    enter: { frames: [555, 555], from: {} },
+    exit: { frames: [555, 555], to: { y: 4 } },
+    virtualExitFrames: 0,
   },
 };
 
@@ -1070,8 +1078,10 @@ export function sectionTimingForMode(
   section: SectionTimeline,
   mode: TimelineMode = "desktop",
 ): SectionTimeline {
-  if (mode !== "desktop") return section;
-  const override = DESKTOP_TIMING_OVERRIDES[section.id];
+  const overrides = mode === "desktop"
+    ? DESKTOP_TIMING_OVERRIDES
+    : COMPACT_TIMING_OVERRIDES;
+  const override = overrides[section.id];
   return override ? { ...section, ...override } : section;
 }
 
@@ -1648,7 +1658,7 @@ export const SECTIONS: SectionTimeline[] = [
     // match the new exit would drop the last 45 frames of footage.
     settledFrame: 1055,
     enter: { frames: [1035, 1055], from: { y: 4 } },
-    exit: { frames: [1075, 1100], to: { y: -4 } },
+    exit: { frames: [1075, 1100], to: { y: 0 } },
     // 20 crawl frames each side of settledFrame at half scroll speed,
     // instead of the shared 4-frame/6x default. The 20 after settledFrame
     // are the ask: the end screen keeps moving but takes twice the scroll

@@ -60,6 +60,18 @@ test("desktop Section 3 keeps its virtual exit while compact removes it", () => 
   assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames, undefined);
 });
 
+test("compact Leadership parks at 555 without enter or exit travel", () => {
+  const section = SECTIONS.find((item) => item.id === "12-leadership");
+
+  assert.ok(section);
+  assert.deepEqual(sectionTimingForMode(section, "compact").enter?.frames, [555, 555]);
+  assert.deepEqual(sectionTimingForMode(section, "compact").exit?.frames, [555, 555]);
+  assert.equal(sectionTimingForMode(section, "compact").holdFrames, 60);
+  assert.equal(sectionTimingForMode(section, "compact").virtualExitFrames, 0);
+  assert.deepEqual(sectionTimingForMode(section, "desktop").enter?.frames, [553, 555]);
+  assert.deepEqual(sectionTimingForMode(section, "desktop").exit?.frames, [555, 575]);
+});
+
 test("desktop Section 19 holds until 1085 before exiting to 1110", () => {
   const section = SECTIONS.find((item) => item.id === "19-end-screen");
 
