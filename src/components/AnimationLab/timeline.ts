@@ -1068,8 +1068,8 @@ const DESKTOP_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
 
 const COMPACT_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
   "12-leadership": {
-    enter: { frames: [555, 555], from: {} },
-    exit: { frames: [555, 555], to: { y: 4 } },
+    enter: { frames: [553, 555], from: {} },
+    exit: { frames: [555, 558], to: { y: 4 } },
     virtualExitFrames: 0,
   },
 };
