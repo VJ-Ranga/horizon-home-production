@@ -62,6 +62,14 @@ const leadershipSource = readFileSync(
   new URL("../src/components/AnimationLab/LeadershipLayer.tsx", import.meta.url),
   "utf8",
 );
+const financialCapitalSource = readFileSync(
+  new URL("../src/components/AnimationLab/FinancialCapitalLayer.tsx", import.meta.url),
+  "utf8",
+);
+const financialCapitalStyles = readFileSync(
+  new URL("../src/components/AnimationLab/styles/15-financial-capital.css", import.meta.url),
+  "utf8",
+);
 
 test("large compact gestures target only the adjacent settled section", () => {
   assert.equal(nextCompactSectionFrame(100, [50, 150, 250], 1), 150);
@@ -144,6 +152,13 @@ test("capital slider remains on bounded section input instead of native page pas
 
 test("Leadership edge handoff does not consume a separate outer special budget", () => {
   assert.doesNotMatch(source, /section\.id === "12-leadership"/);
+});
+
+test("Financial Capital uses a normal stacked reader on compact viewports", () => {
+  assert.match(financialCapitalSource, /if \(mode === "compact"\) return/);
+  assert.match(financialCapitalSource, /data-lenis-prevent/);
+  assert.match(financialCapitalStyles, /\.s-fincap__cards--normal/);
+  assert.match(financialCapitalStyles, /overflow-y: auto/);
 });
 
 test("compact frame limiting preserves continuous scroll input for pinned sections", () => {

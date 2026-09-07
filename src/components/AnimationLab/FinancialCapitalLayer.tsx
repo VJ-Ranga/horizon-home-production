@@ -232,6 +232,8 @@ export default function FinancialCapitalLayer() {
   const currentRef = useRef<number | null>(null);
 
   useFrameEffect((_frame, _phase, scrollPx, mode) => {
+    if (mode === "compact") return;
+
     const pxPerFrame = readPxPerFrame();
     const startPx = scrollPxForFrame(FINCAP.settledFrame, pxPerFrame, mode);
     const reduceMotion =
@@ -314,7 +316,11 @@ export default function FinancialCapitalLayer() {
           </p>
         </header>
 
-        <section className="s-fincap__cards" aria-label="Capitals Management highlights">
+            <section
+              className="s-fincap__cards s-fincap__cards--normal"
+              data-lenis-prevent
+              aria-label="Capitals Management highlights"
+            >
           {CARDS.map((card, index) => (
             <article
               key={index}
