@@ -98,6 +98,8 @@ test("Haycarb at a Glance keeps a 20-frame virtual exit from frames 279 to 280",
 
 test("Leadership compact scrolling uses its hold and virtual-exit budget as direct input", () => {
   assert.equal(compactLeadershipScrollBudgetPx(60, 20, 14), 1_120);
+  assert.equal(compactLeadershipScrollBudgetPx(60, 20, 14, false), 840);
+  assert.match(source, /max-width: 1100px/);
 });
 
 test("carousel damping keeps the desktop feel when compact frames are slower", () => {

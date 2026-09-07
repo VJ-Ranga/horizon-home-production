@@ -595,6 +595,7 @@ export default function AnimationLab({
           section.holdFrames ?? 0,
           section.virtualExitFrames ?? 0,
           pxPerFrame,
+          !window.matchMedia("(max-width: 1100px)").matches,
         );
       }
       return 0;

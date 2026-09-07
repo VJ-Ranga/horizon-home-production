@@ -13,8 +13,10 @@ export function compactLeadershipScrollBudgetPx(
   holdFrames: number,
   virtualExitFrames: number,
   pxPerFrame: number,
+  includeVirtualExit = true,
 ): number {
-  return Math.max(holdFrames + virtualExitFrames, 0) * Math.max(pxPerFrame, 0);
+  const exitFrames = includeVirtualExit ? virtualExitFrames : 0;
+  return Math.max(holdFrames + exitFrames, 0) * Math.max(pxPerFrame, 0);
 }
 
 export function carouselDampingForElapsedMs(baseEase: number, elapsedMs: number): number {
