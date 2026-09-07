@@ -261,7 +261,7 @@
 }
 
 @media (max-width: 1100px) {
-  .s-nonfinancial9 { overflow-x: hidden; overflow-y: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior-y: auto; }
+  .s-nonfinancial9 { overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
   .s-nonfinancial9.is-scrollable { overflow-y: auto; }
   .s-nonfinancial9__intro { padding: 64px clamp(20px, 6vw, 64px) 0; }
   .s-nonfinancial9__intro h1 { font-size: clamp(30px, 4vw, 42px); }

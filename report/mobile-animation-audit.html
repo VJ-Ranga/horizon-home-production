@@ -28,6 +28,12 @@
     .risk { border-left:4px solid var(--bad); padding-left:14px; margin:18px 0; }
     .risk strong { color:var(--bad); }
     .note { border-left:4px solid var(--warn); padding:12px 16px; background:#28251e; color:#e8d9bd; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0; }
+    .legend span { padding:6px 9px; border:1px solid var(--line); border-radius:6px; color:var(--muted); background:var(--panel); font-size:.82rem; }
+    .phase-table table { min-width:1450px; }
+    .phase-table td:nth-child(1), .phase-table td:nth-child(2) { white-space:nowrap; }
+    .phase-table td:nth-child(3) { color:#d9f2ec; font-weight:700; }
+    .phase-table td:nth-child(4) { color:#f0c98e; }
     code { color:#b8e7dd; background:#202831; padding:2px 5px; border-radius:4px; }
     ul { color:var(--muted); max-width:1000px; }
     footer { margin-top:56px; color:var(--muted); font-size:.85rem; }
@@ -89,6 +95,43 @@
     <li>Community: native full-stage reader, then edge handoff.</li>
     <li>All section exits: one predictable handoff after content has completed.</li>
   </ul>
+
+  <h2>Complete Frame Ledger</h2>
+  <p>The ledger below is the current source-of-truth timing map. A range is inclusive for the visible animation window. <code>V-enter</code> and <code>V-exit</code> are virtual scroll frames while the background is parked; <code>hold</code> is a settled-frame freeze; <code>crawl</code> is the short slowed zone around a hold. A normal gap means the background frame continues advancing between section windows.</p>
+  <div class="legend">
+    <span><strong>Enter</strong> section loads</span>
+    <span><strong>Settle</strong> fully loaded frame</span>
+    <span><strong>Hold</strong> frame stays still</span>
+    <span><strong>V</strong> virtual UI time while frame is parked</span>
+    <span><strong>Exit</strong> section leaves</span>
+    <span><strong>Gap</strong> normal frame movement</span>
+  </div>
+  <div class="table-wrap phase-table">
+    <table>
+      <thead><tr><th>#</th><th>Section</th><th>Exact frame sequence</th><th>Virtual / hold detail</th><th>Normal gap to next section</th><th>Compact/mobile implementation</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Hero</td><td>Autoplay entry → settle `50` → exit `50-70`</td><td>Hold `20`; no V-enter/V-exit; exit overlaps the settled frame.</td><td>`70→70` into Main 02</td><td>Initial autoplay, then shared scroll.</td></tr>
+        <tr><td>2</td><td>Main 02</td><td>Enter `70-90` → settle `90` → exit `91-105`</td><td>Hold `20`; default `4f` crawl at `2x`; no virtual frames.</td><td>`105→114` normal</td><td>Normal section handoff.</td></tr>
+        <tr><td>3</td><td>Approach</td><td>Enter `114-134` → settle `134` → exit `145-158`</td><td>Hold `20`; normal native content reader.</td><td>Overlaps Digital enter at `141`</td><td>Native content reader, then edge handoff.</td></tr>
+        <tr><td>4</td><td>Digital</td><td>Enter `141-161` → settle `161` → exit `161-181`</td><td>Hold `20`; no virtual frames.</td><td>`181→245` normal</td><td>Normal section handoff.</td></tr>
+        <tr><td>5</td><td>Intro Statement</td><td>Enter `245-255` → settle `255` → exit `255-269`</td><td>V-enter `10`; hold `20`; V-exit `14`; crawl disabled.</td><td>`269→263` overlaps Key Data</td><td>Virtual reveal while frame is parked.</td></tr>
+        <tr><td>6</td><td>Key Data Points</td><td>Enter `263-275` → settle `275` → exit `279-280`</td><td>Hold `20`; V-exit `20`; `9f` crawl.</td><td>`280→322` normal</td><td>Normal timeline.</td></tr>
+        <tr><td>7</td><td>Banner City</td><td>Enter `322-335` → settle `335` → exit `335-371`</td><td>V-enter `10`; hold `20`; V-exit `10`.</td><td>`371→408` normal</td><td>Normal timeline.</td></tr>
+        <tr><td>8</td><td>Financial Highlights</td><td>Enter `408-436` → settle `436` → exit `448-454`</td><td>Hold `60`; V-exit `20`; `16f` crawl; panel reveal is time-based.</td><td>`454→490` normal</td><td>Park/reveal, then normal handoff.</td></tr>
+        <tr><td>9</td><td>Governance Intro</td><td>Enter `490-511` → settle `511` → exit `511-520`</td><td>V-enter `10`; hold `20`; V-exit `20`.</td><td>`520→520` into Governance</td><td>Normal timeline.</td></tr>
+        <tr><td>10</td><td>Governance</td><td>Enter `520-533` → settle `533` → exit `533-540`</td><td>V-enter `15`; hold `30`; V-exit `20`.</td><td>Overlaps Governance Cards enter `535`</td><td>Normal timeline.</td></tr>
+        <tr><td>11</td><td>Governance Cards</td><td>Enter `535-540` → settle `540` → exit `540-550`</td><td>V-enter `20`; hold `40`; V-exit `20`.</td><td>`550→553` normal</td><td>Normal timeline.</td></tr>
+        <tr><td>12</td><td>Leadership</td><td>Enter `553-555` → settle `555` → exit `555-575`</td><td>Hold `60`; V-exit `20`; no crawl. Compact exit is `555-558`, V-exit `0`.</td><td>`575→642` normal</td><td>Native reader on compact screens.</td></tr>
+        <tr><td>13</td><td>Banner Ocean</td><td>Enter `642-650` → settle `650` → exit `650-665`</td><td>V-enter `20`; hold `20`; V-exit `20`.</td><td>`665→665` into Capitals</td><td>Normal timeline.</td></tr>
+        <tr><td>14</td><td>Capitals Management</td><td>Enter `665-675` → settle `675` → exit `675-693`</td><td>V-enter `20`; carousel reader; V-exit `20` desktop. Compact removes V-exit.</td><td>`693→762` normal</td><td>Full section native reader; edge releases page.</td></tr>
+        <tr><td>15</td><td>Banner River</td><td>Enter `762-782` → settle `782` → exit `782-802`</td><td>V-enter `40`; hold `20`; crawl disabled; no V-exit.</td><td>`802→843` normal</td><td>Normal timeline.</td></tr>
+        <tr><td>16</td><td>Non-Financial</td><td>Enter `843-845` → settle `845` → exit `857-863`</td><td>Hold `60`; V-exit `20`; no virtual enter.</td><td>`863→870` normal</td><td>Park/reveal, then normal handoff.</td></tr>
+        <tr><td>17</td><td>Strategy</td><td>Enter `870-890` → settle `890` → exit `933-963`</td><td>Desktop only: normal `890→933`, pin at `933`, V-content `60`, V-exit `30`. Compact removes the complete scroll-through/pin.</td><td>`963→1015` normal</td><td>Full panel native reader; no compact pin at `933`.</td></tr>
+        <tr><td>18</td><td>Community</td><td>Enter `1015-1020` → settle `1020` → exit `1038-1040`</td><td>Desktop: carousel `3,756px` with V-enter/V-exit `10/10`. Compact removes carousel and virtual budget.</td><td>`1040→1040` into End Screen</td><td>Full stage native reader; last-edge swipe hands off.</td></tr>
+        <tr><td>19</td><td>End Screen</td><td>Enter `1040-1055` → settle `1055` → exit `1075-1100` → finish `1125`</td><td>Hold `20`; default `4f` crawl at `2x`; `4f` ramp; no virtual frames.</td><td>Final section; footage continues `1100→1125`</td><td>Normal enter, settled hold, then normal finish.</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <h2>Fix Order</h2>
   <ol>

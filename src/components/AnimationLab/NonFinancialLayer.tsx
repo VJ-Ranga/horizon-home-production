@@ -57,11 +57,17 @@ export default function NonFinancialLayer() {
     const exitStart =
       NONFINANCIAL.exit?.frames[0] ?? NONFINANCIAL.settledFrame;
 
+    const compact = window.matchMedia("(max-width: 1100px)").matches;
     const scrollUnlocked =
       frame >= NONFINANCIAL.settledFrame &&
       frame <= (NONFINANCIAL.exit?.frames[1] ?? exitStart);
-    element.classList.toggle("is-scrollable", scrollUnlocked);
-    if (!scrollUnlocked) element.scrollTop = 0;
+    // Compact screens own a real reader for the whole section. Keeping it
+    // available from entry prevents Lenis from being fenced off while the
+    // frame callback is between samples on small phones.
+    if (!compact) {
+      element.classList.toggle("is-scrollable", scrollUnlocked);
+      if (!scrollUnlocked) element.scrollTop = 0;
+    }
 
     // Park model (same as 08-financial): the intro + cards reveal with
     // a plain time-based CSS transition — see lab.css's

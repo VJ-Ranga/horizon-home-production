@@ -96,7 +96,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     0 0 var(--carve-rx, 0%) var(--carve-rx, 0%) /
     0 0 var(--carve-ry, 0%) var(--carve-ry, 0%);
   overflow: hidden;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 /* Scrim — html-templates/final/02-main.html's own
@@ -818,6 +818,9 @@ html.lab-menu-open body {
 .lab-hud__id { opacity: 0.75; }
 .lab-hud__val { font-variant-numeric: tabular-nums; }
 .lab-hud__note { margin: 6px 0 0; opacity: 0.55; max-width: 26ch; }
+.lab-hud__jumps { display: flex; align-items: center; gap: 4px; margin: 8px 0; color: #ffd9a8; font-size: 11px; }
+.lab-hud__jumps button { min-width: 24px; padding: 2px 4px; border: 1px solid rgba(255,255,255,.35); border-radius: 3px; color: #fff; background: rgba(0,0,0,.25); font: inherit; cursor: pointer; }
+.lab-hud__jumps button:hover, .lab-hud__jumps button:focus-visible { border-color: #fff; background: rgba(255,255,255,.2); }
 .lab-hud__rule {
   display: flex;
   gap: 10px;

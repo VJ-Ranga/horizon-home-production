@@ -295,8 +295,20 @@ function FrameReadout() {
     rowRefs.current[key] = element;
   };
 
+  const jumpToSection = (section: SectionTimeline) => {
+    const pxPerFrame = readPxPerFrame();
+    const mode: TimelineMode = isCompactViewport() ? "compact" : "desktop";
+    const total = totalScrollPx(pxPerFrame, mode);
+    const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPx = scrollPxForFrame(section.settledFrame, pxPerFrame, mode);
+    window.scrollTo({
+      top: total > 0 && scrollable > 0 ? (scrollPx / total) * scrollable : 0,
+      behavior: "auto",
+    });
+  };
+
   return (
-    <aside className="lab-hud" aria-hidden="true">
+    <aside className="lab-hud" aria-label="Animation debug controls">
       <p className="lab-hud__frame">
         frame <span ref={frameRef}>{ENTRY_FRAMES[0].toFixed(1)}</span>
       </p>
@@ -306,6 +318,14 @@ function FrameReadout() {
       <p className="lab-hud__note">
         <span ref={holdRef}>hold: —</span>
       </p>
+      <div className="lab-hud__jumps">
+        <span>jump</span>
+        {SECTIONS.slice(14).map((section) => (
+          <button key={section.id} type="button" onClick={() => jumpToSection(section)}>
+            {section.id.slice(0, 2)}
+          </button>
+        ))}
+      </div>
 
       {SECTIONS.map((section) => (
         <p className="lab-hud__row" key={section.id}>
@@ -878,9 +898,6 @@ export default function AnimationLab({
     if (loopTransitionRef.current) return;
 
     let lastScrollY = window.scrollY;
-    let recentering = false;
-    const timelineMode = compact ? "compact" : "desktop";
-
     const startLoopTransition = () => {
       if (loopTransitionRef.current) return;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -896,8 +913,7 @@ export default function AnimationLab({
       if (event.deltaY <= 0) return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame, timelineMode);
-      if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
+      if (scrollable > 0 && window.scrollY >= scrollable - 1) startLoopTransition();
     };
 
     // Phones do not dispatch wheel events. Trigger the identical cover
@@ -917,43 +933,17 @@ export default function AnimationLab({
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame, timelineMode);
-      if (scrollable > 0 && window.scrollY >= coverY) startLoopTransition();
+      if (scrollable > 0 && window.scrollY >= scrollable - 1) startLoopTransition();
     };
     const onTouchEnd = () => {
       lastTouchY = null;
     };
 
     const onScroll = () => {
-      if (recentering) return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       if (loopTransitionRef.current) return;
 
       const currentScrollY = window.scrollY;
-      const direction = currentScrollY >= lastScrollY ? 1 : -1;
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const coverY = scrollYForFrame(LOOP_COVER_START_FRAME, pxPerFrame, timelineMode);
-
-      const targetFrame = loopTargetForBoundary(
-        direction as -1 | 1,
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      );
-      const nextY = scrollable > 0 && targetFrame !== null && currentScrollY >= scrollable
-        ? 0
-        : null;
-
-      if (direction > 0 && scrollable > 0 && currentScrollY >= coverY) {
-        startLoopTransition();
-        return;
-      }
-
-      if (nextY !== null) {
-        recentering = true;
-        startLoopTransition();
-        recentering = false;
-        return;
-      }
-
       lastScrollY = currentScrollY;
     };
 
