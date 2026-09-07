@@ -727,7 +727,7 @@ export default function AnimationLab({
       lastSpecialInputAt = performance.now();
       specialMovedDuringTouch = false;
       readerElement = (event.target as HTMLElement | null)?.closest(
-        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage",
+        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage, .s-fincap",
       ) ?? null;
       startedInsideReader = readerElement !== null;
     };
@@ -737,6 +737,7 @@ export default function AnimationLab({
         event.preventDefault();
       } else {
         if (!readerElement || startY === null) return;
+        if (readerElement.matches(".s-fincap")) return;
         const touchY = event.touches[0]?.clientY ?? startY;
         const direction = startY - touchY > 0 ? 1 : -1;
         if (readerConsumesScroll(
@@ -761,8 +762,14 @@ export default function AnimationLab({
       if (startY === null) return;
       const endY = event.changedTouches[0]?.clientY ?? startY;
       const delta = startY - endY;
+      const nativeCarousel = readerElement?.matches(".s-fincap") ?? false;
       startY = null;
       lastTouchY = null;
+      if (nativeCarousel) {
+        readerElement = null;
+        specialMovedDuringTouch = false;
+        return;
+      }
       const direction = delta > 0 ? 1 : -1;
       const readerAtEdge = readerElement !== null && !readerConsumesScroll(
         readerElement.scrollTop,
@@ -796,8 +803,9 @@ export default function AnimationLab({
       if (Math.abs(event.deltaY) < 1) return;
       const direction = event.deltaY > 0 ? 1 : -1;
       const reader = (event.target as HTMLElement | null)?.closest(
-        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage",
+        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage, .s-fincap",
       );
+      if (reader?.matches(".s-fincap")) return;
       if (reader && readerConsumesScroll(
         reader.scrollTop,
         reader.clientHeight,
