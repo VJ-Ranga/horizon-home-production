@@ -1658,7 +1658,7 @@ export const SECTIONS: SectionTimeline[] = [
     // CommunityLayer.tsx, reads COMMUNITY.settledFrame live).
     settledFrame: 1020,
     enter: { frames: [1015, 1020], from: { y: 4 } },
-    exit: { frames: [1038, 1054], to: { y: -4 } },
+    exit: { frames: [1038, 1040], to: { y: -4 } },
     // Same stop-scroll rule as section 11: lead pause, card sweep, tail
     // pause, then normal frame scrolling resumes. Sweep is 584px per gap;
     // seven spec stories therefore need six gaps (3504px).
@@ -1679,7 +1679,7 @@ export const SECTIONS: SectionTimeline[] = [
     // public/frames/, not a marker for this section, so shortening it to
     // match the new exit would drop the last 45 frames of footage.
     settledFrame: 1055,
-    enter: { frames: [1035, 1055], from: { y: 4 } },
+    enter: { frames: [1040, 1055], from: { y: 4 } },
     exit: { frames: [1075, 1100], to: { y: 0 } },
     // Hold on the settled frame, then resume normal frame movement. This is
     // the same pattern used by the other readable closing sections.

@@ -102,6 +102,19 @@ test("compact Community uses the native card reader without a carousel budget", 
   assert.equal(sectionTimingForMode(section, "compact").carousel, undefined);
 });
 
+test("Community exits quickly before the end screen handoff", () => {
+  const section = SECTIONS.find((item) => item.id === "18-community");
+
+  assert.deepEqual(section?.exit?.frames, [1038, 1040]);
+});
+
+test("End screen enters after Community exits and settles at frame 1055", () => {
+  const section = SECTIONS.find((item) => item.id === "19-end-screen");
+
+  assert.deepEqual(section?.enter?.frames, [1040, 1055]);
+  assert.equal(section?.settledFrame, 1055);
+});
+
 test("desktop Section 19 holds until 1085 before exiting to 1110", () => {
   const section = SECTIONS.find((item) => item.id === "19-end-screen");
 
