@@ -1085,6 +1085,9 @@ const COMPACT_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
     virtualEnterFrames: 0,
     virtualExitFrames: 0,
   },
+  "19-end-screen": {
+    enter: { frames: [1040, 1055], from: { y: 4 } },
+  },
 };
 
 export function sectionTimingForMode(
@@ -1660,7 +1663,7 @@ export const SECTIONS: SectionTimeline[] = [
   },
   {
     id: "19-end-screen",
-    label: "End screen message",
+    label: "End Message Screen",
     // Moved 45 frames earlier (was settled 1100, enter [1080, 1100], exit
     // [1100, 1125]). The whole window shifts, so the 20-frame reveal and
     // 25-frame exit keep the pace they had; only their position changes.

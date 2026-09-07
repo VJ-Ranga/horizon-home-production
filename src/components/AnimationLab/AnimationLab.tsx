@@ -526,6 +526,11 @@ export default function AnimationLab({
   );
   const [loopTransition, setLoopTransition] = useState<LoopTransition | null>(null);
   const loopTransitionRef = useRef(false);
+  /* Compact end-of-page restart: raise the same white shade the desktop
+     loop uses, then reload the page behind it so there is no flash of
+     the end screen or the entry. Set once by the compact navigation
+     effect; the effect below performs the reload. */
+  const [endReload, setEndReload] = useState(false);
 
   /* Watch for the one entry -> scroll handover. Guarded by a ref so
      the rAF callback does not call setState on every frame. */
@@ -586,6 +591,10 @@ export default function AnimationLab({
   const compactNavigationLockRef = useRef(false);
   const compactNavigationTargetRef = useRef<number | null>(null);
   const compactNavigationTimerRef = useRef<number | null>(null);
+  /* One-shot guard for the compact end-of-page reload. The infinite loop
+     is disabled on tablet/phone (see the loop effect below); instead a
+     forward gesture while the end screen is showing restarts the page. */
+  const compactEndReloadRef = useRef(false);
   useEffect(() => {
     // skipEntry is the normal compact path after the intro has been seen;
     // navigation interception must still be installed in that case.
@@ -627,6 +636,37 @@ export default function AnimationLab({
       inputDeltaPx?: number,
       specialOnly = false,
     ): boolean => {
+      /* End of the timeline on compact. Checked before the nav lock and
+         off the end screen being on screen (not an exact frame), so a
+         quick repeat swipe still lands it where the old frame-exact test
+         missed. A finger drag still in progress (specialOnly) is
+         ignored — only a completed forward gesture restarts. The
+         white-shade-then-reload itself is the endReload effect below. */
+      if (
+        direction > 0 &&
+        !specialOnly &&
+        !compactEndReloadRef.current
+      ) {
+        const scrollableNow =
+          document.documentElement.scrollHeight - window.innerHeight;
+        if (scrollableNow > 0) {
+          const frameNow = frameForScrollPx(
+            Math.min(Math.max(scrollY / scrollableNow, 0), 1) *
+              totalScrollPx(pxPerFrame, "compact"),
+            pxPerFrame,
+            "compact",
+          );
+          const endScreen = SECTIONS[SECTIONS.length - 1];
+          const endShownFrame =
+            (endScreen.enter?.frames[0] ?? endScreen.settledFrame) - 0.5;
+          if (frameNow >= endShownFrame) {
+            compactEndReloadRef.current = true;
+            setEndReload(true);
+            return false;
+          }
+        }
+      }
+
       if (compactNavigationLockRef.current) return false;
       const scrollable = document.documentElement.scrollHeight - window.innerHeight;
       if (scrollable <= 0) return false;
@@ -893,6 +933,11 @@ export default function AnimationLab({
      to suppress. */
   useEffect(() => {
     if (phase !== "scroll") return;
+    // The infinite loop is desktop-only. On tablet and phone the end
+    // screen is the end of the road — a forward gesture there reloads
+    // the page (see compactEndReloadRef in the compact navigation
+    // effect above) instead of wrapping back to the hero.
+    if (compact) return;
     if (skipEntry) return;
     if (loopTransitionRef.current) return;
 
@@ -974,7 +1019,7 @@ export default function AnimationLab({
         // loop finishes; the scroll below is programmatic, not a gesture.
         beginFrameJump();
         const revealY = scrollYForFrame(
-          compact ? HERO_SETTLED_FRAME : LOOP_REVEAL_START_FRAME,
+          LOOP_REVEAL_START_FRAME,
           pxPerFrame,
           compact ? "compact" : "desktop",
         );
@@ -1000,7 +1045,7 @@ export default function AnimationLab({
 
     const timelineMode = compact ? "compact" : "desktop";
     const startY = scrollYForFrame(
-      compact ? HERO_SETTLED_FRAME : LOOP_REVEAL_START_FRAME,
+      LOOP_REVEAL_START_FRAME,
       pxPerFrame,
       timelineMode,
     );
@@ -1023,6 +1068,28 @@ export default function AnimationLab({
     frameId = requestAnimationFrame(animateReveal);
     return () => cancelAnimationFrame(frameId);
   }, [compact, loopTransition, pxPerFrame]);
+
+  /* ---- compact end-of-page restart ----
+     The desktop loop wraps back to the hero with a masked scroll jump.
+     On tablet/phone that jump was never reliable, so the reset here is
+     a full page reload — but behind the same white shade, so the end
+     screen never flickers and the reload's own repaint is hidden.
+     scrollRestoration is forced manual and the page scrolled to the top
+     first, or the browser would restore to the bottom on reload and the
+     end-screen gesture would fire again immediately. */
+  useEffect(() => {
+    if (!endReload) return;
+    const timer = window.setTimeout(() => {
+      try {
+        history.scrollRestoration = "manual";
+      } catch {
+        /* Safari private mode throws; the reload still works. */
+      }
+      window.scrollTo(0, 0);
+      window.location.reload();
+    }, 420);
+    return () => window.clearTimeout(timer);
+  }, [endReload]);
 
   /* ---- loading gate, phase 2 only ----
      Frames load roughly in order (1 -> LAB_LAST_FRAME) in the
@@ -1173,7 +1240,8 @@ export default function AnimationLab({
         data-phase={phase}
         data-ready={entryReady}
         data-gated={gated}
-        data-loop-transition={loopTransition ? "active" : "idle"}
+        data-loop-transition={loopTransition || endReload ? "active" : "idle"}
+        data-end-reload={endReload ? "active" : undefined}
       >
         {SHOW_HERO_LOGO && <HeroLogo />}
         <IntroNavGate />
@@ -1213,7 +1281,9 @@ export default function AnimationLab({
           <EndScreenLayer />
         </div>
 
-        <LoopTransitionOverlay stage={loopTransition?.stage ?? null} />
+        <LoopTransitionOverlay
+          stage={loopTransition?.stage ?? (endReload ? "cover" : null)}
+        />
 
         {/* Shown only while the loading gate above is holding scroll
             for an under-loaded section. */}

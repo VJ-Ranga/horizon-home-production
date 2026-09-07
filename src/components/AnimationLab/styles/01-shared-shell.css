@@ -235,6 +235,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   visibility: visible;
 }
 
+/* Compact end-of-page restart only: ease the shade up instead of the
+   desktop loop's instant cover, so the reload fades in rather than
+   snapping. Scoped to data-end-reload so the desktop loop, which needs
+   the cover opaque on the first frame, is untouched. */
+.lab[data-end-reload="active"] .lab-loop-transition {
+  transition: opacity 320ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lab-loop-transition {
     display: none;

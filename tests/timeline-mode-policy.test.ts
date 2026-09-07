@@ -14,6 +14,10 @@ const timelineSource = readFileSync(
   new URL("../src/components/AnimationLab/timeline.ts", import.meta.url),
   "utf8",
 );
+const animationLabSource = readFileSync(
+  new URL("../src/components/AnimationLab/AnimationLab.tsx", import.meta.url),
+  "utf8",
+);
 
 test("desktop and compact timeline policies are explicit and preserve current values", () => {
   const desktop = timelinePolicy("desktop");
@@ -104,6 +108,33 @@ test("End screen enters after Community exits and settles at frame 1055", () => 
 
   assert.deepEqual(section?.enter?.frames, [1040, 1055]);
   assert.equal(section?.settledFrame, 1055);
+  assert.deepEqual(sectionTimingForMode(section, "compact").enter?.frames, [1040, 1055]);
+});
+
+test("mobile loop reveal starts from the reveal frame instead of the hero settled frame", () => {
+  assert.match(
+    animationLabSource,
+    /const revealY = scrollYForFrame\(\s*LOOP_REVEAL_START_FRAME,/,
+  );
+  assert.match(
+    animationLabSource,
+    /const startY = scrollYForFrame\(\s*LOOP_REVEAL_START_FRAME,/,
+  );
+});
+
+test("compact tablet and phone testing disables the infinite loop", () => {
+  assert.match(
+    animationLabSource,
+    /if \(phase !== "scroll"\) return;[\s\S]*?if \(compact\) return;[\s\S]*?if \(skipEntry\) return;/,
+  );
+  assert.match(animationLabSource, /window\.location\.reload\(\);/);
+});
+
+test("compact forward navigation keeps the end screen handoff", () => {
+  assert.match(
+    animationLabSource,
+    /nextCompactSectionFrame\(\s*currentFrame,\s*SECTIONS\.map\(\(section\) => section\.settledFrame\)/,
+  );
 });
 
 test("desktop Section 19 holds until 1085 before exiting to 1110", () => {
