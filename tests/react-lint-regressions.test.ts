@@ -78,6 +78,14 @@ test("phone Leadership and Strategy leave content movement to native scrolling",
   assert.match(strategy, /panel\.style\.transform = ""/);
 });
 
+test("Leadership compact reader uses the requested 80vh viewport", () => {
+  const styles = readFileSync(
+    new URL("../src/components/AnimationLab/styles/17-leadership-replacement-strategy.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(styles, /\.s-leadership5\s*\{[\s\S]*max-height: 80dvh/);
+});
+
 test("tablet compact mode does not fall back to desktop frames", () => {
   const scrubber = source("LabScrubber.tsx");
   const harness = source("AnimationLab.tsx");
