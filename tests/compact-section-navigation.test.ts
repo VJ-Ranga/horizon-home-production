@@ -172,7 +172,12 @@ test("Financial Capital intro belongs to the compact reader flow", () => {
 
 test("compact Financial Capital exits normally after the last card", () => {
   assert.match(source, /section\.id === "14-financial-capital"[\s\S]*return 0/);
-  assert.match(financialCapitalStyles, /margin: 0 auto clamp\(32px/);
+  assert.match(financialCapitalStyles, /margin: 0 auto clamp\(20px/);
+});
+
+test("compact Strategy exits normally after its reader finishes", () => {
+  assert.match(source, /section\.id === "17-strategy"[\s\S]*return 0/);
+  assert.match(source, /section\.id === "17-strategy"[\s\S]*inScrollSupportSection/);
 });
 
 test("compact frame limiting preserves continuous scroll input for pinned sections", () => {

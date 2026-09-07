@@ -582,7 +582,7 @@ export default function AnimationLab({
         let specialMovedDuringTouch = false;
 
         const compactSpecialBudgetPx = (section: (typeof SECTIONS)[number]): number => {
-          if (section.id === "14-financial-capital") return 0;
+          if (section.id === "14-financial-capital" || section.id === "17-strategy") return 0;
           if (section.carousel) {
         return section.carousel.scrollPx +
           ((section.virtualEnterFrames ?? 0) + (section.virtualExitFrames ?? 0)) * pxPerFrame;
@@ -771,7 +771,7 @@ export default function AnimationLab({
         : 0;
       const currentScrollPx = currentProgress * totalScrollPx(pxPerFrame, "compact");
       const inScrollSupportSection = SECTIONS.some((section) => {
-        if (!section.scrollThrough && section.id !== "12-leadership") return false;
+            if ((!section.scrollThrough && section.id !== "12-leadership") || section.id === "17-strategy") return false;
         const startPx = scrollPxForFrame(section.settledFrame, pxPerFrame, "compact");
         const endPx = startPx + compactSpecialBudgetPx(section);
         return currentScrollPx >= startPx - 1 && currentScrollPx <= endPx + 1;
