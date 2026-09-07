@@ -1676,7 +1676,8 @@ export const SECTIONS: SectionTimeline[] = [
     // Hold on the settled frame, then resume normal frame movement. This is
     // the same pattern used by the other readable closing sections.
     holdFrames: 20,
-    holdCrawlFrames: 0,
+    holdSlowdown: 2,
+    holdRampFrames: 4,
     // The end screen stays fully loaded during the settled-frame hold; the
     // exit starts only at frame 1075.
   },

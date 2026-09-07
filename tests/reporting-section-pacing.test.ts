@@ -83,8 +83,9 @@ test("end screen holds on its settled frame for 20 frames before normal movement
   assert.deepEqual(section.exit?.frames, [1075, 1100]);
   assert.equal(section.virtualEnterFrames ?? 0, 0);
   assert.equal(section.virtualExitFrames ?? 0, 0);
-  assert.equal(section.holdCrawlFrames, 0);
-  assert.equal(section.holdSlowdown, undefined);
+  assert.equal(section.holdCrawlFrames ?? 4, 4);
+  assert.equal(section.holdSlowdown, 2);
+  assert.equal(section.holdRampFrames, 4);
 });
 
 test("virtual enter does not drop a section after its real enter completes", () => {
