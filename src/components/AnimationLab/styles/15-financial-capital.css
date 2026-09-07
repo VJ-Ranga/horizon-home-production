@@ -243,7 +243,7 @@
     top: 0;
     bottom: 0;
     height: auto;
-    padding: clamp(24px, 5svh, 56px) var(--gutter) clamp(24px, 5svh, 56px);
+    padding: calc(clamp(24px, 5svh, 56px) + 20px) var(--gutter) clamp(24px, 5svh, 56px);
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
