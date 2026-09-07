@@ -85,6 +85,15 @@ test("compact Financial Capital removes the invisible carousel tail", () => {
   assert.match(timelineSource, /mode === "compact"[\s\S]*14-financial-capital/);
 });
 
+test("compact Strategy removes only the 60-frame virtual reader hold", () => {
+  const section = SECTIONS.find((item) => item.id === "17-strategy");
+
+  assert.ok(section?.scrollThrough);
+  assert.equal(sectionTimingForMode(section, "desktop").scrollThrough?.scrollPx, 1_862);
+  assert.equal(sectionTimingForMode(section, "compact").scrollThrough?.scrollPx, 1_022);
+  assert.equal(sectionTimingForMode(section, "compact").scrollThrough?.virtualExitFrames, 30);
+});
+
 test("desktop Section 19 holds until 1085 before exiting to 1110", () => {
   const section = SECTIONS.find((item) => item.id === "19-end-screen");
 

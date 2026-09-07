@@ -1087,7 +1087,19 @@ export function sectionTimingForMode(
     ? DESKTOP_TIMING_OVERRIDES
     : COMPACT_TIMING_OVERRIDES;
   const override = overrides[section.id];
-  return override ? { ...section, ...override } : section;
+  const timedSection = override ? { ...section, ...override } : section;
+  if (mode === "compact" && section.id === "17-strategy" && timedSection.scrollThrough) {
+    return {
+      ...timedSection,
+      scrollThrough: {
+        ...timedSection.scrollThrough,
+        // Compact readers scroll the content natively, so remove the desktop
+        // 60-frame panel hold while preserving the real approach and exit.
+        scrollPx: timedSection.scrollThrough.scrollPx - 60 * PX_PER_FRAME_DEFAULT,
+      },
+    };
+  }
+  return timedSection;
 }
 
 /**
