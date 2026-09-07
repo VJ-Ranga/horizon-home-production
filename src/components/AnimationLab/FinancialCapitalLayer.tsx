@@ -305,22 +305,22 @@ export default function FinancialCapitalLayer() {
       aria-labelledby="fincap-title"
     >
       <div className="s-fincap__stage">
-        <header className="s-fincap__intro">
-          <h1 className="s-fincap__title" id="fincap-title">
-            Capitals Management
-          </h1>
-          <p className="s-fincap__lede">
-            Our capitals form the foundation of sustainable value creation at Haycarb. Through the
-            effective management of our capitals we strengthen resilience, drive innovation and
-            create long term value for all stakeholders as we continue to move Beyond the Beyond.
-          </p>
-        </header>
+        <section
+          className="s-fincap__cards s-fincap__cards--normal"
+          data-lenis-prevent
+          aria-label="Capitals Management highlights"
+        >
+          <header className="s-fincap__intro">
+            <h1 className="s-fincap__title" id="fincap-title">
+              Capitals Management
+            </h1>
+            <p className="s-fincap__lede">
+              Our capitals form the foundation of sustainable value creation at Haycarb. Through the
+              effective management of our capitals we strengthen resilience, drive innovation and
+              create long term value for all stakeholders as we continue to move Beyond the Beyond.
+            </p>
+          </header>
 
-            <section
-              className="s-fincap__cards s-fincap__cards--normal"
-              data-lenis-prevent
-              aria-label="Capitals Management highlights"
-            >
           {CARDS.map((card, index) => (
             <article
               key={index}

@@ -161,6 +161,14 @@ test("Financial Capital uses a normal stacked reader on compact viewports", () =
   assert.match(financialCapitalStyles, /overflow-y: auto/);
 });
 
+test("Financial Capital intro belongs to the compact reader flow", () => {
+  assert.match(
+    financialCapitalSource,
+    /s-fincap__cards[\s\S]*<header className="s-fincap__intro">[\s\S]*CARDS\.map/,
+  );
+  assert.match(financialCapitalStyles, /\.s-fincap__cards--normal \.s-fincap__intro/);
+});
+
 test("compact frame limiting preserves continuous scroll input for pinned sections", () => {
   assert.doesNotMatch(
     frameDriverSource,
