@@ -151,6 +151,11 @@ export default function LeadershipLayer() {
       mobileCurrentRef.current = 0;
       return;
     }
+    if (window.matchMedia("(max-width: 700px)").matches) {
+      if (bodyRef.current) bodyRef.current.style.transform = "";
+      mobileCurrentRef.current = 0;
+      return;
+    }
     const pxPerFrame = readPxPerFrame();
     const startPx = scrollPxForFrame(LEADERSHIP.settledFrame, pxPerFrame, mode);
     // The section's frame is pinned at settledFrame across holdFrames +

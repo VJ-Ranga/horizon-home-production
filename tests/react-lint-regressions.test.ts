@@ -66,12 +66,16 @@ test("compact navigation snaps one page swipe to one section", () => {
   assert.match(contents, /nextCompactSectionFrame/);
   assert.match(contents, /compactNavigationLockRef/);
   assert.match(contents, /passive: false/);
-  assert.match(
-    contents,
-    /closest\(\s*"\[data-lenis-prevent\], \.s-glance2__stage, \.s-financial2__stage, \.s-fincap",\s*\)/,
-  );
+  assert.match(contents, /COMPACT_NATIVE_READER_SELECTOR/);
   assert.match(contents, /reader\.scrollTop = direction > 0[\s\S]*scrollHeight - reader\.clientHeight/);
   assert.match(contents, /\.lab-layer\[data-lenis-prevent\], \.lab-layer \[data-lenis-prevent\]/);
+});
+
+test("phone Leadership and Strategy leave content movement to native scrolling", () => {
+  const leadership = source("LeadershipLayer.tsx");
+  const strategy = source("StrategyLayer.tsx");
+  assert.match(leadership, /bodyRef\.current\.style\.transform = ""/);
+  assert.match(strategy, /panel\.style\.transform = ""/);
 });
 
 test("tablet compact mode does not fall back to desktop frames", () => {

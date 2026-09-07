@@ -120,6 +120,11 @@ export default function StrategyLayer() {
   useFrameEffect((_frame, _phase, scrollPx, mode) => {
     const panel = panelRef.current;
     if (!panel) return;
+    if (window.matchMedia("(max-width: 700px)").matches) {
+      panel.style.transform = "";
+      currentRef.current = 0;
+      return;
+    }
     const pxPerFrame = readPxPerFrame();
     // The px position where the virtual pinned panel movement begins.
     const pinFrame = STRATEGY.scrollThrough!.pinFrame ?? STRATEGY.settledFrame;

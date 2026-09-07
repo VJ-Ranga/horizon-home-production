@@ -46,6 +46,10 @@ const source = readFileSync(
   new URL("../src/components/AnimationLab/AnimationLab.tsx", import.meta.url),
   "utf8",
 );
+const compactNavigationSource = readFileSync(
+  new URL("../src/components/AnimationLab/compactNavigation.ts", import.meta.url),
+  "utf8",
+);
 const frameDriverSource = readFileSync(
   new URL("../src/components/AnimationLab/useFrameTimeline.ts", import.meta.url),
   "utf8",
@@ -117,14 +121,18 @@ test("inner readers consume gestures only while they have room in that direction
 test("compact outer navigation prevents native momentum and locks transitions", () => {
   assert.match(source, /compactNavigationLockRef/);
   assert.match(source, /event\.preventDefault\(\)/);
-  assert.match(
-    source,
-    /closest\(\s*"\[data-lenis-prevent\], \.s-glance2__stage, \.s-financial2__stage, \.s-fincap",\s*\)/,
-  );
+  assert.match(source, /COMPACT_NATIVE_READER_SELECTOR/);
   assert.match(source, /targetFrame[\s\S]*settledFrame/);
   assert.match(source, /compactTransitionDurationMs/);
   assert.match(source, /fromScrollY[\s\S]*top: fromScrollY/);
   assert.match(source, /passive:\s*false/);
+});
+
+test("target mobile sections share native reader ownership", () => {
+  assert.match(compactNavigationSource, /s-leadership5/);
+  assert.match(compactNavigationSource, /s-fincap/);
+  assert.match(compactNavigationSource, /s-strategy/);
+  assert.match(compactNavigationSource, /s-community__stage/);
 });
 
 test("compact frame limiting preserves continuous scroll input for pinned sections", () => {

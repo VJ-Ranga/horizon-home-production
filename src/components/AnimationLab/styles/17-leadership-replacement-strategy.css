@@ -141,6 +141,21 @@
   .s-leadership5__actions { position: static; flex-direction: column; align-items: stretch; margin: 42px clamp(20px, 6vw, 64px); padding-bottom: 48px; gap: 14px; }.s-leadership5__pill { height: 48px; padding: 0 22px; font-size: 14px; width: 100%; }
 }
 
+@media (max-width: 700px) {
+  .s-leadership5 {
+    max-height: 100dvh;
+    overflow-y: auto;
+    padding-bottom: 40px;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .s-leadership5__scrollbody {
+    display: block;
+    transform: none !important;
+  }
+}
+
 @media (min-width: 641px) and (max-width: 1100px) {
   .s-leadership5__people { gap: 88px; margin-top: 82px; }
   .s-leadership5__person, .s-leadership5__person--chairman, .s-leadership5__person--md {
@@ -229,8 +244,8 @@
 }
 
 @media (max-width: 720px) {
-  .lab .s-strategy { overflow: visible; }
-  .lab .s-strategy__panel { width: min(calc(100% - (var(--gutter) * 2)), 600px); margin-top: 20px; padding-inline: 18px; }
+  .lab .s-strategy { max-height: 100dvh; overflow-y: auto; overflow-x: hidden; padding-bottom: 40px; overscroll-behavior-y: auto; -webkit-overflow-scrolling: touch; }
+  .lab .s-strategy__panel { width: min(calc(100% - (var(--gutter) * 2)), 600px); margin-top: 20px; padding-inline: 18px; transform: none !important; }
   .lab .s-strategy__pillars, .lab .s-strategy__risks { grid-template-columns: 1fr; }
   .lab .s-strategy__pillar, .lab .s-strategy__risk { min-height: 0; }
   .lab .s-strategy__card-copy { min-height: 0; }

@@ -1,6 +1,8 @@
 export const COMPACT_TRANSITION_FPS = 15.5766;
 export const COMPACT_SCROLL_SUPPORT_THRESHOLD_RATIO = 0.25;
 export const COMPACT_CARD_AND_LEADERSHIP_INPUT_SCALE = 4;
+export const COMPACT_NATIVE_READER_SELECTOR =
+  "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage, .s-fincap, .s-leadership5, .s-strategy, .s-community__stage";
 const SETTLED_FRAME_EPSILON = 0.25;
 
 export function compactScrollSupportThresholdPx(viewportHeight: number): number {

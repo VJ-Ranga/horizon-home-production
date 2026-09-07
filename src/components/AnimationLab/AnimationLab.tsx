@@ -70,6 +70,7 @@ import {
   compactSpecialTransitionDurationMs,
   compactInputDeltaPx,
   COMPACT_CARD_AND_LEADERSHIP_INPUT_SCALE,
+  COMPACT_NATIVE_READER_SELECTOR,
   compactLeadershipScrollBudgetPx,
   compactScrollSupportThresholdPx,
   compactTransitionDurationMs,
@@ -727,7 +728,7 @@ export default function AnimationLab({
       lastSpecialInputAt = performance.now();
       specialMovedDuringTouch = false;
       readerElement = (event.target as HTMLElement | null)?.closest(
-        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage, .s-fincap",
+        COMPACT_NATIVE_READER_SELECTOR,
       ) ?? null;
       startedInsideReader = readerElement !== null;
     };
@@ -803,7 +804,7 @@ export default function AnimationLab({
       if (Math.abs(event.deltaY) < 1) return;
       const direction = event.deltaY > 0 ? 1 : -1;
       const reader = (event.target as HTMLElement | null)?.closest(
-        "[data-lenis-prevent], .s-glance2__stage, .s-financial2__stage, .s-fincap",
+        COMPACT_NATIVE_READER_SELECTOR,
       );
       if (reader?.matches(".s-fincap")) return;
       if (reader && readerConsumesScroll(
