@@ -2,14 +2,14 @@
 
 ## Section 11: Narrow Mobile Heading
 
-- [ ] Fix the Section 11 heading on narrow phones around `max-width: 400px`.
-- [ ] Keep the full heading visible when it wraps to multiple lines.
-- [ ] Use balanced text wrapping and a slightly smaller narrow-phone title size.
-- [ ] Preserve the existing two-column card layout.
-- [ ] Do not change larger mobile screens.
-- [ ] Do not change tablet or desktop layouts.
-- [ ] Verify the heading does not overlap or hide behind the first row of cards.
-- [ ] Verify the existing Section 11 scroll and handoff behavior remains unchanged.
+- [x] Fix the Section 11 heading on narrow phones around `max-width: 400px`.
+- [x] Keep the full heading visible when it wraps to multiple lines.
+- [x] Use balanced text wrapping and a slightly smaller narrow-phone title size.
+- [x] Preserve the existing two-column card layout.
+- [x] Do not change larger mobile screens.
+- [x] Do not change tablet or desktop layouts.
+- [x] Verify the heading does not overlap or hide behind the first row of cards.
+- [x] Verify the existing Section 11 scroll and handoff behavior remains unchanged.
 
 ## Section 16: Small-Mobile Scroll Handoff
 

@@ -161,3 +161,15 @@
   .s-govcards__lottie svg { width: 46px; height: 46px; }
   .s-govcards__card p { font-size: 14px; max-width: none; }
 }
+
+@media (max-width: 400px) {
+  .s-govcards__content { padding-inline: 14px; }
+  .s-govcards__title {
+    overflow: visible;
+    font-size: clamp(26px, 7.6vw, 31px);
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+  .s-govcards__cards { gap: 12px; }
+  .s-govcards__card { min-height: 145px; padding: 14px 8px; }
+}

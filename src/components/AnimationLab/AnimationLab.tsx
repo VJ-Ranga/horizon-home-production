@@ -93,7 +93,6 @@ import {
   LAB_FIRST_FRAME,
   LAB_LAST_FRAME,
   LOOP_TRANSITION_DURATION_MS,
-  LOOP_COVER_START_FRAME,
   LOOP_REVEAL_START_FRAME,
   loopTargetForBoundary,
   REVEAL_FRAMES,
@@ -662,10 +661,7 @@ export default function AnimationLab({
         SECTIONS.map((section) => section.settledFrame),
         direction,
       );
-      const loopTargetFrame = direction > 0 && targetFrame === null && specialTargetPx === null
-        ? LOOP_COVER_START_FRAME
-        : null;
-      if (targetFrame === null && specialTargetPx === null && loopTargetFrame === null) return false;
+      if (targetFrame === null && specialTargetPx === null) return false;
 
       if (specialTargetPx !== null && inputDeltaPx !== undefined) {
         const now = performance.now();
@@ -689,14 +685,14 @@ export default function AnimationLab({
 
       compactNavigationLockRef.current = true;
       compactNavigationTargetRef.current = specialTargetPx === null
-        ? targetFrame ?? loopTargetFrame
+        ? targetFrame
         : null;
       const targetY = specialTargetPx === null
-        ? scrollYForFrame(targetFrame ?? loopTargetFrame!, pxPerFrame, "compact")
+        ? scrollYForFrame(targetFrame!, pxPerFrame, "compact")
         : (specialTargetPx / totalScrollPx(pxPerFrame, "compact")) * scrollable;
       const fromScrollY = scrollY;
       const duration = specialTargetPx === null
-        ? compactTransitionDurationMs(currentFrame, targetFrame ?? loopTargetFrame!)
+        ? compactTransitionDurationMs(currentFrame, targetFrame!)
         : Math.max(
             900,
             compactSpecialTransitionDurationMs(
@@ -862,7 +858,10 @@ export default function AnimationLab({
       });
       if (!active || active.id === compactSectionRef.current) return;
 
-      const direction = frame >= previousFrame ? 1 : -1;
+       // A loop wrap is a new forward pass, not a reverse reader visit.
+       // Reset compact readers to their top edge before the next pass.
+       const wrappedToStart = previousFrame - frame > LAB_LAST_FRAME / 2;
+       const direction = wrappedToStart || frame >= previousFrame ? 1 : -1;
       compactSectionRef.current = active.id;
       document
         .querySelectorAll<HTMLElement>(
