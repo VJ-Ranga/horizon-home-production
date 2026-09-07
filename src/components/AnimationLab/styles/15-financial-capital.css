@@ -267,7 +267,7 @@
     position: relative;
     inset: auto;
     width: 100%;
-    margin: 0 auto clamp(32px, 7svh, 72px);
+    margin: 0 auto clamp(20px, 7svh, 72px);
     padding: 0;
     transform: none;
     text-align: center;
