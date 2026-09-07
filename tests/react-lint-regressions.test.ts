@@ -68,7 +68,7 @@ test("compact navigation snaps one page swipe to one section", () => {
   assert.match(contents, /passive: false/);
   assert.match(
     contents,
-    /closest\(\s*"\[data-lenis-prevent\], \.s-glance2__stage, \.s-financial2__stage, \.s-fincap, \.s-leadership5",\s*\)/,
+    /closest\(\s*"\[data-lenis-prevent\], \.s-glance2__stage, \.s-financial2__stage, \.s-fincap",\s*\)/,
   );
   assert.match(contents, /reader\.scrollTop = direction > 0[\s\S]*scrollHeight - reader\.clientHeight/);
   assert.match(contents, /\.lab-layer\[data-lenis-prevent\], \.lab-layer \[data-lenis-prevent\]/);
