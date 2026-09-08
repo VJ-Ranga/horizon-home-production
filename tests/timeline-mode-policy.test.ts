@@ -130,6 +130,17 @@ test("compact tablet and phone testing disables the infinite loop", () => {
   assert.match(animationLabSource, /window\.location\.reload\(\);/);
 });
 
+test("Home return reuses the session-only frame readiness flag", () => {
+  const layout = readFileSync(
+    new URL("../src/app/layout.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(layout, /horizon:home-frames-ready/);
+  assert.match(animationLabSource, /homeFramesReady/);
+  assert.match(animationLabSource, /sessionStorage\.setItem\(HOME_FRAMES_READY_KEY, "1"\)/);
+});
+
 test("compact forward navigation keeps the end screen handoff", () => {
   assert.match(
     animationLabSource,

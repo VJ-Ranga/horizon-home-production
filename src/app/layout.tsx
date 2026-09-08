@@ -26,7 +26,9 @@ export const metadata: Metadata = {
    side of this lives in AnimationLab, which drops the overlay on mount. */
 const INTRO_SEEN_SCRIPT =
   "try{if(sessionStorage.getItem('horizon:intro-seen')==='1')" +
-  "document.documentElement.classList.add('intro-seen')}catch(e){}";
+  "document.documentElement.classList.add('intro-seen');" +
+  "if(location.pathname==='/'&&sessionStorage.getItem('horizon:home-frames-ready')==='1')" +
+  "document.documentElement.classList.add('home-frames-ready')}catch(e){}";
 
 export default function RootLayout({
   children,

@@ -563,6 +563,7 @@ html.lab-menu-open body {
   display: grid;
   opacity: 1;
 }
+.home-frames-ready .lab-mobile-loading { display: none; }
 
 .lab-mobile-loading p,
 .lab-mobile-loading > span:last-child {

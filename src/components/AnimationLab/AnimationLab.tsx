@@ -153,6 +153,7 @@ const SHOW_HERO_LOGO = true;
 /* sessionStorage key marking that this browsing session has already seen
    the intro, so returning to `/` from a feature page does not replay it. */
 const INTRO_SEEN_KEY = "horizon:intro-seen";
+const HOME_FRAMES_READY_KEY = "horizon:home-frames-ready";
 
 /* The flag never changes within a render pass, so there is nothing to
    subscribe to — useSyncExternalStore is used for its SSR contract, not for
@@ -202,6 +203,16 @@ function readIntroSeen(): boolean {
    the real value right after hydration. globals.css has already hidden the
    overlay by then, via the blocking script in layout.tsx. */
 const readIntroSeenOnServer = () => false;
+
+function readHomeFramesReady(): boolean {
+  try {
+    return window.sessionStorage.getItem(HOME_FRAMES_READY_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+const readHomeFramesReadyOnServer = () => false;
 
 type LoopTransition = {
   fromFrame: number;
@@ -470,11 +481,21 @@ export default function AnimationLab({
      below has to be released here instead, or the lab would hold on the
      handoff frame forever on every return visit. */
   const introComplete = introDone || introSeen;
+  const homeFramesReady = useSyncExternalStore(
+    subscribeToNothing,
+    readHomeFramesReady,
+    readHomeFramesReadyOnServer,
+  ) && runIntro;
 
   useEffect(() => {
     if (skipEntry || !mounted) return;
+    if (homeFramesReady) {
+      setEntryReady(true);
+      return;
+    }
     let disposed = false;
     let loaded = 0;
+    let hadDecodeFailure = false;
 
     const ready = async () => {
       const frames: number[] = [];
@@ -488,6 +509,7 @@ export default function AnimationLab({
           try {
             await image.decode();
           } catch {
+            hadDecodeFailure = true;
             // A frame that fails to decode must not stall the page.
             // The scrubber falls back to the nearest frame it has.
           } finally {
@@ -499,14 +521,23 @@ export default function AnimationLab({
         })
       );
 
-      if (!disposed) setEntryReady(true);
+      if (!disposed) {
+        try {
+          if (runIntro && !hadDecodeFailure) {
+            sessionStorage.setItem(HOME_FRAMES_READY_KEY, "1");
+          }
+        } catch {
+          // Storage can be unavailable in private browsing; loading still completes.
+        }
+        setEntryReady(true);
+      }
     };
 
     void ready();
     return () => {
       disposed = true;
     };
-  }, [skipEntry, frameDir, mounted, phone, compact]);
+  }, [skipEntry, frameDir, mounted, phone, compact, homeFramesReady, runIntro]);
 
   /* Scroll pace. PX_PER_FRAME_DEFAULT unless ?px=<n> overrides it,
      so the old 34px inspection pace is one URL away. Read once — it
