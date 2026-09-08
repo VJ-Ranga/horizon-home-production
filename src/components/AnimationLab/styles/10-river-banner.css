@@ -50,7 +50,7 @@
   }
 
   .s-banner-river__copy {
-    font-size: clamp(21px, 5.5vw, 30px);
+    font-size: 18.33px;
     line-height: 1.25;
   }
 
