@@ -88,7 +88,7 @@ export default function GlobalHeader() {
 
       <nav
         data-global-nav
-        className={`!fixed !inset-0 !w-screen !h-screen !z-[999] overflow-hidden transition-transform duration-700 ease-in-out ${
+        className={`!fixed !inset-0 !w-screen !h-[100svh] !z-[999] overflow-hidden transition-transform duration-700 ease-in-out ${
           isOpen
             ? "translate-y-0 md:translate-y-0 translate-x-0"
             : "-translate-y-full md:-translate-y-full -translate-x-full"
@@ -115,7 +115,7 @@ export default function GlobalHeader() {
             />
           </div>
 
-          <div className="!absolute !top-[120px] md:!top-[160px] !left-0 !w-full !px-6 md:!pr-12 md:!pl-[96px] !flex !flex-col !gap-6 md:!gap-8 !z-[60] !pointer-events-auto">
+          <div className="max-md:!static md:!absolute md:!top-[160px] !left-0 !w-full !px-6 md:!pr-12 md:!pl-[96px] max-md:!mt-6 !flex !flex-col !gap-6 md:!gap-8 !z-[60] !pointer-events-auto">
             {menuLinks.map((link) => (
               <Link
                 key={link.path}
@@ -145,12 +145,9 @@ export default function GlobalHeader() {
             ))}
           </div>
 
-          {/* Credit, pinned to the bottom-right of the panel, on the logo's
-              right inset so it sits under the logo rather than the links.
-              Watermark weight: a flat 12px at 30% white, two lines, no size
-              step at md. pointer-events-auto because the nav itself only
-              enables them while open. */}
-          <p className="desktop-menu-credit !absolute !bottom-0 !right-0 !w-full !px-6 !pb-6 md:!pr-12 md:!pl-12 md:!pb-8 !z-[60] !pointer-events-auto !text-center md:!text-right !font-sans !text-[12px] !leading-relaxed text-white/50">
+          {/* Credit stays in mobile flow for safe-area and short-screen
+              scrolling; desktop keeps the original bottom-right pin. */}
+          <p className="desktop-menu-credit max-md:!static md:!absolute md:!bottom-0 md:!right-0 !w-full !px-6 max-md:!mt-auto max-md:!pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:!pr-12 md:!pl-12 md:!pb-8 !z-[60] !pointer-events-auto !text-center md:!text-right !font-sans !text-[12px] !leading-relaxed text-white/50">
             <span className="block">© 2026. Haycarb PLC, All Rights Reserved.</span>
             <span className="block">
               Concept &amp; Design by{" "}
