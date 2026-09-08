@@ -234,6 +234,19 @@
   color: rgba(255, 255, 255, 0.82);
 }
 
+/* Desktop: give the intro more horizontal room and add 30px of breathing
+   space before the card group. Compact layouts keep their own spacing below. */
+@media (min-width: 1101px) {
+  .s-fincap__intro {
+    width: 100%;
+    bottom: calc(50% + clamp(120px, 19.2svh, 200px) + 50px);
+  }
+
+  .s-fincap__lede {
+    max-width: none;
+  }
+}
+
 /* ---------- Section 14 · COMPACT (≤1100px) ----------
    Compact viewports use a normal vertical reader. The desktop carousel
    remains absolute-positioned and frame-driven; here the section itself is
