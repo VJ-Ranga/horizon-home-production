@@ -5,10 +5,37 @@ import GlobalHeader from "@/components/GlobalHeader";
 import BackgroundMusic from "@/components/BackgroundMusic";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://annualreport.haycarb.com"),
   title: "Haycarb Annual Report 2025/26 | Beyond the Beyond",
   description:
     "Explore Haycarb\u2019s Annual Report 2025/26 through an interactive digital " +
     "experience covering performance, strategy, sustainability and value creation.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: "Haycarb PLC",
+    title: "Haycarb Annual Report 2025/26 | Beyond the Beyond",
+    description:
+      "Explore Haycarb\u2019s Annual Report 2025/26 through an interactive digital " +
+      "experience covering performance, strategy, sustainability and value creation.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Haycarb Annual Report 2025/26 - Beyond the Beyond",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Haycarb Annual Report 2025/26 | Beyond the Beyond",
+    description:
+      "Explore Haycarb\u2019s Annual Report 2025/26 through an interactive digital " +
+      "experience covering performance, strategy, sustainability and value creation.",
+    images: ["/og-image.jpg"],
+  },
   // Advertise square assets so browsers and search crawlers do not fall back
   // to the generic globe when the larger source mark is not accepted.
   icons: {
