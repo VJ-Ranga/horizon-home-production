@@ -9,12 +9,16 @@ export const metadata: Metadata = {
   description:
     "Explore Haycarb\u2019s Annual Report 2025/26 through an interactive digital " +
     "experience covering performance, strategy, sustainability and value creation.",
-  // Same favicon as the Horizon app, declared the same way, so the two
-  // sites share one icon in the tab bar.
+  // Advertise square assets so browsers and search crawlers do not fall back
+  // to the generic globe when the larger source mark is not accepted.
   icons: {
-    icon: "/images/fav.png",
-    shortcut: "/images/fav.png",
-    apple: "/images/fav.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: { url: "/favicon-192.png", sizes: "192x192", type: "image/png" },
   },
 };
 
