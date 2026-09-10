@@ -1284,6 +1284,7 @@ export default function AnimationLab({
             normal load, the settled frame under reduced motion. */}
         <LabScrubber
           posterFrame={skipEntry ? HERO_SETTLED_FRAME : HANDOFF_FRAME}
+          hidePoster={showIntro}
           hq={hq}
           fourK={fourK}
           densify={densify}

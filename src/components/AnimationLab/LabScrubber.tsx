@@ -124,12 +124,15 @@ const getServerMountedSnapshot = () => false;
 
 export default function LabScrubber({
   posterFrame,
+  hidePoster = false,
   hq = false,
   fourK = false,
   densify = 1,
   onFrameLoaded,
 }: {
   posterFrame: number;
+  /** Home's intro overlay owns first paint; omit the SSR poster beneath it. */
+  hidePoster?: boolean;
   hq?: boolean;
   /** New-video 4K set, /animation-lab-4k only. Optional and false by
       default, so every existing caller behaves exactly as before. */
@@ -492,23 +495,25 @@ export default function LabScrubber({
           eslint's next/image rule is off here for the same reason as
           the hero art: these are exact-size assets addressed by
           frame number, not responsive images. */}
-      <picture>
-        <source
-          media="(max-width: 700px)"
-          srcSet={frameSrc(frameToFile(posterFrame), FRAME_DIR_MOBILE)}
-        />
-        <source
-          media="(max-width: 1100px)"
-          srcSet={frameSrc(frameToFile(posterFrame), FRAME_DIR_TABLET)}
-        />
-        <img
-          className="lab-media__poster"
-          src={frameSrc(frameToFile(posterFrame), frameDir)}
-          alt=""
-          fetchPriority="high"
-          decoding="async"
-        />
-      </picture>
+      {!hidePoster && (
+        <picture>
+          <source
+            media="(max-width: 700px)"
+            srcSet={frameSrc(frameToFile(posterFrame), FRAME_DIR_MOBILE)}
+          />
+          <source
+            media="(max-width: 1100px)"
+            srcSet={frameSrc(frameToFile(posterFrame), FRAME_DIR_TABLET)}
+          />
+          <img
+            className="lab-media__poster"
+            src={frameSrc(frameToFile(posterFrame), frameDir)}
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+          />
+        </picture>
+      )}
       <canvas
         ref={canvasRef}
         className="lab-media__canvas"
