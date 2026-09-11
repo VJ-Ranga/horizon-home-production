@@ -281,7 +281,7 @@ export default function HeroLayer() {
         className="s-hero__scroll"
         data-scroll-to={String(SECTIONS[1].settledFrame)}
       >
-        Explore the Journey
+        Scroll down to explore the journey
       </button>
 
       {/* Bottom-centre. Only the first pill carries the PSD's glow ring. */}

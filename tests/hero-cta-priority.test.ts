@@ -14,6 +14,11 @@ const styles = readFileSync(
 test("AI Guided Exploration is the prominent hero CTA", () => {
   assert.match(hero, /className="btn btn--ghost s-hero__cta s-hero__cta--report"/);
   assert.match(hero, /className="btn btn--light s-hero__cta s-hero__cta--ai"/);
+  assert.match(hero, /Scroll down to explore the journey/);
   assert.match(styles, /\.s-hero__cta--report\s*\{\s*width: 15\.99vw;\s*\}/);
   assert.match(styles, /\.s-hero__cta--ai\s*\{\s*width: 17\.21vw;\s*\}/);
+  assert.match(styles, /\.s-hero__scroll::after/);
+  assert.match(styles, /\.s-hero__scroll\s*\{[\s\S]*flex-direction: column;/);
+  assert.match(styles, /margin-left: 0;/);
+  assert.match(styles, /animation:\s*hero-scroll-cue/);
 });
