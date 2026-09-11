@@ -212,22 +212,19 @@
   font-size: var(--hero-fs-cta);
   flex: none;
 }
-.s-hero__cta--report { width: 17.21vw; }
-.s-hero__cta--ai     { width: 15.99vw; }
+.s-hero__cta--report { width: 15.99vw; }
+.s-hero__cta--ai     { width: 17.21vw; }
 .s-hero__cta .btn-icon { width: 1.05em; height: 1.05em; flex: none; }
 
-/* Button 1 is the shared .btn--download component (tokens.css / final
-   template: `btn btn--light btn--download ...`) — scale + fading white
-   ring on hover. Ported directly under .s-hero__cta--report, same as
-   ApproachLayer ports it under .s-approach2__cta, since .lab .btn--light
-   outranks a bare .btn--download on specificity. Button 2 stays plain
-   .btn--ghost, no special hover. */
-.lab .s-hero__cta--report {
+/* AI Guided Exploration is the primary action. It uses the filled light
+   treatment and keeps the PSD-style emphasis ring on hover/focus. The
+   annual-report download remains the outlined secondary action. */
+.lab .s-hero__cta--ai {
   position: relative;
   isolation: isolate;
 }
 
-.s-hero__cta--report::after {
+.s-hero__cta--ai::after {
   content: "";
   position: absolute;
   inset: -8px;
@@ -238,13 +235,13 @@
   transition: opacity var(--dur-base) var(--ease-out);
 }
 
-.lab .s-hero__cta--report:hover,
-.lab .s-hero__cta--report:focus-visible {
+.lab .s-hero__cta--ai:hover,
+.lab .s-hero__cta--ai:focus-visible {
   transform: scale(1.06);
 }
 
-.s-hero__cta--report:hover::after,
-.s-hero__cta--report:focus-visible::after {
+.s-hero__cta--ai:hover::after,
+.s-hero__cta--ai:focus-visible::after {
   opacity: 1;
 }
 

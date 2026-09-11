@@ -287,7 +287,7 @@ export default function HeroLayer() {
       {/* Bottom-centre. Only the first pill carries the PSD's glow ring. */}
       <div className="s-hero__actions btn-row btn-row--center" ref={actionsRef}>
         <a
-          className="btn btn--light s-hero__cta s-hero__cta--report"
+          className="btn btn--ghost s-hero__cta s-hero__cta--report"
           href="/pdf/home/01-hero/Annual%20Report%202025-26.pdf"
           target="_blank"
           rel="noopener noreferrer"
@@ -307,7 +307,7 @@ export default function HeroLayer() {
           <span>Download Annual Report</span>
         </a>
         <a
-          className="btn btn--ghost s-hero__cta s-hero__cta--ai"
+          className="btn btn--light s-hero__cta s-hero__cta--ai"
           href={horizonUrl(HORIZON_ROUTES.aiAssistant)}
           target="_blank"
           rel="noopener noreferrer"

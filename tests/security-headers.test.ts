@@ -6,10 +6,15 @@ const config = readFileSync("next.config.ts", "utf8");
 
 test("Next config defines baseline security headers", () => {
   assert.match(config, /headers:\s*async \(\)/);
+  assert.match(config, /source:\s*"\/:path\*"/);
   assert.match(config, /X-Content-Type-Options/);
   assert.match(config, /Referrer-Policy/);
   assert.match(config, /Permissions-Policy/);
   assert.match(config, /X-Frame-Options/);
+});
+
+test("Next.js framework disclosure is disabled", () => {
+  assert.match(config, /poweredByHeader:\s*false/);
 });
 
 test("production CSP allows only declared third-party integrations", () => {

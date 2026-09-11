@@ -6,6 +6,10 @@ const backgroundMusic = readFileSync(
   new URL("../src/components/BackgroundMusic.tsx", import.meta.url),
   "utf8",
 );
+const videoDialogController = readFileSync(
+  new URL("../src/components/AnimationLab/videoDialogController.ts", import.meta.url),
+  "utf8",
+);
 
 test("background music pauses for popup videos and resumes only when it was playing", () => {
   assert.match(backgroundMusic, /data-bg-music-audio/);
@@ -36,4 +40,9 @@ test("community popup videos also pause background music", () => {
   );
   assert.match(source, /notifyPopupVideo\("open"\)/);
   assert.match(source, /notifyPopupVideo\("close"\)/);
+});
+
+test("shared video dialog controller pauses and resumes background music", () => {
+  assert.match(videoDialogController, /notifyPopupVideo\("open"\)/);
+  assert.match(videoDialogController, /notifyPopupVideo\("close"\)/);
 });

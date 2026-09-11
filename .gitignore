@@ -69,3 +69,12 @@ next-env.d.ts
 # Standalone visual experiments — not production, not imported by src/
 /mobile-video-prototype/
 /public/frames-mobile-portrait/
+
+# Local tooling and diagnostic output — never part of the application deploy.
+/.claude/
+/.playwright-mcp/
+/accessibly-network.txt
+/public-accessibly-network.txt
+/diagnostic-accessibility-widget.png
+/section-08-frame-*.png
+/menu-*.png

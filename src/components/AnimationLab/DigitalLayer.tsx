@@ -144,10 +144,10 @@ const FEATURES = [
   },
 ];
 
-// The "Explore the Digital Experience" quicklinks (PDF p.3). The
-// fifth link is the --cta anchor rendered after this list. Same 5
-// routes GlobalHeader.tsx's own menu points at, via the same
-// HORIZON_ROUTES map.
+// The "Explore the Digital Experience" quicklinks (PDF p.3). These five
+// routes are the same destinations GlobalHeader.tsx's menu points at, via
+// the shared HORIZON_ROUTES map. `variant` preserves the existing CTA
+// treatment for Adaptive Reports & Charts.
 const PROFILES = [
   {
     label: "AI Guided Exploration",
@@ -155,9 +155,10 @@ const PROFILES = [
     href: horizonUrl(HORIZON_ROUTES.aiAssistant),
   },
   {
-    label: "User Profiles",
-    file: "User Profiles.json",
-    href: horizonUrl(HORIZON_ROUTES.userProfiles),
+    label: "Adaptive Reports & Charts",
+    file: "Interactive Charts & Reports.json",
+    href: horizonUrl(HORIZON_ROUTES.tailorMade),
+    variant: "cta" as const,
   },
   {
     label: "Gamified Exploration",
@@ -168,6 +169,12 @@ const PROFILES = [
     label: "Sustainability Dashboard",
     file: "Sustainability Dashboard.json",
     href: horizonUrl(HORIZON_ROUTES.dashboard),
+  },
+  {
+    label: "Stakeholder Based Summary",
+    file: "User Profiles.json",
+    href: horizonUrl(HORIZON_ROUTES.userProfiles),
+    variant: "stakeholder" as const,
   },
 ];
 
@@ -288,33 +295,18 @@ export default function DigitalLayer() {
                 <span className="s-digital2__profile-label">{profile.label}</span>
               </>
             );
-            return profile.href ? (
-              <li key={index} className="s-digital2__profile">
+            const variantClass = profile.variant
+              ? ` s-digital2__profile--${profile.variant}`
+              : "";
+            return (
+              <li key={index} className={`s-digital2__profile${variantClass}`}>
                 <a href={profile.href} target="_blank" rel="noopener noreferrer">
                   {content}
                 </a>
               </li>
-            ) : (
-              // eslint-disable-next-line react/no-array-index-key
-              <li key={index} className="s-digital2__profile">
-                {content}
-              </li>
             );
           })}
         </ul>
-
-        <a
-          className="s-digital2__profile s-digital2__profile--cta"
-          href={horizonUrl(HORIZON_ROUTES.tailorMade)}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Interactive Charts &amp; Reports"
-        >
-          <span className="s-digital2__avatar s-digital2__avatar--animated">
-            <LottieIcon file="Interactive Charts & Reports.json" label="Interactive Charts & Reports" />
-          </span>
-          <span className="s-digital2__profile-label">Interactive Charts &amp; Reports</span>
-        </a>
       </div>
     </div>
   );

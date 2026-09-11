@@ -223,9 +223,9 @@
    circle. 1px nudge (VJ's call, judged on the live page). Held at the
    same offset on hover so it doesn't slide sideways while the avatar
    scales up. */
-.s-digital2__profile:nth-child(2) .s-digital2__lottie,
-.s-digital2__profile:nth-child(2):hover .s-digital2__lottie,
-.s-digital2__profile:nth-child(2):focus-within .s-digital2__lottie { transform: translateX(1px); }
+.s-digital2__profile--stakeholder .s-digital2__lottie,
+.s-digital2__profile--stakeholder:hover .s-digital2__lottie,
+.s-digital2__profile--stakeholder:focus-within .s-digital2__lottie { transform: translateX(1px); }
 
 .s-digital2__profile-label {
   color: #ffffff;

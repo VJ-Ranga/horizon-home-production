@@ -14,10 +14,10 @@
 
 import { useEffect } from "react";
 import { useFrameEffect } from "./useFrameTimeline";
-import { LOGO_EXIT_FRAMES, SECTIONS } from "./timeline";
+import { HERO_SETTLED_FRAME, LOGO_EXIT_FRAMES, SECTIONS } from "./timeline";
 
 /* The frame the hamburger appears on, and stays visible from. */
-const REVEAL_FRAME = 60;
+const REVEAL_FRAME = HERO_SETTLED_FRAME;
 
 /* The music toggle stays hidden for the whole hero and only appears
    once the hero has exited (VJ, 2026-09-03: "that sound icon only need

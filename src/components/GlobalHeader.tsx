@@ -10,10 +10,10 @@ import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
 const menuLinks = [
   { name: "Home", path: "/" },
   { name: "AI Guided Exploration", path: horizonUrl(HORIZON_ROUTES.aiAssistant) },
-  { name: "User Profiles", path: horizonUrl(HORIZON_ROUTES.userProfiles) },
+  { name: "Adaptive Reports & Charts", path: horizonUrl(HORIZON_ROUTES.tailorMade) },
   { name: "Gamified Exploration", path: horizonUrl(HORIZON_ROUTES.crosswordPuzzle) },
   { name: "Sustainability Dashboard", path: horizonUrl(HORIZON_ROUTES.dashboard) },
-  { name: "Interactive Charts & Reports", path: horizonUrl(HORIZON_ROUTES.tailorMade) },
+  { name: "Stakeholder Based Summary", path: horizonUrl(HORIZON_ROUTES.userProfiles) },
 ];
 
 const darkPages = ['/ai-assistant', '/user-profiles'];

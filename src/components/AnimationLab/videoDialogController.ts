@@ -1,3 +1,5 @@
+import { notifyPopupVideo } from "./popupVideoAudio";
+
 type DialogElement = Pick<HTMLDialogElement, "close" | "open" | "showModal">;
 type VideoFrameElement = Pick<HTMLIFrameElement, "src">;
 
@@ -15,6 +17,7 @@ export function createVideoDialogController({
   src: string;
 }) {
   let openedAtFrame: number | null = null;
+  let popupOpen = false;
 
   function open() {
     const dialog = getDialog();
@@ -24,6 +27,8 @@ export function createVideoDialogController({
     openedAtFrame = getCurrentFrame();
     videoFrame.src = src;
     dialog.showModal();
+    popupOpen = true;
+    notifyPopupVideo("open");
   }
 
   function sync(currentFrame: number) {
@@ -40,6 +45,10 @@ export function createVideoDialogController({
 
   function handleClose() {
     openedAtFrame = null;
+    if (popupOpen) {
+      popupOpen = false;
+      notifyPopupVideo("close");
+    }
     const videoFrame = getVideoFrame();
     if (videoFrame) videoFrame.src = "";
   }
