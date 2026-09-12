@@ -39,6 +39,7 @@ import {
 } from "./useFrameTimeline";
 import { notifyPopupVideo } from "./popupVideoAudio";
 import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
+import LottieIcon from "./LottieIcon";
 
 const HERO = SECTIONS[0];
 const POPUP_CLOSE_AFTER_FRAMES = 5;
@@ -282,6 +283,12 @@ export default function HeroLayer() {
         data-scroll-to={String(SECTIONS[1].settledFrame)}
       >
         Scroll down to explore the journey
+        <LottieIcon
+          file="Scroll down.json"
+          directory="hero"
+          label="Scroll down"
+          className="s-hero__scroll-animation"
+        />
       </button>
 
       {/* Bottom-centre. Only the first pill carries the PSD's glow ring. */}
