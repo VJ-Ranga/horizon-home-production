@@ -44,7 +44,7 @@
  } from "./timeline";
 import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 import LottieIcon from "./LottieIcon";
-import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
+import { horizonUrl } from "@/lib/horizon";
 
 const DIGITAL = SECTIONS[3];
 const TITLE_TEXT = "The Next Horizon of Intelligent Reporting";
@@ -145,35 +145,34 @@ const FEATURES = [
 ];
 
 // The "Explore the Digital Experience" quicklinks (PDF p.3). These five
-// routes are the same destinations GlobalHeader.tsx's menu points at, via
-// the shared HORIZON_ROUTES map. `variant` preserves the existing CTA
-// treatment for Adaptive Reports & Charts.
+// Keep Section 4 quicklinks aligned with report menu destinations. `variant`
+// preserves existing CTA treatment for Adaptive Reports & Charts.
 const PROFILES = [
   {
     label: "AI Guided Exploration",
     file: "AI Guided Exploration.json",
-    href: horizonUrl(HORIZON_ROUTES.aiAssistant),
+    href: horizonUrl("/ai-guided-exploration"),
   },
   {
     label: "Adaptive Reports & Charts",
     file: "Interactive Charts & Reports.json",
-    href: horizonUrl(HORIZON_ROUTES.tailorMade),
+    href: horizonUrl("/adaptive-reports-charts"),
     variant: "cta" as const,
   },
   {
     label: "Gamified Exploration",
     file: "Gamified Exploration.json",
-    href: horizonUrl(HORIZON_ROUTES.crosswordPuzzle),
+    href: horizonUrl("/gamified-exploration"),
   },
   {
     label: "Sustainability Dashboard",
     file: "Sustainability Dashboard.json",
-    href: horizonUrl(HORIZON_ROUTES.dashboard),
+    href: horizonUrl("/sustainability-dashboard"),
   },
   {
     label: "Stakeholder Based Summary",
     file: "User Profiles.json",
-    href: horizonUrl(HORIZON_ROUTES.userProfiles),
+    href: horizonUrl("/stakeholder-based-summary"),
     variant: "stakeholder" as const,
   },
 ];

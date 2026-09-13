@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HORIZON_ROUTES, horizonUrl } from "@/lib/horizon";
+import { horizonUrl } from "@/lib/horizon";
 
 // This app owns the domain root; Horizon is a separate deployment on its own
 // host, so every link out to it is absolute. "Home" stays relative: it is here.
 const menuLinks = [
   { name: "Home", path: "/" },
-  { name: "AI Guided Exploration", path: horizonUrl(HORIZON_ROUTES.aiAssistant) },
-  { name: "Adaptive Reports & Charts", path: horizonUrl(HORIZON_ROUTES.tailorMade) },
-  { name: "Gamified Exploration", path: horizonUrl(HORIZON_ROUTES.crosswordPuzzle) },
-  { name: "Sustainability Dashboard", path: horizonUrl(HORIZON_ROUTES.dashboard) },
-  { name: "Stakeholder Based Summary", path: horizonUrl(HORIZON_ROUTES.userProfiles) },
+  { name: "AI Guided Exploration", path: horizonUrl("/ai-guided-exploration") },
+  { name: "Adaptive Reports & Charts", path: horizonUrl("/adaptive-reports-charts") },
+  { name: "Gamified Exploration", path: horizonUrl("/gamified-exploration") },
+  { name: "Sustainability Dashboard", path: horizonUrl("/sustainability-dashboard") },
+  { name: "Stakeholder Based Summary", path: horizonUrl("/stakeholder-based-summary") },
 ];
 
 const darkPages = ['/ai-assistant', '/user-profiles'];
