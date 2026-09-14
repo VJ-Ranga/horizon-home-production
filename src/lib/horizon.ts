@@ -12,11 +12,11 @@ export const HORIZON_ORIGIN =
 
 /** Horizon's real route names, as of misfarsiddeek95/horizon@main. */
 export const HORIZON_ROUTES = {
-  aiAssistant: "/ai-assistant",
+  aiAssistant: "/ai-guided-exploration",
   userProfiles: "/user-profiles",
   crosswordPuzzle: "/crossword-puzzle",
   dashboard: "/sustainability-dashboard",
-  tailorMade: "/tailor-made-for-you",
+  tailorMade: "/adaptive-reports-charts",
 } as const;
 
 export const horizonUrl = (route: string) => `${HORIZON_ORIGIN}${route}`;
