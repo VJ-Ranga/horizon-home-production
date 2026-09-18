@@ -7,15 +7,15 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "frame-ancestors 'self'",
   "form-action 'self'",
-  `script-src 'self' 'unsafe-inline' https://dash.accessibly.app https://*.accessibly.app${
+  `script-src 'self' 'unsafe-inline' https://dash.accessibly.app https://*.accessibly.app https://www.googletagmanager.com${
     isProduction ? "" : " 'unsafe-eval'"
   }`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https://cdn.accessibly.app https://fonts.gstatic.com",
   "media-src 'self' blob:",
-  "connect-src 'self' https://*.accessibly.app https://alt-tags.accessiblyapp.com",
-  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+  "connect-src 'self' https://*.accessibly.app https://alt-tags.accessiblyapp.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.doubleclick.net",
+  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.googletagmanager.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
 ].join("; ");
