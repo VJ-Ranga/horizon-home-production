@@ -1,73 +1,16 @@
 /* =========================================================
-   ANIMATION LAB — the timeline model
-   =========================================================
+   Timeline model for the scroll experience.
 
-   THE PAGE HAS TWO PHASES. They are driven by different clocks and
-   must not be confused.
+   Two phases, driven by different clocks:
 
-     PHASE 1  "entry"   AUTOPLAY, scroll locked.
-                        Runs on a real clock, at the footage's own
-                        speed, from the intro handoff to the hero's
-                        settled frame. The hero elements reveal
-                        during it. The user does nothing.
+     "entry"   Autoplay with scroll locked. Runs on a timer from the
+               intro hand-off (frame 1) to the settled hero (frame 50)
+               while the hero elements reveal.
 
-     PHASE 2  "scroll"  Scroll-driven, from the settled frame on.
-                        Hero exits, section 2 arrives.
+     "scroll"  Scroll-driven from the settled hero onward.
 
-   Between them the page is simply LOADED AND IDLE at frame 50, like
-   any normal site. Nothing moves until the user scrolls.
-
-   The hero entry is NOT scroll animation. Nobody has to scroll to
-   load the hero.
-
-   ---------------------------------------------------------
-   FRAME NUMBERING — read this before touching anything.
-
-   THREE frame sets exist in this project, with different rates and
-   different start times, so THE SAME NUMBER MEANS A DIFFERENT
-   MOMENT in each. Never carry a number between them unconverted.
-
-     A. video/Intro-frames/   240 frames, Intro.mp4,  0 -> 22.700s
-                              240/22.70    = 10.5727 fps
-     B. video/full-frames/    240 frames, Full.mp4,   0 -> 161.367s
-                              240/161.3667 =  1.4873 fps   <- COARSE
-   C. public/frames/        1125 frames, final 4K edit after intro
-                              5.1922 fps                   <- THIS FILE
-
-   Everything here, and in FRAME-MAP.md, is set C, 1-based.
-   src/data/home.ts framePath() takes a 0-BASED index into set C;
-   that conversion happens in one place only, frameSrc() below.
-
-   ---------------------------------------------------------
-   THE INTRO HANDOFF — measured 2026-08-19.
-
-   Intro-frames/frame_0240.webp (the intro's final frame) diffed
-   against full-frames 30-35. Mean absolute difference /255:
-
-       30: 16.79   31: 15.18   32: 13.92
-       33: 11.52   34: 10.86 <- closest   35: 17.79
-
-   So the handoff is FULL-FRAME 34 (set B) — a clean minimum, with
-   the rise at 35 being the cut.
-
-   Set B samples only 1.4873 times a second, though, so its frames
-   sit 0.67s apart and 34 is merely the last sample before the cut:
-   t = 33/1.4873 = 22.188s, half a second before the intro ends.
-
-   Resolved against the source timeline instead, by pulling Full.mp4
-   at its true 30fps across 21.8-23.6s and diffing every frame:
-
-       true handoff  t = 22.667s   (next best 22.700s)
-
-   Into set C, whose frame 1 is t 22.700s:
-
-       (22.667 - 22.700) x 5.1922 + 1  =  frame 0.83
-
-   ==> THE HANDOFF IS SET-C FRAME 1, within 0.17 of a frame.
-
-   Set C was deliberately cut starting at 22.700s so that its first
-   frame IS the handover. Full-frame 34 and set-C frame 1 are the
-   same moment in the video, named by two sets of different density.
+   Frame numbers are 1-based indexes into public/frames (5.1922 fps).
+   Frame 1 is the visual hand-off from the intro video.
    ========================================================= */
 
 export type TimelineMode = "desktop" | "compact";
@@ -77,10 +20,8 @@ export interface TimelinePolicy {
   frameStepLimit: number;
 }
 
-/**
- * The mode boundary for timeline behavior. Compact deliberately mirrors the
- * current values until its mobile timeline is redesigned independently.
- */
+/** Per-mode timeline behaviour. Compact limits how many frames a single
+    tick may advance, so a touch flick cannot skip short sections. */
 export function timelinePolicy(mode: TimelineMode): TimelinePolicy {
   switch (mode) {
     case "compact":
@@ -90,13 +31,13 @@ export function timelinePolicy(mode: TimelineMode): TimelinePolicy {
   }
 }
 
-/** Set-C frame the intro hands over to. Measured — see above. */
+/** Frame the intro video hands over to. */
 export const HANDOFF_FRAME = 1;
 
-/** Set-C frame where the hero is fully loaded. Measured, FRAME-MAP.md. */
+/** Frame where the hero is fully loaded. */
 export const HERO_SETTLED_FRAME = 50;
 
-/** Last frame the lab runs to — the full post-intro new-video timeline. */
+/** Last frame of the timeline (number of files in public/frames). */
 export const LAB_LAST_FRAME = 1125;
 
 /* ---------------------------------------------------------
@@ -109,56 +50,12 @@ export const ENTRY_FRAMES: [number, number] = [
   HERO_SETTLED_FRAME,
 ];
 
-/** Playback rate of the current post-intro source timeline. */
+/** Frame rate of public/frames. */
 export const SET_C_FPS = 5.1922;
 
-/** Playback multiplier. 1.0 = the footage's real speed, which is 9.44
-    REAL SECONDS of locked scroll — measured as far too slow for a
-    hero load.
-
-    Raising it shortens the entry AND makes it smoother, because the
-    frame count is fixed: displayed fps = 5.1922 x ENTRY_SPEED.
-
-        speed  duration  displayed fps
-          1      9.44s      5.2      unwatchable
-          3      3.15s     15.6      still steps
-        > 4      2.36s     20.8      chosen
-          5      1.89s     26.0      film rate, but very brief
-
-    4 is the top of the 2.3-3.2s target and the smoothest option the
-    current 49 frames can give. The ceiling here is FRAME COUNT, not
-    speed — see the note on density below. */
+/** Entry playback multiplier. 1 = the footage's real speed.
+    Displayed fps = SET_C_FPS x ENTRY_SPEED. */
 export const ENTRY_SPEED = 2;
-
-/* ---------------------------------------------------------
-   MEASURED: why 20.8fps is the ceiling, and what would lift it.
-
-   Consecutive-frame change across the entry window (mean abs
-   difference, full resolution):
-
-     shipped 720 set, 49 frames in the window   9.06
-     whole clip, from PROJECT-LOG                3.10
-
-   The entry is ~3x more active than the clip average — it is the
-   camera's hardest forward push, right after the intro.
-
-   Fitting  change = grain + motion x spacing  over test extractions
-   of the same window at 49 / 73 / 145 frames:
-
-     compression + grain floor  6.32   constant, does not judder
-     motion                    15.08 per second of spacing
-
-   So the part that actually steps is the motion component:
-
-     frames in window   displayed fps @2.4s   motion per shown frame
-        49 (shipped)          20.4                   2.90
-        73                    30.0                   1.98
-       145                    60.0                   0.99
-
-   ==> A 73-frame entry-only set would run the same 2.4s at 30fps
-   with the per-frame step cut by a third. 145 is wasteful. Proposed,
-   not built — see PROJECT-LOG.
-   --------------------------------------------------------- */
 
 export const ENTRY_DURATION_MS =
   ((ENTRY_FRAMES[1] - ENTRY_FRAMES[0]) / SET_C_FPS / ENTRY_SPEED) * 1000;
@@ -172,7 +69,7 @@ export const ENTRY_DURATION_MS =
 export const SCROLL_FIRST_FRAME = HERO_SETTLED_FRAME;
 export const SCROLL_LAST_FRAME = LAB_LAST_FRAME;
 
-/** Duration of the optional downward-only end-to-start cinematic bridge. */
+/** End-to-start loop transition (desktop, downward only). */
 export const LOOP_TRANSITION_FRAMES = 20;
 export const LOOP_TRANSITION_DURATION_MS = 900;
 export const LOOP_COVER_START_FRAME = LAB_LAST_FRAME - 10;
@@ -190,25 +87,11 @@ export function loopTargetForBoundary(
   return direction === 1 && !reducedMotion ? SCROLL_FIRST_FRAME : null;
 }
 
-/** Scroll distance per frame. 34 was an inspection speed and made
-    the page feel heavy — 3,060px, 2.8 screens, to get through 90
-    frames. What each value costs, at a 1080px viewport:
-
-        px/frame  hero exit 50-70   whole scroll 50-140
-           34         680px (0.63 screens)  3060px (2.8 screens)
-        >  14         280px (0.26 screens)  1260px (1.2 screens)
-            8         160px (0.15 screens)   720px (0.7 screens)
-
-    14 is chosen: the top of the 8-14 range, because at 8 the entire
-    remaining page is under one screen of scroll and a single flick
-    crosses the hero exit, the gap and section 2 together.
-
-    Override for inspection with ?px=<n> — see PX_PER_FRAME_DEFAULT
-    and readPxPerFrame() below. */
+/** Scroll distance per frame, in px. Lower values let a single flick
+    cross several sections. Can be overridden with ?px=<n>. */
 export const PX_PER_FRAME_DEFAULT = 14;
 
-/** Debug override: /animation-lab?px=34 restores the old inspection
-    pace without a rebuild. Falls back to the default off-browser. */
+/** Reads the ?px=<n> override. Falls back to the default on the server. */
 export function readPxPerFrame(): number {
   if (typeof window === "undefined") return PX_PER_FRAME_DEFAULT;
   const raw = new URLSearchParams(window.location.search).get("px");
@@ -227,25 +110,13 @@ export const PX_PER_FRAME = PX_PER_FRAME_DEFAULT;
    continuous scrub means the footage has already moved on by the
    time a panel is fully visible — there's no real moment to read it.
 
-   So every non-hero section gets extra scroll room at its own
-   settledFrame before scroll continues: enter, hold, exit — the same
-   shape for a caption banner as for a dense dashboard. Decided
-   2026-08-21: one fixed budget for all of them, not sized per
-   section, so it stays one number to retune.
-
-   REVISED same day: a dead-flat freeze read as broken, not settled.
-   The hold now CRAWLS — the footage still creeps forward, just very
-   slowly, through HOLD_CRAWL_FRAMES on each side of settledFrame (8
-   frames total) instead of pinning at a single frame.
+   So every non-hero section gets extra scroll room around its
+   settledFrame: the footage keeps creeping forward, slowly, through
+   HOLD_CRAWL_FRAMES on each side of settledFrame instead of freezing.
 
    HOLD_CRAWL_SLOWDOWN is how much slower than normal scrubbing that
-   crawl is (VJ: 12.5x read as stuck, not slow — dropped to 6x). Scroll
-   budget is derived from it rather than a raw pixel count, so "make
-   the crawl Nx slower" stays a one-number change instead of redoing
-   the pixel math by hand each time. It's PX_PER_FRAME_DEFAULT the
-   budget scales off, not the (rare) ?px= override — the crawl's
-   sluggishness is a content-pacing choice, it shouldn't quietly
-   change just because someone loaded the page in inspection mode. */
+   crawl is. The budget scales off PX_PER_FRAME_DEFAULT, not the ?px=
+   override, because it is a content-pacing choice. */
 export const HOLD_CRAWL_FRAMES = 4;
 export const HOLD_CRAWL_SLOWDOWN = 6;
 export const HOLD_SCROLL_PX =
@@ -253,8 +124,7 @@ export const HOLD_SCROLL_PX =
 
 /** One section's hold, resolved to numbers. slowdown/rampFrames come
     from the section's own overrides, defaulting to the shared crawl
-    (6x, no ramp — the old hard-cut behaviour) for every section that
-    doesn't set them. */
+    (6x, no ramp). */
 interface CrawlStop {
   kind: "crawl";
   sectionId: string;
@@ -405,12 +275,9 @@ interface Leg {
     inconsistent inverses of each other.
 
     The crawl/ramp legs are paced off PX_PER_FRAME_DEFAULT, not the
-    `pxPerFrame` parameter — same as the original HOLD_SCROLL_PX did.
-    It's a content-pacing choice, not something that should quietly
-    change because someone loaded the page with a ?px= override. */
+    `pxPerFrame` parameter, so a ?px= override does not change them. */
 function buildLegs(pxPerFrame: number, mode: TimelineMode = "desktop"): Leg[] {
-  // Keep the mode in the mapping boundary even while both modes use the
-  // current piecewise values. Compact gets its own branch for future policy.
+  // Both modes currently share the same piecewise mapping.
   const policy = timelinePolicy(mode);
   if (policy.mode === "compact") {
     return buildCurrentLegs(pxPerFrame, mode);
@@ -424,15 +291,8 @@ function buildCurrentLegs(pxPerFrame: number, mode: TimelineMode = "desktop"): L
 
   for (const stop of stops(mode)) {
     if (stop.kind === "carousel") {
-      // Bug fix, 2026-08-24 (VJ: "start point need to fix... it have
-      // 1 or 2 fram issue so fully stop"): scrolling in at full,
-      // uncrawled pace right up to the exact freeze frame then
-      // hard-cutting to pinned read as not-quite-stopped. Give it the
-      // same crawl-in every other section's hold gets (decelerate
-      // over HOLD_CRAWL_FRAMES beforehand) so it visibly settles
-      // before the freeze, not just after. No crawl-OUT on the other
-      // side — the freeze itself is the "settle", already far longer
-      // than a normal hold's crawl.
+      // Crawl in over HOLD_CRAWL_FRAMES so the footage visibly settles
+      // before the freeze. No crawl-out: the freeze itself is the settle.
       const crawlStart = Math.max(frame, stop.frame - HOLD_CRAWL_FRAMES);
       if (crawlStart > frame) {
         legs.push({ frameStart: frame, frameEnd: crawlStart, pxPerFrame });
@@ -829,52 +689,34 @@ export function totalScrollPx(
   return scrollPxForFrame(SCROLL_LAST_FRAME, pxPerFrame, mode);
 }
 
-/** Every frame file the lab needs: the entry's plus the scroll's. */
+/** Every frame file the page needs: the entry's plus the scroll's. */
 export const LAB_FIRST_FRAME = ENTRY_FRAMES[0];
 export const LAB_FRAME_COUNT = LAB_LAST_FRAME - LAB_FIRST_FRAME + 1;
 
-/** The regular set: 1942x1080 q90. Full post-intro new-video timeline. */
+/** The regular set: 1942x1080 q90. */
 export const FRAME_DIR_DEV = "/frames";
 
-/** The HQ client-preview set: 2590x1440 q95. Full post-intro timeline,
-    reached ONLY through /animation-lab?quality=hq. */
+/** HQ set: 2590x1440 q95. Used only with ?quality=hq. */
 export const FRAME_DIR_HQ = "/frames-hq";
 
-/** 4K set from the NEW video (Haycarb AI Final Video.mp4), 3884x2160,
-    extracted at the same 5.1922 fps and renumbered from 1 so it shares
-    the numbering below. Served only on /animation-lab-4k — the two
-    routes above are untouched by its existence. Separate route rather
-    than another ?quality= value because the new video is a different
-    edit: its frame N is NOT guaranteed to be the same moment as the
-    old sets' frame N, so the section frame numbers in SECTIONS may not
-    land the same way. Keeping it on its own URL means finding that out
-    cannot break the working ones. */
+/** 4K set: 3884x2160 at the same 5.1922 fps, numbered from 1. Used only
+    when the `fourK` prop is set. */
 export const FRAME_DIR_4K = "/frames-4k";
 
-/** 2x-density sets from the full post-intro source timeline, at exactly
-    10.3844 fps (2 x SET_C_FPS). They share this timeline's logical
-    frame numbers; the dense route simply has two files per frame. */
+/** 2x-density sets at 10.3844 fps (2 x SET_C_FPS). Same logical frame
+    numbers, two files per frame. */
 export const FRAME_DIR_2X = "/frames-2x";
 export const FRAME_DIR_2X_HQ = "/frames-2x-hq";
 
-/** 4x-density set, 1080p only (VJ, 2026-08-25: "same way 4x only for
-    1080"). Same start, 20.7688 fps (4 x SET_C_FPS), trimmed by 196 so
-    file 1 lands on the 840-sets' frame 1 — the general rule is
-    `file = k*N - (k-1)`, so at k=4 the light set's frame 1 sits at
-    dense frame 197. Quarter-frame scroll resolution; still no timeline
-    of its own. */
+/** 4x-density set, 1080p only, 20.7688 fps (4 x SET_C_FPS). File for
+    logical frame N is `k*N - (k-1)`. */
 export const FRAME_DIR_4X = "/frames-4x";
 
-/** The intro shot — 240 frames, public/frames-intro (2590x1440): the
-    opening camera push from the new final 4K video through the visual
-    handoff into set-C frame 1. Loaded only by LabIntro.tsx on the
-    /animation-lab-full, -intro and -loading routes — every other
-    route never touches it. */
+/** Intro shot as 240 frames in public/frames-intro (2590x1440), ending on
+    the hand-off into frame 1. */
 export const FRAME_DIR_INTRO = "/frames-intro";
 export const INTRO_FRAME_COUNT = 240;
-/** 240 frames across the new video's 30.815s opening ≈ 7.79 fps —
-    its real speed, so the last intro frame lands on the new set-C
-    frame-1 visual handoff. */
+/** 240 frames over the 30.815s intro ≈ 7.79 fps (real speed). */
 export const INTRO_FPS = INTRO_FRAME_COUNT / 30.815;
 
 /** 1-based intro frame number -> file. Same padded naming as
@@ -884,9 +726,8 @@ export function introFrameSrc(frame: number): string {
 }
 
 
-/** 1-based set-C frame number -> file. Both sets share the numbering,
-    the 22.700s start and the 5.192308 fps rate, so a frame number
-    means the same moment in either — only the pixels differ. */
+/** 1-based frame number -> file. Every set shares the numbering, so a
+    frame number means the same moment in any of them. */
 export function frameSrc(
   frame: number,
   dir: string = FRAME_DIR_DEV
@@ -911,9 +752,7 @@ export function progressBetween(frame: number, a: number, b: number): number {
   return clamp01((frame - a) / (b - a));
 }
 
-/** Per-item stagger, purely a function of `frame` — the frame-driven
-    replacement for the CSS animation-delay staggers ported from
-    motion.js (per-character title reveal, per-card/feature rise-in).
+/** Per-item stagger, purely a function of `frame`.
     `count` items share `window`, each getting its own slice with a
     little overlap so neighbours don't read as discrete steps; item 0
     starts at window[0], the last item finishes at window[1].
@@ -923,9 +762,7 @@ export function progressBetween(frame: number, a: number, b: number): number {
     to the frame the user has scrolled to — scroll fast and the
     stagger visibly catches up/skips ahead with you, scroll slowly and
     it plays out slowly, scroll backward and it reverses. If a window
-    feels too tight for its item count, the fix is to widen `window`
-    (more frames = more scroll distance = more room), not to add a
-    fixed-duration animation back. */
+    feels too tight for its item count, widen `window`. */
 export function staggerProgressAt(
   index: number,
   count: number,
@@ -957,7 +794,7 @@ export interface Offset {
 export interface SectionTimeline {
   id: string;
   label: string;
-  /** The "fully loaded" frame — measured, from FRAME-MAP.md. */
+  /** The frame where the section is fully shown. */
   settledFrame: number;
   /** Omit when the section is already present when scroll begins. */
   enter?: { frames: [number, number]; from: Offset };
@@ -991,7 +828,7 @@ export interface SectionTimeline {
   /** Extra frames appended right after this section's crawl, during
       which scroll speed eases from the crawl's pace back up to full
       pace in a few short linear steps rather than snapping instantly.
-      Omit (0) for the old hard-cut behaviour. */
+      Omit (0) for a hard cut. */
   holdRampFrames?: number;
   /** Scroll-lock carousel, e.g. FinancialCapitalLayer.tsx. When set,
       this section gets its own short crawl-in (not the normal
@@ -1006,10 +843,8 @@ export interface SectionTimeline {
       scrollPxForFrame(settledFrame, ...) as the zero point, same
       coordinate space window.scrollY already is — see
       FinancialCapitalLayer.tsx) to drive the sweep and its own
-      lead/tail buffers. VJ (2026-08-24): "after u stop give similar
-      time for 1 frame to start scrolling, also scroll done and
-      before start move wait 2 or 3 frame" — leadPx/tailPx exist
-      specifically for that pause on each side. */
+      lead/tail buffers. leadPx/tailPx give a short pause before the
+      first card moves and after the last card lands. */
   carousel?: { count: number; scrollPx: number; leadPx: number; tailPx: number };
   /** Scroll-through: the section's content is TALLER than one viewport
       — stacked "pages" the reader scrolls between. By default the scrub
@@ -1048,13 +883,8 @@ export interface ElementState {
   interactive: boolean;
 }
 
-/**
- * Device-specific timing overrides. Content and asset frame numbers remain
- * shared; only interaction pacing is allowed to vary by mode.
- *
- * Desktop keeps the smoother legacy timing for sections 2-4. Compact keeps
- * the current values until its redesigned mobile sections are ready.
- */
+/** Per-mode timing overrides. Content and asset frame numbers stay shared;
+    only pacing varies by mode. */
 const DESKTOP_TIMING_OVERRIDES: Record<string, Partial<SectionTimeline>> = {
   "02-main-02": { holdFrames: 10 },
   "03-approach": { holdFrames: 10, virtualExitFrames: 20 },
@@ -1121,46 +951,31 @@ export const SECTIONS: SectionTimeline[] = [
     id: "01-hero",
     label: "Hero — Beyond the Beyond",
     settledFrame: HERO_SETTLED_FRAME,
-    // No section-level enter: the hero arrives during the entry
-    // phase, element by element — see HERO_PARTS.
+    // No section-level enter: the hero arrives during the entry phase,
+    // element by element (see HERO_PARTS).
     exit: {
-      // FRAME-MAP: hero animation window 50 -> 70. The camera's own
-      // hold is 62-65, so the exit rides through the hold and is
-      // finished before the camera moves off.
+      // The exit finishes before the camera moves off its hold.
       frames: [50, 70],
       to: { y: -6 },
     },
-    // Keep the fully loaded hero on frame 50 for ten virtual frames
-    // of scroll before its exit starts. No image files are duplicated.
+    // Keep the settled hero on screen for a short virtual hold before
+    // its exit starts.
     holdFrames: 20,
     holdCrawlFrames: 0,
   },
   {
     id: "02-main-02",
     label: "Bridge — A Journey of Possibilities",
-    // Not FRAME-MAP'd: no camera hold near here, this is a short title
-    // card invented to bridge the hero's exit (ends 70) and the
-    // approach panel's enter (starts 109). Frame 74 is only where
-    // html-templates/01-main-02.html took its static preview still
-    // from — the window below is a design choice, not a measurement.
-    //
-    // Everything here — enter, the crawl hold at 85, exit and the
-    // speed ramp back to normal — is deliberately finished by frame
-    // 93, well ahead of the approach panel's own enter at 109: the
-    // bridge card gets its slow, readable moment and gets out of the
-    // way cleanly rather than lingering into the next section's
-    // arrival.
+    // Short title card between the hero exit and the Approach panel.
+    // Enter, hold, exit and the speed ramp all finish before the next
+    // section enters.
     settledFrame: 90,
     enter: { frames: [70, 90], from: { y: 4 } },
     exit: { frames: [91, 105], to: { y: -4 } },
     holdFrames: 20,
-    // Half speed, not the shared 6x — a lighter touch is enough for a
-    // short title card that is already fading out again 7 frames
-    // after its settle, unlike a data-dense panel.
+    // A lighter crawl than the shared 6x: this card is short.
     holdSlowdown: 2,
-    // Ramps 89 -> 93 (crawlEnd = 85 + HOLD_CRAWL_FRAMES) back to full
-    // scroll speed over 3 short linear steps, landing on normal pace
-    // exactly as the card's own exit finishes at 92.
+    // Ease back to full scroll speed after the crawl.
     holdRampFrames: 4,
   },
   {
@@ -1168,22 +983,19 @@ export const SECTIONS: SectionTimeline[] = [
     label: "Our Approach to Reporting — Physical Report",
     settledFrame: 134,
     enter: {
-      // FRAME-MAP: the book's leading edge slides in at 109, the
-      // composition is settled at 118. The panel arrives with it.
+      // The panel arrives with the book sliding into frame.
       frames: [114, 134],
       from: { y: 5 },
     },
     holdFrames: 20,
-    // Finish this section's UI while the background remains pinned at 134.
-    // The next section enters at frame 141, so it cannot visibly overlap the
-    // Approach panel during its own enter window.
+    // The UI finishes while the background stays pinned, before the
+    // next section enters.
     exit: {
-      // FRAME-MAP: window 118 -> 135, camera holds 123-128.
       frames: [145, 158],
       to: { y: -5 },
     },
-    // The panel is a tall overflow:auto list (5 items + CTA) — more
-    // to read per frame of scroll than the default window covers.
+    // Tall overflow:auto panel: more to read per frame of scroll, so a
+    // wider load window.
     loadBuffer: { behind: 4, ahead: 4 },
   },
   {
@@ -1191,8 +1003,8 @@ export const SECTIONS: SectionTimeline[] = [
     label: "The Next Horizon of Intelligent Reporting",
     settledFrame: 161,
     enter: {
-      // The background parks at 161 before Digital's content is fully
-      // settled and its real exit window begins.
+      // The background parks at settledFrame before the content settles
+      // and the exit begins.
       frames: [141, 161],
       from: { y: 5 },
     },
@@ -1201,27 +1013,14 @@ export const SECTIONS: SectionTimeline[] = [
       frames: [161, 181],
       to: { y: -5 },
     },
-    // Taller than 02-approach's panel — features grid + interactive
-    // grid + CTA, same overflow:auto scrollbar.
+    // Taller panel than Approach, so a wider load window.
     loadBuffer: { behind: 4, ahead: 4 },
   },
   {
     id: "05-intro-statement",
     label: "Intro Statement — Beyond the Beyond",
-    // Promoted from a standalone, non-SECTIONS layer (IntroStatementLayer.tsx)
-    // to a real entry, 2026-08-25, per VJ. Its own hardcoded ENTER_FRAMES/
-    // EXIT_FRAMES (246-254/254-265, tuned against the OLD cut, so Glance
-    // settled at 266) are gone — the component now reads its window from
-    // this entry via useSectionLayer, same as every other section.
-    //
-    // Re-measured against the new cut, 2026-08-25: 06-key-data-points now
-    // settles at 233 (enter starts 224). This entry keeps the same
-    // proportions the old numbers had — an 8-frame enter, an 11-frame exit
-    // that ends 4 frames INTO the next section's own enter (a deliberate
-    // crossfade, not a bug) — resolved backward from the new enter start:
-    //   exit ends   224 + 4  = 228
-    //   exit spans  228 - 11 = 217  (= settledFrame)
-    //   enter spans 217 - 8  = 209
+    // The exit ends a few frames into the next section's enter — a
+    // deliberate crossfade.
     settledFrame: 255,
     enter: { frames: [245, 255], from: {} },
     exit: { frames: [255, 269], to: {} },
@@ -1233,56 +1032,23 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "06-key-data-points",
     label: "Key Data Points — Haycarb at a Glance",
-    // FRAME-MAP: the third measured camera hold, 268-273, previously
-    // unassigned ("holds found at 62-65, 123-128, 268-273 ... I can
-    // map the remaining sections this way whenever you want"). Same
-    // rule as every other section: settled a little before the hold,
-    // hold left as runway. This section has no video background of
-    // its own (see GlanceLayer) — it's an opaque light panel that
-    // fully covers the canvas by the time it's settled, so the hard
-    // cut to the city footage at 196-203 is hidden behind it well
-    // before either is on screen at the same time.
-    //
-    // TEMPORARY, 2026-08-23: settledFrame moved 266 -> 270 per VJ,
-    // while the 04-key-data-points.html template itself is still
-    // being reworked — not a remeasurement of the camera hold above,
-    // just a placeholder shift.
-    //
-    // 2026-08-24: ported from the richer 06-glance.html (title,
-    // quote, 4 stats+counters, note, video card, 4 pills). First pass
-    // widened this to enter:[240,270] to give the internal stagger
-    // room, but that also pulled the SECTION's own opacity fade back
-    // to 240 — 30 frames before the camera hold, so the layer was
-    // visibly showing far too early (VJ: "that section load after
-    // fram 261 befor that laver show it"). Corrected: the parent's
-    // own visibility now starts at 261, matching the hold; the child
-    // stagger windows in GlanceLayer.tsx pack their overlapping
-    // staggers into that same short span instead (same technique as
-    // Governance's 5 stat cards fitting inside a tight parent
-    // window) rather than the parent starting early. Exit keeps a
-    // small hold (270-273) before it starts, same as
-    // Governance-Cards, to avoid a snap at the settle frame.
+    // Light-themed panel with no background of its own; it covers the
+    // canvas while shown, hiding the cut into the city footage.
+    // The section's own fade starts with the camera hold; GlanceLayer's
+    // child staggers fit inside that short window.
     settledFrame: 275,
     enter: { frames: [263, 275], from: { y: 6 } },
     exit: { frames: [279, 280], to: { y: -6 } },
     holdFrames: 20,
     virtualExitFrames: 20,
-    // VJ 2026-08-28: this section's reveal (238-247) went by too fast.
-    // Its enter is 9 frames wide — well past the default +/-4 crawl
-    // half-width (243-251), so most of the reveal was running at full
-    // scroll speed. Widen the crawl to 9 so the whole 238-256 span sits
-    // in the slow zone; at the shared 6x crawl pace that also roughly
-    // doubles the scroll distance spent on this section.
+    // Wider crawl so the whole reveal runs inside the slow zone.
     holdCrawlFrames: 9,
   },
   {
     id: "07-banner-city",
     label: "Banner — City Skyline",
-    // Template 05-banner-city.html: the supplied still identified frame
-    // 320 in the OLD cut as the fully established skyline/caption
-    // composition. Re-measured against the new cut, 2026-08-25 (VJ):
-    // settledFrame 295, exit finished by 315 — well clear of the shot
-    // cut into the boardroom footage at ~322-325.
+    // Caption over the city skyline, clear of the cut into the
+    // boardroom footage.
     settledFrame: 335,
     enter: { frames: [322, 335], from: { y: 4 } },
     exit: { frames: [335, 371], to: { y: -4 } },
@@ -1293,39 +1059,10 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "08-financial",
     label: "Financial Highlights",
-    // Same hold every other section gets now (see THE HOLD above).
-    // This was the section that motivated it — a dense static
-    // dashboard needs real reading time — but the behavior isn't
-    // special-cased to it anymore.
-    //
-    // 2026-08-25 (VJ: "it just came and go", then "loading in 325,
-    // fully load 338"): unlike every other section, exit here does
-    // NOT touch settledFrame. The ±4-frame crawl (HOLD_CRAWL_FRAMES,
-    // 334-342) only slows scroll pace, it doesn't pause opacity — so
-    // an exit starting exactly at settledFrame means the section
-    // scrolls off partly at normal, non-crawled speed right after
-    // barely finishing its enter. Enter is 325 -> 338 (visibly still
-    // loading through the second half of the crawl, fully loaded
-    // exactly on cue at 338); exit doesn't start until 344, after the
-    // crawl zone ends at 342 — a real flat-opacity plateau from 338
-    // to 344 instead of a momentary peak.
-    //
-    // 2026-09-03 (VJ review): the old 410->436 scroll-mapped entrance
-    // was the problem, not the fix. By ~frame 429 the panel already
-    // looked 100% done (HUD read "99%") while it was still scrubbing
-    // in, so the eye couldn't tell "loaded" from "still loading" and
-    // people clicked ghost buttons.
-    //
-    // NEW MODEL, this section only: NO scroll-driven reveal at all.
-    // The frame scrubs up to 436 with the panel absent (2-frame
-    // opacity snap, no offset), stops, and holds flat for 40 virtual
-    // frames. The panel's own reveal is a normal quick time-based
-    // animation (CSS @property transition on .s-financial2, ~0.45s
-    // staggered fade — see FinancialLayer.tsx / lab.css) fired the
-    // instant it parks, and reversed when it leaves. It is click-live
-    // only during that hold (.s-financial2__stage pointer-events
-    // gate). Scroll through the 40 frames and it exits, footage
-    // resumes. No virtualEnterFrames — nothing scroll-mapped to protect.
+    // No scroll-driven reveal. The frame scrubs to settledFrame with the
+    // panel hidden, then holds. The panel reveals with a short CSS
+    // transition (see FinancialLayer.tsx) and is clickable only while
+    // parked. holdCrawlFrames is widened to cover the enter window.
     settledFrame: 436,
     enter: { frames: [408, 436], from: {} },
     exit: { frames: [448, 454], to: { y: -5 } },
@@ -1336,12 +1073,8 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "09-governance-intro",
     label: "Governance intro — transition to Lighthouse",
-    // NEW breaker (audit gap G2), inserted 2026-08-27 per VJ: a text
-    // bridge between Financial Highlights and Corporate Governance,
-    // over the lighthouse shot. settledFrame 382 (VJ). Windows sit in
-    // the ~354-390 gap between 08-financial's exit (…354) and
-    // 09→10-governance's enter (390…). Inserting this shifted every
-    // downstream id and SECTIONS[n] index by one.
+    // Text bridge between Financial Highlights and Corporate Governance,
+    // over the lighthouse shot.
     settledFrame: 511,
     enter: { frames: [490, 511], from: { y: 4 } },
     exit: { frames: [511, 520], to: { y: -4 } },
@@ -1352,24 +1085,9 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "10-governance",
     label: "Corporate Governance",
-    // Re-measured against the new cut, 2026-08-25: the lighthouse shot
-    // only runs new frames ~378-417 (was ~69 frames in the old cut,
-    // now ~40) — not enough distinct footage to give this section,
-    // 10-governance-cards AND 11-leadership their own separate settle
-    // point the way every other section gets one. VJ: "stop in fream
-    // 394 ... in same fream (still stop) load 10-governance-cards
-    // after 09 go", then "add 11-leadership also before 415 fream".
-    // All three settle within ~20 frames of each other, deep inside
-    // this one still-mostly-static shot, sequenced entirely by their
-    // own opacity (not by the background moving) — see the other two
-    // sections' own notes. Exit shortened to 7 frames (was 10) to
-    // leave 10-governance-cards enough room of its own.
-    //
-    // 2026-09-03 (VJ, review): "it quickly moves, the numbers don't
-    // fully appear — keep this section a bit longer". +20 virtual hold
-    // frames (10 -> 30) pinned at the settled frame, and the stat
-    // numbers no longer count up (see GovernanceLayer.tsx) so they're
-    // fully readable the moment the cards are in.
+    // Sections 09-11 share the short lighthouse shot, so they are
+    // sequenced by their own opacity rather than by the background
+    // moving. holdFrames gives the stat cards time to be read.
     settledFrame: 533,
     enter: { frames: [520, 533], from: { y: 4 } },
     exit: { frames: [533, 540], to: { y: -4 } },
@@ -1380,23 +1098,7 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "11-governance-cards",
     label: "Driving Sustainable Value Creation Through Effective Governance",
-    // NEW section, inserted 2026-08-24 per VJ ("add this as a new 8").
-    // Was a standalone layer outside this array at first (avoiding an
-    // index shift on everything after it), then moved in here properly
-    // on request, so it shows in the debug HUD like every other
-    // section — everything from here down had its own id/array index
-    // bumped by one to make room.
-    //
-    // Re-measured 2026-08-25 alongside 09-governance and
-    // 11-leadership (see their own notes): settledFrame 403, still
-    // inside the ~378-417 lighthouse shot. Enter starts at 397, 4
-    // frames before Governance's own exit finishes (401) — "slowly
-    // start" while Governance is still fading out, not cut in after a
-    // gap. Exit shortened to 6 frames so Leadership has room to settle
-    // before 415.
-    // 2026-09-03 (VJ): +30 hold frames (10 -> 40) so the cards get a
-    // real settle-down dwell to read, matching 10-governance's own
-    // longer hold. virtualExitFrames left at 20.
+    // Enters while Corporate Governance is still fading out (crossfade).
     settledFrame: 540,
     enter: { frames: [535, 540], from: { y: 6 } },
     exit: { frames: [540, 550], to: { y: -6 } },
@@ -1407,42 +1109,9 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "12-leadership",
     label: "Our Approach to Reporting — Artboard 5",
-    // Was its own, later video slot (settled 442) before VJ asked to
-    // squeeze it onto the same lighthouse shot as 09/10, fully loaded
-    // before frame 415 ("add that section also using ur technic" —
-    // same shared-shot, opacity-only sequencing as the other two, see
-    // 09-governance's own note). Settles at 411, enter overlaps
-    // 10-governance-cards' own exit tail by 2 frames (same "slowly
-    // start" crossfade). Exit is allowed to run past the shot's own
-    // ~417 end (into 419) since that's just a fade-out, not a hold —
-    // scroll resumes at normal pace into 12-banner-ocean well after.
-    //
-    // 2026-09-03 (VJ): "stop 555 and wait 60 virtual frames" — same
-    // park-and-hold model as 08-financial, and it removes three
-    // measured problems at once:
-    //
-    //   1. The old 12-frame enter [543,555] was wider than the default
-    //      ±4 crawl, so opacity ran 0.08 -> 0.965 in 160px at FULL
-    //      scroll pace and the 6x slow zone only covered the last 3.5%
-    //      of the fade. Same trap the 06-key-data-points note describes.
-    //   2. virtualEnterFrames made the section visibly KICK BACKWARDS
-    //      at its own settle: measured opacity 1.000 -> 0.911 and x
-    //      0 -> 0.36vw the instant the virtual-enter leg began, because
-    //      sectionLayerStateAt switches to combinedEnter (which starts
-    //      at 0.5) after the crawl had already carried it to 1.0. It
-    //      also flipped `interactive` true -> false -> true. Dropping
-    //      virtualEnterFrames sidesteps that path entirely.
-    //   3. Enter (~500px) was ~3.5x longer than the exit (~144px). A
-    //      2-frame enter inside the crawl is ~168px, so the two now
-    //      match without touching the exit.
-    //
-    // The 2-frame enter sits inside the ±4 crawl, so it is a soft
-    // ~168px arrival rather than a hard cut, then 60 frames pinned.
-    // LeadershipLayer has no internal stagger of its own, so nothing
-    // else has to change for this.
-    // 2026-09-03 (VJ): "add 20 frames before section gone" —
-    // virtualExitFrames 10 -> 20, so the fade-out is pinned at 555 for
-    // twice as long and the section leaves gently instead of snapping.
+    // Park-and-hold: a short enter inside the crawl, then a long pinned
+    // hold and a virtual exit. No virtualEnterFrames — that path makes
+    // the layer jump back at its own settle frame.
     settledFrame: 555,
     enter: { frames: [553, 555], from: { y: 4 } },
     exit: { frames: [555, 575], to: { y: 4 } },
@@ -1452,15 +1121,7 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "13-banner-ocean",
     label: "Banner — ocean navigation",
-    // 2026-08-24: briefly moved to settle at 285 (right after Key Data
-    // Points) per a misheard frame number, then corrected back here —
-    // "sorry it is fram 485 soo sorry bro". Content (Artboard 6.html)
-    // stays wired up in OceanBannerLayer.tsx; only the position moved
-    // back to between Leadership and Capitals, close to (not exactly)
-    // its original template-measured settledFrame of 503. Enter/exit
-    // sit in the gap between Leadership's own exit (457) and Capitals'
-    // own enter (550), same plain-gap pattern as the rest of this
-    // timeline's banner boundaries.
+    // Caption between Leadership and Capitals.
     settledFrame: 650,
     enter: { frames: [642, 650], from: { y: 4 } },
     exit: { frames: [650, 665], to: { y: -4 } },
@@ -1471,83 +1132,30 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "14-financial-capital",
     label: "Capitals Management",
-    // NEW section, 2026-08-24, ported from html-templates/final/
-    // Artboard 7.html — a 5-card scroll-jack carousel, distinct from
-    // every other section in this timeline. VJ's own words: "stop
-    // move video after this fully load and scroll card one by one
-    // after finish scarling card work like normal section desaper
-    // with frams." Confirmed mechanism: scroll drives the background
-    // frame-scrub normally up to settledFrame; AT settledFrame the
-    // scrub freezes completely (not just slowed, unlike every other
-    // section's crawl hold — see the `carousel` field and
-    // buildLegs/stops in this file) while further scroll instead
-    // drives the 5-card carousel in FinancialCapitalLayer.tsx; once
-    // that scrollPx budget is spent, frame-driven scroll resumes and
-    // this section exits exactly like any other, fading out as
-    // normal before the River banner enters. That file reads
-    // FINCAP.settledFrame live (scrollPxForFrame(FINCAP.settledFrame,
-    // ...) as its zero point), so retiming this entry alone moves the
-    // freeze point correctly — no duplicate number to keep in sync.
-    //
-    // Re-measured against the new cut, 2026-08-25: settledFrame 490
-    // (was 515), sits after Ocean's exit (475) and before the River
-    // banner enters (594 as of this writing — see 14-banner-river).
-    // Exit only starts advancing once the carousel budget is spent,
-    // since the frame is pinned at 490 until then.
+    // Scroll-lock carousel (see FinancialCapitalLayer.tsx). The
+    // background freezes at settledFrame while scroll drives the cards,
+    // then normal scrolling resumes and the section exits.
+    // FinancialCapitalLayer reads settledFrame live, so retiming here is
+    // enough.
     settledFrame: 675,
     enter: { frames: [665, 675], from: { y: 4 } },
     exit: { frames: [675, 693], to: { y: -4 } },
     virtualEnterFrames: 20,
     virtualExitFrames: 20,
-    // leadPx ~1 crawl-speed frame (14 * HOLD_CRAWL_SLOWDOWN), tailPx
-    // ~2.5 — see the carousel field's own doc comment for why these
-    // exist. scrollPx is the full budget: leadPx + the sweep + tailPx.
-    // Sweep was 1920px for the original 5 cards (480px/gap); scaled to
-    // 2880px for the 7 capital cards (2026-08-28) to hold that same
-    // per-card scroll distance.
+    // scrollPx = leadPx + card sweep + tailPx.
     carousel: { count: 7, scrollPx: 90 + 2880 + 240, leadPx: 90, tailPx: 240 },
   },
   {
     id: "15-banner-river",
     label: "Banner — mountain river",
-    // Artboard 8: fully loaded at frame 613 in the OLD cut. Re-measured
-    // against the new cut, 2026-08-25: settledFrame 590.
+    // The background pins at settledFrame while the copy writes on over
+    // virtualEnterFrames (RiverBannerLayer maps that progress onto its
+    // word stagger).
     //
-    // 2026-09-03 (VJ): "780 to 800 start 15 section and stop, then 40
-    // virtual frames so we can animate text in that frames, then 800
-    // to 820 full gone."
-    //
-    // The 40 are virtualEnterFrames, NOT holdFrames. holdFrames is a
-    // pure freeze — `frame` is pinned and never advances — so a
-    // frame-driven stagger has nothing to read and the words cannot
-    // animate during it. virtualEnterFrames pins the background the
-    // same way but exposes a 0..1 progress
-    // (virtualEnterProgressAtScrollPx), which RiverBannerLayer maps
-    // onto 800 -> 840 to write the copy on word by word while the
-    // footage sits still.
-    //
-    // Settle moves 830 -> 800. Still clear of both neighbours:
-    // 14-financial-capital is gone by 693, 16-nonfinancial does not
-    // start entering until 843.
-    //
-    // holdFrames: 20 provides the requested reading dwell and routes
-    // buildLegs through the
-    // monotonic `holdFrames > 0` branch. Without it (virtualEnterFrames
-    // set, holdFrames 0) buildLegs splices the pinned virtual-enter leg
-    // BEFORE the crawl-out leg, so after the 40 text frames the footage
-    // jumps BACKWARDS ~4 frames (800 -> 796) and slow-crawls back up —
-    // the "glitchy / slow around 800" bug. With any holdFrames the legs
-    // come out crawl-in, virtual-enter, hold, crawl-out, all forward.
-    //
-    // holdCrawlFrames: 0 — kill the automatic ±4-frame 6x crawl that
-    // otherwise brackets the hold. It was adding ~672px of molasses
-    // scroll (336px each side at 84px/frame) on top of the 616px
-    // pinned text span — a big "stuck" zone nobody asked for. Now the
-    // footage runs at normal 14px/frame right up to 800, freezes for
-    // the 40 text frames + 4, then normal pace resumes. Same treatment
-    // 01-hero uses.
-    // 2026-09-03 (VJ): settle 800 -> 782. Enter/exit shift with it so
-    // the 20-frame windows keep their shape.
+    // holdFrames must be > 0 when virtualEnterFrames is set: without it
+    // buildLegs puts the pinned leg before the crawl-out and the footage
+    // steps backwards. holdCrawlFrames 0 removes the slow crawl around
+    // the hold.
     settledFrame: 782,
     enter: { frames: [762, 782], from: { y: 4 } },
     exit: { frames: [782, 802], to: { y: -4 } },
@@ -1558,34 +1166,9 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "16-nonfinancial",
     label: "Non-Financials",
-    // Non-Financials: fully loaded at frame 635 in the OLD cut.
-    // Re-measured against the new cut, 2026-08-25: settledFrame 620.
-    //
-    // 2026-09-03 (VJ): "use 845 frame and stop it and use 60 virtual
-    // frames — in that frame using normal animation section 16 load
-    // fully then gone". Same park model as 08-financial: the frame
-    // snaps up to 845 with the panel present but its contents at
-    // opacity 0, stops, and holds flat for 60 virtual frames (40 hold
-    // + 20 virtual exit). The intro + 4 cards reveal with a normal
-    // ~0.5s staggered CSS fade (NonFinancialLayer sets data-revealed;
-    // the cards keep their own min-height hover animation), reversed
-    // when it leaves. NOT scroll-scrubbed — this section has card
-    // hover animation, so a per-frame word stagger would fight it.
-    // Settle moves 860 -> 845, closing most of the dead gap after
-    // 15-banner-river (which is gone by ~820). 17-strategy does not
-    // enter until ~880, so exit [857, 863] is clear.
-    //
-    // SAME SHAPE AS 12-leadership: NO virtualEnterFrames (that path
-    // makes the container kick backwards at its own settle — see the
-    // 12-leadership note), a 2-frame enter that lands inside the ±4
-    // crawl for a soft arrival, then a long pure hold, then a virtual
-    // exit. Pinned budget, frame stays at 845 throughout:
-    //   holdFrames        60 — the CSS card reveal plays in the first
-    //                          ~0.9s, the rest is dead-static HOLD to
-    //                          hover the cards and read
-    //   virtualExitFrames 20 — the reverse fade
-    // data-revealed is true for the 60 hold frames, false for the 20.
-    // ~80 pinned frames ≈ 1120px on screen still, no dip.
+    // Same park-and-hold model as 12-leadership. The intro and cards
+    // reveal with a CSS transition while data-revealed is set (see
+    // NonFinancialLayer.tsx) and reverse when the section leaves.
     settledFrame: 845,
     enter: { frames: [843, 845], from: {} },
     exit: { frames: [857, 863], to: { y: -4 } },
@@ -1595,37 +1178,13 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "17-strategy",
     label: "Strategy, Risks & Opportunities",
-    // final/15 Horizon of Progress.html: overlay starts at 650, fully
-    // loaded at 670 in the OLD cut; re-measured to 704 on 2026-08-25.
+    // Content is taller than one viewport. The background advances to
+    // pinFrame, then stays pinned while StrategyLayer.tsx glides the
+    // panel up by its overflow and the layer exits.
     //
-    // The content — title, five Strategic Pillars, three Risks &
-    // Opportunities — is taller than one viewport. VJ 2026-08-31: it is
-    // now ONE continuous page, not two viewport "pages" snapped A -> B.
-    // `scrollThrough` gives it a scroll budget past settledFrame across
-    // which StrategyLayer.tsx glides the whole .s-strategy__panel up by
-    // exactly its overflow. Then the real exit window below fades the
-    // layer out, same as every other section — no scroll-jack, no
-    // snapping.
-    //
-    // Pin-after-30 design (VJ 2026-08-31): §17 settles, advances through
-    // 43 real frames to pinFrame, then keeps the background on that frame
-    // while the panel completes over 60 virtual frames and fades away over
-    // another 30 virtual frames. There is no hold phase. The section exit
-    // runs while that background remains pinned, and section 18 enters at
-    // 1015.
-    //
-    // Moved 2026-09-02: enter 870, settles 890 (was 860/875). Everything
-    // after settledFrame shifted with it so the scroll-through is
-    // untouched — these four numbers are locked together:
-    //   pinFrame - settledFrame must stay 43. StrategyLayer derives the
-    //     panel glide as scrollPx - (pinFrame - settledFrame)*px -
-    //     virtualExitFrames*px, so changing the gap silently rescales the
-    //     glide (28 would have made it 75 virtual frames, not 60).
-    //   exit[0] must equal pinFrame. The real frame is pinned there for
-    //     the whole glide, so an earlier exit would fade the panel out
-    //     while it is still moving.
-    //   exit width must stay virtualExitFrames (30).
-    // Only the enter window changed shape: 15 frames -> 20, as asked.
+    // Keep these in step: exit[0] must equal pinFrame, the exit width
+    // must equal virtualExitFrames, and scrollPx is built from
+    // (pinFrame - settledFrame) — StrategyLayer derives the glide from it.
     settledFrame: 890,
     enter: { frames: [870, 890], from: { y: 4 } },
     exit: { frames: [933, 963], to: { y: -4 } },
@@ -1642,21 +1201,12 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "18-community",
     label: "Community Impact",
-    // final/16-Community Impact.html: enters at 686 and settles at 690
-    // in the OLD cut. Re-measured against the new cut, 2026-08-25:
-    // settledFrame 780. Exit keeps the original's 15-frame gap after
-    // settledFrame (705 was 15 past 690) — that gap is how far normal
-    // frame-driven scroll has to travel, AFTER the carousel's own
-    // scrollPx budget is spent and frame resumes advancing, before
-    // reaching the exit window; it isn't part of the carousel itself
-    // (which is pure px, unaffected by this frame move — see
-    // CommunityLayer.tsx, reads COMMUNITY.settledFrame live).
+    // Stop-scroll carousel, same as 14-financial-capital (see
+    // CommunityLayer.tsx, which reads settledFrame live).
     settledFrame: 1020,
     enter: { frames: [1015, 1020], from: { y: 4 } },
     exit: { frames: [1038, 1040], to: { y: -4 } },
-    // Same stop-scroll rule as section 11: lead pause, card sweep, tail
-    // pause, then normal frame scrolling resumes. Sweep is 584px per gap;
-    // seven spec stories therefore need six gaps (3504px).
+    // Lead pause, card sweep, tail pause. Seven stories need six gaps.
     carousel: { count: 7, scrollPx: 168 + 3504 + 84, leadPx: 168, tailPx: 84 },
     virtualEnterFrames: 10,
     virtualExitFrames: 10,
@@ -1664,25 +1214,16 @@ export const SECTIONS: SectionTimeline[] = [
   {
     id: "19-end-screen",
     label: "End Message Screen",
-    // Moved 45 frames earlier (was settled 1100, enter [1080, 1100], exit
-    // [1100, 1125]). The whole window shifts, so the 20-frame reveal and
-    // 25-frame exit keep the pace they had; only their position changes.
-    // It now crossfades with 18-community's exit [1038, 1054] instead of
-    // leaving the 26-frame dead gap that sat between them.
-    //
-    // LAB_LAST_FRAME stays 1125: that is the number of files in
-    // public/frames/, not a marker for this section, so shortening it to
-    // match the new exit would drop the last 45 frames of footage.
+    // LAB_LAST_FRAME stays at the file count; it is not tied to this
+    // section's exit.
     settledFrame: 1055,
     enter: { frames: [1040, 1055], from: { y: 4 } },
     exit: { frames: [1075, 1100], to: { y: 0 } },
-    // Hold on the settled frame, then resume normal frame movement. This is
-    // the same pattern used by the other readable closing sections.
+    // Hold on the settled frame, then resume normal frame movement.
     holdFrames: 20,
     holdSlowdown: 2,
     holdRampFrames: 4,
-    // The end screen stays fully loaded during the settled-frame hold; the
-    // exit starts only at frame 1075.
+    // The end screen stays fully shown during the hold.
   },
 ];
 
@@ -1691,7 +1232,7 @@ export function backgroundFrameForFrame(frame: number): number {
   return frame;
 }
 
-/** Blend out Section 17's pinned still instead of hard-cutting to frame 1009. */
+/** Background crossfade between two frames. Currently unused: always null. */
 export function backgroundTransitionAtFrame(
   _frame: number
 ): { from: number; to: number; progress: number } | null {
@@ -1765,18 +1306,10 @@ export function sectionLayerStateAt(
    ENTRY_FRAMES, so the whole reveal happens on the clock, with
    scroll locked. None of it is scroll-driven.
 
-   Order is VJ's: brand/logo, wordmark, video card, scroll CTA,
-   buttons.
+   Order: brand/logo, wordmark, video card, scroll CTA, buttons.
+   The reveal sits in the last 20 frames of the entry (REVEAL_FRAMES).
 
-   TIGHTENED 2026-08-19: the reveal was spread across frames 6-50,
-   which read as lazy. It now sits in the LAST 20 FRAMES (30-50) —
-   at ENTRY_SPEED 4 that is 0.96s in total, each element taking about
-   0.5s with a 0.1s stagger between starts. The background keeps
-   moving from the handoff throughout; only the elements are late.
-
-   THE WINDOWS ARE A DESIGN CHOICE, NOT A MEASUREMENT. The PSD is a
-   single settled state and says nothing about order or timing. Only
-   the two ends are measured: the handoff at frame 1 and the settled
+   The windows are a design choice; the PSD only defines the settled
    state at frame 50.
 
    The opening frames are bare on purpose — the handover from the
@@ -1800,33 +1333,23 @@ export interface PartTimeline {
 
 /* Choreography: top section first (logo, brand, video — all fall into
    place from above), then the bottom row (scroll cue, action buttons —
-   both rise into place from below). Confirmed correct by VJ
-   2026-08-23 after a same-day round trip through a reversed version
-   ("came down from above") and back — bottom-to-up is the intended
-   behavior, do not flip this again without explicit instruction. The
+   both rise into place from below). The
    wordmark is deliberately NOT here: its enter window would tie its
    motion to the frame clock, and it stops advancing at
    HERO_SETTLED_FRAME (50), whereas the wordmark needs to keep
    animating well past that on its own clock. Instead HeroLayer
    triggers it directly at WORDMARK_EMERGE_FRAME, below, and a CSS
-   keyframe in lab.css (".s-hero__wordmark--emerge") takes it from
-   there — see that rule for why it cannot double-fire. */
+   keyframe in styles/01-shared-shell.css (".s-hero__wordmark--emerge")
+   takes it from there. */
 /* scroll/actions carry their own exit, matching HERO's own exit
    window (50-70) so they finish leaving exactly as the rest of the
    hero does. Direction is DOWN (positive y) — the reverse of their
    own entrance, which came from below — rather than fading with the
    parent's -6vh upward drift like brand/video do. brand/video get no
-   exit entry here on purpose: "like normal" is the parent's own
-   fade, nothing extra.
+   exit entry: they simply fade with the parent.
 
-   logo is NOT here at all (moved out 2026-08-23) — it used to fade
-   with the rest of the hero like brand/video, but now needs to keep
-   existing, shrunk and fixed, well past HERO's own exit. A part
-   inside this array is a child of HeroLayer's fading root and so
-   cannot outlive that fade no matter what state it is given — see
-   HeroLogo.tsx, which reimplements this same enter window
-   (LOGO_ENTER_FRAMES/LOGO_ENTER_FROM_Y below) independently as a
-   sibling of HeroLayer instead. */
+   The logo is rendered by HeroLogo.tsx as a sibling of HeroLayer, so
+   it is not listed here (see LOGO_ENTER_FRAMES below). */
 export const HERO_PARTS: PartTimeline[] = [
   { id: "brand", enter: [31, 37], from: { y: -1.2 } },
   { id: "video", enter: [33, 39], from: { y: -1.4 } },
@@ -1834,14 +1357,8 @@ export const HERO_PARTS: PartTimeline[] = [
     id: "scroll",
     enter: [38, 45],
     from: { y: 1.6 },
-    // to.y has to clear the PARENT's own exit (HERO's section-level
-    // exit shifts the whole stage -6vh over this same window) before
-    // this element's own offset reads as downward at all — at +2.4 it
-    // was still net upward (2.4 - 6 = -3.6), which is why "up and
-    // disappear" was what actually showed despite the positive value
-    // here. +9 nets +3vh of real downward drift on top of the
-    // parent's own -6vh, so this now visibly sinks while the rest of
-    // the hero drifts up around it.
+    // to.y must outweigh the parent's -6vh exit drift to read as
+    // downward: +9 nets +3vh, so this sinks while the hero drifts up.
     exit: { frames: [50, 70], to: { y: 9 } },
   },
   {
@@ -1852,11 +1369,8 @@ export const HERO_PARTS: PartTimeline[] = [
   },
 ];
 
-/** The logo's own entrance — the same window/offset it had inside
-    HERO_PARTS before it moved out to HeroLogo.tsx. Kept here so both
-    ends of its lifecycle (entrance and the later fade-out,
-    LOGO_EXIT_FRAMES below) live alongside every other frame number in
-    this file. */
+/** The logo's entrance, used by HeroLogo.tsx. Kept here with every
+    other frame number. */
 export const LOGO_ENTER_FRAMES: [number, number] = [30, 36];
 export const LOGO_ENTER_FROM_Y = -1.6;
 
@@ -1866,16 +1380,13 @@ export const LOGO_ENTER_FROM_Y = -1.6;
 export const REVEAL_FRAMES: [number, number] = [30, 50];
 
 /** Frame at which HeroLayer fires the wordmark's emerge animation.
-    It starts during the final hero reveal and completes before the
-    expanded frame-70 settle/handoff, so it cannot pop in after scroll
-    begins. The CSS animation is intentionally shorter than the old
-    2.6s duration to fit this entry window. */
+    It starts during the hero reveal and finishes before the hero
+    exit, so it cannot pop in after scroll begins. */
 export const WORDMARK_EMERGE_FRAME = 30;
 
 /** The wordmark's exit — same window as HERO's own exit (50-70), same
     "reverse of the entrance" shape (scale down + blur back up, fading
-    out) as hero-wordmark-emerge in lab.css runs it in, just the other
-    way. Unlike the emerge, this MUST be frame-driven rather than a
+    out) as hero-wordmark-emerge, just the other way. Unlike the emerge, this MUST be frame-driven rather than a
     fixed-duration CSS animation: exit happens during the scroll
     phase, where the user can scroll back and forth freely, and only a
     pure function of frame stays correct under that — see the
@@ -1884,9 +1395,8 @@ export const WORDMARK_EMERGE_FRAME = 30;
 export const WORDMARK_EXIT_FRAMES: [number, number] = [50, 70];
 
 /** The logo's own fade-out window, matching WORDMARK_EXIT_FRAMES and
-    the hero section's own exit (also [50, 70]) — the logo now leaves
-    with the rest of the hero instead of shrinking to a sticky dock.
-    HeroLogo.tsx and IntroNavGate.tsx (which unhides the app-wide
+    the hero section's own exit — the logo leaves with the rest of the
+    hero. HeroLogo.tsx and IntroNavGate.tsx (which unhides the app-wide
     GlobalHeader the instant this finishes) both read this. */
 export const LOGO_EXIT_FRAMES: [number, number] = [50, 70];
 
@@ -1900,7 +1410,7 @@ export function wordmarkExitStateAt(frame: number): {
   const t = easeIn(progressBetween(frame, a, b));
   return {
     opacity: 1 - t,
-    // Reverses hero-wordmark-emerge's from-scale (0.46) in lab.css.
+    // Reverses hero-wordmark-emerge's from-scale (0.46).
     scale: 1 - t * (1 - 0.46),
     blurPx: t * 4,
   };
@@ -1954,19 +1464,14 @@ export function partStateAt(part: PartTimeline, frame: number): ElementState {
    600px across and 346px up = 15.63% and 18.80%. An elliptical
    radius, not a circular one — a circle does not match the curve.
 
-   THE PSD IS A SINGLE STATIC STATE. It says nothing about how the
-   carve arrives or how it leaves. Both of the movements below are
-   invented, agreed with VJ, and should be revisited if a PSD ever
-   turns up that contradicts them:
+   The PSD is a single static state, so how the carve arrives and
+   leaves is a design choice:
 
-     ENTRY  (1 -> 40)   full-bleed -> the PSD carve.
-                        Decision 2026-08-19. The handoff from the
-                        intro is full-bleed video, and the carve
-                        FORMS as the hero builds in, rather than
-                        being there from the first frame.
+     ENTRY  (ENTRY_CARVE_FRAMES)  full-bleed -> the PSD carve. The
+                                  intro hands over full-bleed, and the
+                                  carve forms as the hero builds in.
 
-     EXIT   (50 -> 70)  the PSD carve -> full-bleed.
-                        Decision 2026-08-19, unchanged.
+     EXIT   (CARVE_FRAMES)        the PSD carve -> full-bleed.
 
    Between them, frames 40-50 HOLD at the PSD values. That hold is
    deliberate: the carve finishes ten frames before the hero settles,
@@ -2024,8 +1529,8 @@ export interface Carve {
 
 /** Interpolate between two carve shapes.
 
-    Returns the target OBJECT ITSELF at t = 1 rather than computing
-    it, so the settled state is bit-exact rather than
+    Returns the target values at t = 1 rather than computing them, so
+    the settled state is bit-exact rather than
     85.19000000000001. Frame 50 has to match the static hero
     precisely — it is the state the PSD was measured against. */
 function carveBetween(from: Carve, to: Carve, t: number): Carve {
