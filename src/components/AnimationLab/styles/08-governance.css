@@ -1,16 +1,10 @@
 /* =========================================================
-   PART A (cont.) — SECTION 7, "Corporate Governance"
-   Ported from html-templates/final/07-governance.html, replacing the
-   earlier card-list/eyebrow/CTA layout wholesale — the new template
-   is a single combined heading + 5 counting stat cards, no CTA at
-   all. Class names are this app's own (the template's are terse
-   generics like .stat/.page that would collide with other sections),
-   but every value below is the source's own. Section-root rules
-   (position, min-height, its own #0d4054 background) are NOT carried
-   over — .lab-layer/.lab-media already provide those here. The
-   template's own dark gradient overlay (.page:before) was ported
-   once as .s-governance2__scrim, then dropped per VJ (2026-08-23) —
-   the shared canvas/scrim underneath is enough on its own here. */
+   Section — "Corporate Governance"
+   One combined heading + 5 counting stat cards, no CTA. Class names
+   are this app's own (generic .stat/.page names would collide with
+   other sections). Section-root rules (position, min-height,
+   background) come from .lab-layer/.lab-media, and the shared
+   canvas/scrim is the only overlay. */
 
 .s-governance2__content {
   position: relative;
@@ -36,8 +30,8 @@
 
 /* Frame-driven (GovernanceLayer.tsx writes opacity/translateY per
    word/stat/counter, per frame, from staggerProgressAt in
-   timeline.ts) rather than the template's fixed-duration CSS/JS
-   animation — see the file header for why. opacity:0 here is only
+   timeline.ts) rather than a fixed-duration CSS animation, so it
+   tracks scroll. opacity:0 here is only
    the first-paint fallback. */
 .s-governance2__word {
   display: inline-block;

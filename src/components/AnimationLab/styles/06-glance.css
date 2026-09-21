@@ -1,29 +1,20 @@
 /* =========================================================
-   PART A (cont.) — SECTION 4, "Haycarb at a Glance"
-   Ported from html-templates/final/06-glance.html (class root
-   .s-glance2, replacing the old simpler .s-glance layout this file
-   used to carry). Section-root rules (position, min-height, its own
-   background gradient) are NOT carried over — those belong to
-   .lab-layer here, same lesson as the Governance-Cards bug (a
-   root-level position/sizing rule fights .lab-layer's own
-   position:absolute; inset:0 and can knock the whole section out of
-   the stacking context). No background at all, matching the rest of
-   this file's light-toned sections — the scrubbed video shows
+   Section — "Haycarb at a Glance"
+   Section-root rules (position, min-height, background) are left to
+   .lab-layer: a root-level position/sizing rule fights .lab-layer's
+   position:absolute; inset:0 and can knock the section out of the
+   stacking context. No background at all — the scrubbed video shows
    through; the stat tiles and pills carry their own light/teal
-   backing so they stay legible either way.
+   backing so they stay legible.
 
-   Token mapping, same convention as every other ported section here
-   (see the SECTION 2 comment above for the full rationale):
+   Token mapping, same convention as the other sections:
    --font-display -> Georgia stack; --font-ui -> inherited; --ink-deep
-   -> #07324a (GlanceLayer's own dark-teal ink); --ink-muted -> #2c6175;
+   -> #07324a (GlanceLayer's dark-teal ink); --ink-muted -> #2c6175;
    --ink-body -> #173e55; --ease-out/--shadow-lift -> .lab's own
-   tokens, unchanged. --tile-mint/--pill-teal/--glance-ground (new
-   tokens this template introduces, not literal Horizon tokens) map to
-   literal colors picked to match the old .s-glance scheme's own teal
-   family, kept as this file already tunes it. The heading's own
-   --font-ui + weight 300 (rather than the display serif every sibling
-   section uses) is the template's own documented inconsistency —
-   reproduced as drawn, not corrected. */
+   tokens. --tile-mint/--pill-teal/--glance-ground are literal colours
+   in the same teal family. The heading uses --font-ui at weight 300
+   rather than the display serif, as in the design.
+   ========================================================= */
 
 .s-glance2 {
   color: #07324a;
@@ -135,8 +126,8 @@
 }
 
 /* ---------- shine sweep on the stat tiles (hover) ----------
-   Same diagonal highlight band as the shared .lab-shine utility, added
-   per VJ 2026-08-28. Triggered on hover, in step with the tile's own
+   Same diagonal highlight band as the shared .lab-shine utility.
+   Triggered on hover, in step with the tile's own
    lift effect. Parked fully off the tile at rest (translateX(-60%) of a
    box 3.4x the tile wide clears the left edge) so nothing shows until
    the pointer is over it; on hover it sweeps right, fully past the

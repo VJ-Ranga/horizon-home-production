@@ -1,8 +1,7 @@
 /* =========================================================
-   PART A (cont.) — SECTION 11, "Banner — mountain river"
-   Ported from html-templates/11-banner-river.html. The scrim lives
-   on the root's own ::after (no media div left to hang it off, since
-   the background img is the shared canvas) rather than a sibling div.
+   Banner — mountain river
+   The scrim lives on the root's own ::after (the background is the
+   shared canvas, so there is no media div to hang it off).
    ========================================================= */
 
 .s-banner-river {

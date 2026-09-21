@@ -102,10 +102,10 @@ export default function BackgroundMusic() {
       window.addEventListener("touchstart", onGesture);
     };
 
-    // The Animation Lab keeps `lab-locked` on <html> while the loader /
+    // AnimationLab keeps `lab-locked` on <html> while the loader /
     // intro shot is playing and drops it at the hand-off to frame 1.
     // Wait for that class to appear and then clear before starting.
-    // Pages without the lab (no `.lab` node) just start.
+    // Pages without it (no `.lab` node) just start.
     const check = () => {
       const locked = root.classList.contains("lab-locked");
       if (locked) everLocked = true;

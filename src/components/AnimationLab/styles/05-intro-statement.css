@@ -1,10 +1,10 @@
 /* =========================================================
-   PART A (cont.) — INTRO STATEMENT, "Beyond the Beyond"
-   Ported from html-templates/final/05-blue-city.html (titled "Intro
-   Statement, Combined" in the source). Not part of the shared
-   SECTIONS array — see the note in IntroStatementLayer.tsx for why;
-   its own opacity is written there directly from frame, so the only
-   thing this stylesheet owns is the static layout/type.
+   Intro statement — "Beyond the Beyond"
+   Static layout/type only; opacity comes from useSectionLayer
+   (IntroStatementLayer.tsx).
+
+   Also holds the tablet and small-laptop overrides for .s-digital2
+   (see "Tablet layout for the Digital section" below).
    ========================================================= */
 
 .s-intro {
@@ -13,10 +13,8 @@
   height: 100%;
 }
 
-/* Pale wash — the template's own .s-intro__media::after gradient,
-   unchanged. This is a section-owned overlay, separate from
-   .lab-media's shared dark scrim (see IntroStatementLayer.tsx for
-   why touching that shared one wasn't necessary). */
+/* Pale wash — a section-owned overlay, separate from .lab-media's
+   shared dark scrim (see IntroStatementLayer.tsx). */
 .s-intro__media {
   position: absolute;
   inset: 0;
@@ -88,9 +86,9 @@
   }
 }
 
-/* Final live-lab responsive pass for Section 4. This block wins over the
-   earlier `781-1100` one (same specificity, later in the file), so the
-   full tablet layout lives HERE.
+/* Tablet layout for the Digital section. This block wins over the
+   earlier `781-1100` one (same specificity, later in the cascade), so
+   the full tablet layout lives HERE.
 
    Card: near-full-width, in-flow from the top (like the phone layout),
    only as tall as its content + small slack. Contents keep the section's
@@ -98,7 +96,7 @@
 @media (min-width: 701px) and (max-width: 1100px) {
   /* Layer stacks the card and the quicklinks as one centred group with
      a fixed 50px gap between them: the card drops down from the top,
-     the quicklinks rise from the bottom, exactly as VJ marked. */
+     the quicklinks rise from the bottom. */
   .s-digital2 {
     display: flex;
     flex-direction: column;

@@ -1,57 +1,30 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — section 14, "Capitals Management"
+   Section — "Capitals Management"
    =========================================================
 
-   Markup ported from html-templates/final/Artboard 7.html — a
-   scroll-jack card carousel, structurally unlike every other
-   section in this timeline. VJ's own words: "stop move video after
-   this fully load and scroll card one by one after finish scarling
-   card work like normal section desaper with frams."
+   A scroll-lock card carousel, unlike every other section.
 
-   Mechanism (confirmed with VJ before building): scroll drives the
-   shared background frame-scrub normally up to this section's own
-   settledFrame (490, re-measured 2026-08-25 — was 515), crawling in
-   over the last few frames like any other section's hold. AT
-   settledFrame the scrub freezes COMPLETELY — not the usual slowed
-   crawl, see the `carousel` field on this section's entry in
-   timeline.ts and the dedicated zero-frame-movement leg
-   buildLegs()/stops() adds for it. Further scroll spends LEAD_PX
-   held on card 0, then sweeps the 5 cards, then holds TAIL_PX on the
-   last card — VJ, 2026-08-24, after the first pass: "give similar
-   time for 1 frame to start scrolling, also once scroll[ing the
-   cards is] done, before [the background] start[s] mov[ing again]
-   wait 2 or 3 frame". Once the whole budget is spent, normal
-   frame-driven scroll resumes past settledFrame and this section
-   exits like any other, fading out before the River banner enters.
+   Scroll drives the shared background normally up to this section's
+   settledFrame, crawling in over the last few frames. At settledFrame
+   the scrub freezes completely (see the `carousel` field on this
+   section in timeline.ts). Further scroll spends leadPx held on card 0,
+   sweeps the 7 cards, then holds tailPx on the last card. Once that
+   budget is spent, frame-driven scroll resumes and the section exits
+   like any other.
 
-   Because the frame is genuinely pinned for the whole carousel, the
-   card position CANNOT be derived from frame (every card would read
-   the same value) — it has to read window.scrollY directly, the
-   same coordinate space scrollPxForFrame/frameForScrollPx already
-   use (confirmed: the page's only in-flow content is the spacer
-   sized to totalScrollPx, so window.scrollY === "px into phase 2"
-   exactly, no separate tracking needed). This runs its own rAF loop
-   rather than useFrameEffect for that reason — it is not a function
-   of frame, it is a function of raw scroll position within the lock.
+   Because the frame is pinned during the carousel, card position cannot
+   be derived from frame. It reads window.scrollY directly (the same
+   coordinate space as scrollPxForFrame/frameForScrollPx) in its own rAF
+   loop rather than useFrameEffect.
 
-   Card visual mechanics (opacity/scale/offset by distance from the
-   active index, eased glide toward the scroll target) are ported
-   from the template's own motion.js-adjacent inline script, same
-   EASE=0.09 damping constant, translated to React refs instead of
-   direct querySelectorAll.
+   Card motion (opacity/scale/offset by distance from the active index,
+   eased glide toward the scroll target) uses EASE = 0.09 damping.
 
-   The Artboard 7 source shipped 5 identical "Financial Capital"
-   placeholder cards. Replaced 2026-08-28 with the 7 real capital
-   cards from the spec (PDF p.10-14): Financial, Natural, Social and
-   Relationship, Intellectual, Human, Manufactured, Digital — each
-   with its own body copy and three stats. carousel.count in
-   timeline.ts bumped 5 -> 7 and the sweep scaled to match. Per-card
-   "Explore More" buttons from the spec are a separate wiring task
-   (local PDFs, see doc/horizon-link-mapping.html) and are not added
-   here. Background image is the same asset off every card's photo
-   half, matching the source. */
+   Seven capital cards: Financial, Natural, Social and Relationship,
+   Intellectual, Human, Manufactured, Digital — each with its own body
+   copy and three stats. */
 
 import { useRef } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
@@ -67,17 +40,14 @@ const TAIL_PX = FINCAP.carousel!.tailPx;
 const SWEEP_PX = FINCAP.carousel!.scrollPx - LEAD_PX - TAIL_PX;
 const EASE = 0.09;
 
-/* Reference stack model — ported from
-   public/html-sections/14-financial-capital.html (which is itself a port
-   of continuous-scroll-stack-carousel-loading-fixed.html). Each card's
-   CENTRE is placed at a fraction of the viewport height: the active card
-   mid-screen, the next card parked on the very bottom edge with a
-   screen-proportional gap, the one after it already creeping in during
-   the same move so the gap can never grow. The outgoing card sinks a
-   little and fades fully OUT before the incoming card lands, so it is
-   never seen through the now-opaque (ACTIVE_O) active card. Every
-   card walks the SAME path for a given distance from the active index,
-   so spacing can't drift after repeated transitions. */
+/* Stack model. Each card's CENTRE is placed at a fraction of the
+   viewport height: the active card mid-screen, the next card parked on
+   the bottom edge with a screen-proportional gap, the one after it
+   already creeping in during the same move so the gap never grows.
+   The outgoing card sinks a little and fades fully OUT before the
+   incoming card lands, so it is never seen through the now-opaque
+   (ACTIVE_O) active card. Every card walks the SAME path for a given
+   distance from the active index, so spacing cannot drift. */
 const ACTIVE_C = 0.5;
 const PREVIEW_C = 0.989;
 const QUEUE_C = 1.2;
@@ -143,9 +113,9 @@ function stateForRel(
 type Stat = { money?: boolean; value: string; unit?: string; label: string };
 type Card = { title: string; body: string; link: string; image: string; stats: Stat[] };
 
-// "Explore More" targets: one local report-extract PDF per capital in
-// public/pdf/home/capitals/ (sourced from doc/new pdf crsl).
-// All open in a new tab. An empty link would render as plain text (no anchor).
+// "Explore More" targets: one report-extract PDF per capital in
+// public/pdf/home/capitals/, opened in a new tab. An empty link renders
+// as plain text (no anchor).
 const CARDS: Card[] = [
   {
     title: "Financial Capital",
@@ -266,10 +236,9 @@ export default function FinancialCapitalLayer() {
       // (removes the big dead band between the two).
       const activeC = w <= 700 ? 0.52 : ACTIVE_C;
       // Desktop keeps the original spacing (0.489V - cardHeight, which
-      // reduces to PREVIEW_C exactly). Below 1100px the natural gap is a
-      // third of the screen, so cap it: ~52px on phones (VJ wants a
-      // little breathing room), a tight ~20px on tablets. Math.max(…, 0)
-      // keeps it from ever letting the parked card overlap the active one.
+      // reduces to PREVIEW_C exactly). Below 1100px the natural gap is a third
+      // of the screen, so cap it: ~52px on phones, ~20px on tablets.
+      // Math.max(…, 0) keeps the parked card from overlapping the active one.
       const naturalGap = V * (PREVIEW_C - ACTIVE_C) - refH;
       const gapCap = w <= 700 ? 72 : 20;
       const previewC =

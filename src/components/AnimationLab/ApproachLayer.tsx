@@ -1,46 +1,20 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — section 2, "Our Approach to Reporting"
+   Section 2 — "Our Approach to Reporting"
    =========================================================
 
-   Markup ported from html-templates/final/03-approach-c2.html
-   (variant C2: centred composition, Horizon-teal glass cards),
-   replacing the earlier 02-approach.html port wholesale. Class names
-   are kept byte-identical (s-approach2__*) so the two can be diffed
-   against each other, and the CSS in lab.css is that file's CSS
-   copied across.
+   No background <img>: the scrubbed <canvas> (LabScrubber) is the
+   background. No <section> wrapper: .lab-layer already provides inset:0
+   inside the shared fixed viewport.
 
-   Differences from the template, all structural, none visual:
-
-   1. No .s-approach2__media / background <img>. The template's own
-      background is the scrubbed <canvas> here, same swap as every
-      other section — see LabScrubber.
-   2. No <section> wrapper, position/min-height/overflow or its own
-      teal background — .lab-layer already provides inset:0 inside
-      the shared fixed viewport and the teal ground sits on .lab
-      itself. Section-root rules stay in the template only.
-
-   Card copy is unchanged from the previous 02-approach.html port —
-   same five items, same order, same icons — this is a visual/layout
-   replacement, not a content one.
-
-   Reveal: frame-driven (VJ, 2026-08-23 — "all animation... need to
-   work with scrolling"), same staggerProgressAt helper as
-   MainStartLayer.tsx/DigitalLayer.tsx, not a fixed-duration CSS
-   animation. Title splits PER WORD, not per character (same day,
-   separate fix — per-character spans broke the font's kerning between
-   adjacent letters, which read as broken letter-spacing; words keep
-   their internal kerning intact). Title's words get their own
-   CHAR_WINDOW; kicker, lead, all five cards and the CTA row share
-   GROUP_WINDOW as an 8-item stagger — each item's opacity/translateY
-   written per frame, so the reveal tracks scroll position exactly
-   (scrub back and it un-reveals, fast-scroll and it visibly races to
-   keep up). Both windows are wider than the section's own `enter`
-   (109-118) specifically to give this many items room — widen further
-   if it still feels rushed, rather than reaching for a CSS animation.
-   This is layered ON TOP of the section's own enter fade from
-   useSectionLayer, not a replacement for it. */
+   Reveal is frame-driven (staggerProgressAt), so it tracks scroll
+   exactly: scrub back and it un-reveals. The title splits per word, not
+   per character, to keep the font's kerning. The title words use
+   CHAR_WINDOW; kicker, lead, the five cards and the CTA row share
+   GROUP_WINDOW as an 8-item stagger. Widen the windows if the reveal
+   feels rushed. This sits on top of the section's own enter fade from
+   useSectionLayer. */
 
 import { useEffect, useRef } from "react";
 import {
@@ -72,9 +46,9 @@ const GROUP_WINDOW: [number, number] = [114, 134];
 const GROUP_COUNT = 8;
 
 // Popup follows the same dialogRef/showModal pattern as HeroLayer.tsx
-// and GlanceLayer.tsx's own video dialogs. "Watch the Highlights"
-// video from VJ, 2026-09-01. Loaded into the iframe only while the
-// dialog is open, cleared on close so it stops playing.
+// and GlanceLayer.tsx. "Watch the Highlights" video, loaded into the
+// iframe only while the dialog is open and cleared on close so it
+// stops playing.
 const POPUP_CLOSE_AFTER_FRAMES = 5;
 const HIGHLIGHTS_VIDEO_SRC =
   "https://www.youtube.com/embed/m4GztUvo9J0?autoplay=1&rel=0";
@@ -156,7 +130,7 @@ export default function ApproachLayer() {
      useSectionLayer cannot run until after the first paint, so without
      it the section flashes on load. Every section layer that is NOT on
      screen at the opening frame needs the marker; the hero does not,
-     because it is present from frame 1. See lab.css. */
+     because it is present from frame 1. See styles/01-shared-shell.css. */
   return (
     <div
       className="lab-layer s-approach2"
@@ -364,9 +338,8 @@ export default function ApproachLayer() {
               groupRefs.current[7] = node;
             }}
           >
-            {/* Spec (AR Crossword Puzzle PDF p.2): this section's two
-                buttons are "Explore More" and "Watch Key Highlights"
-                — not the hero's "Download Annual Report". */}
+            {/* This section's two buttons are "Explore More" and "Watch Key
+                Highlights" — not the hero's "Download Annual Report". */}
             <a
               className="btn s-approach2__cta"
               href="/pdf/home/03-approach/Our%20Approach%20to%20Reporting.pdf"

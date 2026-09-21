@@ -1,10 +1,9 @@
 import AnimationLab from "@/components/AnimationLab/AnimationLab";
 
-/* The client-facing home page: load screen -> intro shot (LabIntro) ->
-   the full scroll experience. Same AnimationLab component as
-   /animation-lab, with `intro` on so the default URL plays the intro.
-   ?quality=hq and ?debug=1 still work (both opt-in, so a client link
-   shows no debug HUD). The intro is skipped automatically under
+/* The home page: load screen -> intro shot (LabIntro) -> the full
+   scroll experience. Same AnimationLab component as /animation-lab,
+   with `intro` on. ?quality=hq and ?debug=1 are opt-in, so the
+   default URL shows no debug HUD. The intro is skipped automatically under
    prefers-reduced-motion.
 
    No metadata export here on purpose: page metadata overrides the

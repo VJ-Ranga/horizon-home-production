@@ -1,22 +1,18 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — the background scrubber
+   Background scrubber
    =========================================================
 
-   Home/ScrollScrubber.tsx, with two changes:
+   Paints the current frame onto a <canvas>. The frame comes from the
+   shared FrameContext rather than from scroll directly, so the
+   background and the section layers cannot drift apart.
 
-   1. It loads only the lab's frame window (1-140, 140 files) rather
-      than all 720, so the lab is usable seconds after load. The
-      entry's own frames (1-50) are already decoded by AnimationLab
-      before the autoplay starts, so those come from cache.
-   2. It takes its frame from the shared FrameContext instead of
-      reading scroll itself, so the background and the overlay
-      layers cannot drift apart — they are the same number.
+   Desktop keeps every frame decoded; phones and tablets keep a
+   sliding window around the current frame (see below). The entry
+   frames (1-50) are already decoded by AnimationLab.
 
-   It also owns the carve, since the carve is a property of the
-   media box. See timeline.ts carveAt() — that shape is an
-   animation assumption, not a PSD measurement.
+   Also owns the carve (timeline.ts carveAt()) and the shared scrim.
    ========================================================= */
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -47,18 +43,16 @@ import {
 } from "./frameDirMobile";
 
 /* Haycarb at a Glance is the one section built light-themed — dark
-   ink on light stat tiles, no background of its own (VJ, 2026-08-21,
-   see GlanceLayer.tsx) — so the scrim below has to fade OUT while it
+   ink on light stat tiles, no background of its own (see
+   GlanceLayer.tsx) — so the scrim below has to fade OUT while it
    is on screen rather than applying everywhere uniformly. Reusing its
    own sectionStateAt opacity curve rather than a second frame-range
    check keeps the scrim's fade exactly in step with Glance's own
    enter/hold/exit, including the easing. */
 const GLANCE_SECTION = SECTIONS[5];
 const FINANCIAL_SECTION = SECTIONS[7];
-// 19-end-screen. The veil used to contract after 16-nonfinancial
-// (SECTIONS[15]); it now runs unbroken to the end of the last section,
-// so 17/18/19 share one continuous overlay and the end screen no longer
-// needs a scrim of its own.
+// 19-end-screen. The veil runs unbroken to the end of the last section,
+// so the closing sections share one overlay.
 const OVERLAY_END_SECTION = SECTIONS[18];
 const OVERLAY_FADE_FRAMES = 20;
 import { useFrameEffect } from "./useFrameTimeline";
@@ -66,9 +60,8 @@ import { useMouseParallax } from "./useMouseParallax";
 
 
 /** Which frame folder a given density/quality combination reads.
-    densify 1 is the plain 840 sets and is byte-for-byte the original
-    behaviour; every other value is a 1080p-only dense set except 2x,
-    which also has an HQ variant. */
+    densify 1 is the plain set; 2 and 4 are 1080p dense sets (2x also
+    has an HQ variant). */
 function resolveFrameDir(
   densify: number,
   hq: boolean,
@@ -134,27 +127,21 @@ export default function LabScrubber({
   /** Home's intro overlay owns first paint; omit the SSR poster beneath it. */
   hidePoster?: boolean;
   hq?: boolean;
-  /** New-video 4K set, /animation-lab-4k only. Optional and false by
-      default, so every existing caller behaves exactly as before. */
+  /** Read the 4K frame set. */
   fourK?: boolean;
-  /** Frame-density multiplier: 1 (default, the 840 sets), 2, or 4.
-      Draws k times as many files across the SAME frame numbers — see
-      FRAME_DIR_2X in timeline.ts. 1 is byte-for-byte the old path. */
+  /** Frame-density multiplier: 1 (default), 2, or 4. Draws k times as
+      many files across the same frame numbers — see FRAME_DIR_2X. */
   densify?: number;
   /** Fired once per frame, right after it decodes. AnimationLab uses
       this to know when a section's frames are ready to hold scroll
       for — see the scroll gate there. */
   onFrameLoaded?: (frame: number) => void;
 }) {
-  /* HQ preview only. Both values below are the dev behaviour when hq
-     is false, so the default path is byte-for-byte what it was.
-     fourK takes precedence when set, and is likewise off by default. */
   /* `mounted` is false on the server and on the first client render, so
      the poster <img src> below matches between the two (window /
      matchMedia are client-only) — no hydration mismatch. Once it flips
      the frame dir resolves for real and the loader effect starts (it
-     bails while !mounted), so the loader never briefly pulls the full
-     set on a phone. */
+     bails while !mounted), so a phone never starts on the full set. */
   const mounted = useSyncExternalStore(
     subscribeToMount,
     getMountedSnapshot,
@@ -174,12 +161,10 @@ export default function LabScrubber({
   const phone = mounted && phoneSnapshot;
   const frameDir = resolveFrameDir(densify, hq, fourK, compact, phone);
 
-  /* THE ONLY THING `densify` CHANGES: which FILE a frame maps to.
-     Frame numbers everywhere else stay in 840-space. `frame` is
-     continuous during scroll, so on a dense route round(k*f - (k-1))
-     resolves to intermediate files the 840 set has no equivalent for —
-     that is where the extra smoothness comes from, at zero cost to the
-     timing config. */
+  /* `densify` only changes which file a frame maps to; frame numbers
+     stay the same everywhere else. `frame` is continuous during scroll,
+     so round(k*f - (k-1)) resolves to in-between files, which is where
+     the extra smoothness comes from. */
   const denseScale = densify > 1 ? densify : 1;
   const frameToFile = (f: number) =>
     Math.round(f * denseScale - (denseScale - 1));
@@ -229,23 +214,9 @@ export default function LabScrubber({
       ? PHONE_LOAD_CONCURRENCY
       : TABLET_LOAD_CONCURRENCY;
 
-    /* Backing store: CSS pixels (dpr 1) for the dev set, dpr 2 for
-       the HQ preview.
-
-       The dev cap exists because drawing more backing store than the
-       source can fill buys interpolation, not resolution, at 4x the
-       fill rate. That reasoning was written when the frames were
-       1600x892 and is kept for the 1920x1080 dev set, where a dpr-2
-       canvas on a 1920-wide viewport is still a 2x linear upscale.
-
-       The HQ set is 2560x1440, so at dpr 2 there is real detail to
-       put on those pixels — and lifting the cap is the point of the
-       preview: measured 2026-08-19, the dev set holds 76-81% of the
-       lossless reference's fine detail at a 2560 backing store while
-       the HQ set holds 104-106%. Capped at dpr 1 the HQ frames would
-       be downscaled and the whole comparison would show nothing.
-
-       Home/ScrollScrubber.tsx already caps at 2 and is untouched. */
+    /* Backing store: dpr 1 for the regular set (a higher dpr would only
+       upscale 1080p frames at 4x the fill rate), up to dpr 2 for the
+       HQ / 4K sets, which have the detail to fill it. */
     const resize = () => {
       const dpr = hq || fourK ? Math.min(window.devicePixelRatio || 1, 2) : 1;
       canvas.width = Math.round(window.innerWidth * dpr);
@@ -271,14 +242,8 @@ export default function LabScrubber({
            AnimationLab's loading gate keeps a Set<number> of frame
            numbers and walks it with `frame += 1`, so a fractional
            value can never match and the gate would stay closed
-           forever — scroll locked at the hero. That is exactly what a
-           any NON-INTEGER denseScale produces before this round().
-           Cost a real debugging session in 2026-08 with a 5.7771
-           (native-30fps) set: integer multipliers happened to land
-           every k-th file on a whole number and so worked by luck,
-           while the fractional one locked scroll at the hero. Keep
-           the round() if a non-integer density is ever added back.
-           Every logical frame stays covered because there are k >= 1
+           forever — scroll locked at the hero. Keep the round() for
+           any non-integer density. Every logical frame stays covered because there are k >= 1
            files per logical frame. */
         onFrameLoadedRef.current?.(
           Math.round(offset / denseScale) + LAB_FIRST_FRAME

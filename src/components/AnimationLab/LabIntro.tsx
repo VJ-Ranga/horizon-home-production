@@ -1,41 +1,27 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — the load screen + intro
+   Load screen + intro
    =========================================================
 
-   An OVERLAY, not part of the frame driver. It renders on top of a
-   fully-mounted <AnimationLab> that is holding on the handoff frame
-   (HANDOFF_FRAME) with scroll locked. Sequence:
+   An overlay, not part of the frame driver. It sits on top of a
+   fully-mounted <AnimationLab> holding on HANDOFF_FRAME with scroll
+   locked. Stages:
 
-     1. "loading"  project-colour screen: a real 0 -> 100 counter
-                   driven by decoded intro frames, plus a thin
-                   progress bar pinned to the top edge. The "minimal"
-                   variant shows a small spinner instead.
-     2. "playing"  the intro shot plays as a real <video>
-                   (/hero/intro.mp4 — H.264, 1920px wide, CRF 26, no
-                   audio) at its native 30fps. This used to be 240
-                   webp frames scrubbed on a <canvas> at ~7.8fps
-                   (240 / 30.8s) — visibly stepped no matter how the
-                   scrub math was tuned, since the frame rate itself
-                   was the problem, not the drawing. A muted autoplay
-                   video is both smoother (true 30fps) and an order of
-                   magnitude smaller (6.7MB vs the old set's 66MB).
-                   Skippable — key, wheel, or the Skip button, deliberately
-                   NOT a click anywhere (see the skip-affordances effect
-                   below for why).
-     3. "leaving"  the overlay fades out; onDone() releases the lab's
-                   entry autoplay (which was gated on this, reusing
-                   the same hold the slow-decode path already uses),
-                   then the node removes itself.
+     1. "loading"  0 -> 100 counter driven by the opening main frames,
+                   plus a thin progress bar. The "minimal" variant
+                   shows a small spinner instead.
+     2. "playing"  the intro plays as a muted autoplay <video> (source
+                   chosen per device in frameDirMobile.ts). Skippable
+                   by key, wheel or the Skip button — not by clicking
+                   anywhere (see the skip effect below).
+     3. "leaving"  the overlay fades out, onDone() releases the entry
+                   autoplay, then the node removes itself.
 
-   loaderOnly: stop at step 1 with the bar full — for tuning the
-   screen in isolation on /animation-lab-loading. onDone is never
-   called, so the lab underneath stays parked on the handoff frame.
+   loaderOnly: stop at step 1 with the bar full. onDone is never
+   called, so the page stays on the handoff frame.
 
-   Nothing here touches timeline.ts's scroll math or the page height.
-   With none of the -full / -intro / -loading routes active this file
-   is never imported. */
+   Nothing here touches timeline.ts's scroll math or the page height. */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -101,7 +87,7 @@ export default function LabIntro({
     if (doneRef.current) return;
     doneRef.current = true;
     setStage("leaving");
-    onDone(); // the lab entry autoplay may start now, under the fade
+    onDone(); // the entry autoplay may start now, under the fade
     window.setTimeout(() => {
       if (rootRef.current) rootRef.current.style.display = "none";
     }, 650);
@@ -257,14 +243,10 @@ export default function LabIntro({
   }, [stage, finish]);
 
   /* ---- skip affordances, only while the intro is playing ----
-     Deliberate actions only — keydown and wheel, not pointerdown.
-     A global click-anywhere used to be here too, and since the video
-     covers almost the whole screen, that meant the very first click
-     ANYWHERE (very often one aimed at the Skip button itself) ended
-     the intro before the button could register as a distinct,
-     visible control — "clicking the video skips it" and "the Skip
-     button is missing" were the same bug. The button's own onClick
-     below is now the only click-based way to skip. */
+     Deliberate actions only — keydown and wheel, not pointerdown. The
+     video covers almost the whole screen, so a click-anywhere skip
+     would swallow clicks aimed at the Skip button. The button's own
+     onClick is the only click-based way to skip. */
   useEffect(() => {
     if (stage !== "playing") return;
     const skip = () => finish();
@@ -305,8 +287,8 @@ export default function LabIntro({
       {/* Load-screen visuals. Kept mounted through the hand-off so they can
           crossfade out over the intro's first frame rather than hard-cut. */}
       <div className="lab-intro__load" data-hidden={stage !== "loading"}>
-        {/* background — 1:1 with the live /ai-assistant AuroraBackground
-            (see lab.css for the port notes). */}
+        {/* Background — matches the /ai-assistant AuroraBackground
+            (styles in styles/19-intro-overlay.css). */}
         <div className="lab-intro__aurora" aria-hidden="true">
           <span className="lab-intro__aurora-base" />
           <span className="lab-intro__fluid lab-intro__fluid--1" />

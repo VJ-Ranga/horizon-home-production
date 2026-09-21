@@ -1,26 +1,14 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — section 1, the hero
+   Section 1 — the hero
    =========================================================
 
-   Markup ported from html-templates/01-hero.html, which is FINAL
-   (mean diff 2.36/255 against the PSD export). Class names are kept
-   byte-identical so the two can be diffed against each other, and
-   the CSS in lab.css is that file's CSS copied across.
+   Positions come from the PSD (see styles/07-hero.css).
 
-   Two differences from the template, both structural, neither
-   visual:
-
-   1. No <img> background. The template's .s-hero__media is the
-      scrubbed <canvas> here — see LabScrubber. The template always
-      anticipated this swap.
-   2. No <section> wrapper or 100svh sizing. Every lab layer is
-      inset:0 inside one fixed viewport, so the layers stack.
-
-   The narrow-viewport rules from the template are carried over in
-   lab.css but are NOT exercised by the lab — see the notes at the
-   foot of that file.
+   No <img> background: the scrubbed <canvas> (LabScrubber) is the
+   background. No <section> wrapper or 100svh sizing: every layer is
+   inset:0 inside one fixed viewport, so the layers stack.
    ========================================================= */
 
 import { useRef } from "react";
@@ -44,8 +32,7 @@ import LottieIcon from "./LottieIcon";
 const HERO = SECTIONS[0];
 const POPUP_CLOSE_AFTER_FRAMES = 5;
 
-// "Theme" video from the client's resource list (AR Crossword Puzzle
-// PDF, Resources appendix). Loaded into the iframe only while the
+// "Theme" video. Loaded into the iframe only while the
 // dialog is open, and cleared on close so it stops playing.
 const HERO_VIDEO_SRC =
   "https://www.youtube.com/embed/xytAX3yFm4Y?autoplay=1&rel=0";
@@ -73,7 +60,7 @@ export default function HeroLayer() {
   });
 
   /* Fires ".s-hero__wordmark--emerge" once, at WORDMARK_EMERGE_FRAME
-     (a few frames before the hero settles at 50) — not through
+     (during the entry reveal) — not through
      useRevealPart, because that hook ties motion to the frame clock,
      and the frame clock stops advancing at 50 while this animation
      needs to keep running past that on its own.
@@ -107,13 +94,9 @@ export default function HeroLayer() {
      back").
 
      Guarded to only act once frame is PAST 50, not from the moment
-     phase flips to "scroll": phase flips the instant frame reaches
-     50, while the emerge animation is 2.6s long and only barely
-     started (WORDMARK_EMERGE_FRAME=48 fires ~96ms of entry-time
-     earlier) — taking over immediately would cut it off almost
-     before it plays. Waiting for real scroll past 50 lets it run
-     its full slow bloom for as long as the user lingers before
-     scrolling away. */
+     phase flips to "scroll": the CSS emerge animation may still be
+     running when the phase flips, and taking over then would cut it
+     off. */
   const exitTakenOverRef = useRef(false);
   useFrameEffect((frame) => {
     const element = wordmarkRef.current;
@@ -195,8 +178,8 @@ export default function HeroLayer() {
       </div>
 
       {/* Top-right. The play disc is baked into the thumbnail — the card
-          is cropped straight off the PSD canvas. TODO(interactive stage):
-          a clean plate, so the disc becomes a real hover/focus target. */}
+          is cropped straight off the PSD canvas, so the disc itself is not
+          a separate hover/focus target. */}
       <div className="s-hero__video" ref={videoRef}>
         <button
           type="button"
@@ -224,8 +207,8 @@ export default function HeroLayer() {
         <p className="s-hero__video-caption">Watch Annual Report Theme</p>
       </div>
 
-      {/* Ported from html-templates/final/01-hero.html unchanged: native
-          <dialog>, closed by the backdrop click or the form's own submit. */}
+      {/* Native <dialog>, closed by the backdrop click or the form's own
+          submit. */}
       <dialog
         ref={dialogRef}
         className="s-hero__video-dialog"
@@ -261,7 +244,7 @@ export default function HeroLayer() {
 
       {/* Centre. Custom lettering, so it is an image; it carries the h1.
           Not driven by useRevealPart like its siblings — the trigger
-          above adds --emerge at WORDMARK_EMERGE_FRAME and lab.css's
+          above adds --emerge at WORDMARK_EMERGE_FRAME and the CSS
           keyframe runs from there on its own clock. */}
       <h1 className="s-hero__wordmark" ref={wordmarkRef}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -272,10 +255,8 @@ export default function HeroLayer() {
         />
       </h1>
 
-      {/* Lower-centre. In the template this is an anchor to #02-approach.
-          There is nothing to jump to in the lab — section 2 is a scroll
-          position, not a document node — so it scrolls to section 2's
-          settled frame instead. */}
+      {/* Lower-centre. Section 2 is a scroll position, not a document
+          node, so this scrolls to section 2's settled frame. */}
       <button
         ref={scrollRef}
         type="button"

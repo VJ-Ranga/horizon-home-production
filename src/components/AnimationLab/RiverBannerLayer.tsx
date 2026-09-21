@@ -1,7 +1,7 @@
 "use client";
 
-/* Artboard 8 foreground only. The template background is supplied by the
-   shared scrubbed video canvas and is intentionally not rendered here. */
+/* River banner foreground only. The background is the shared scrubbed
+   video canvas. */
 
 import { useEffect, useRef } from "react";
 import {
@@ -14,16 +14,14 @@ import { useFrameEffect, useSectionLayer } from "./useFrameTimeline";
 
 const RIVER = SECTIONS[14];
 
-/* Windows are DERIVED from the section entry, never hardcoded — they
-   were literals ([816, 830] / [830, 841]) that silently went stale the
-   moment the section was retimed on 2026-09-03.
+/* Windows are derived from the section entry, never hardcoded.
 
-   The word-by-word reveal runs during the 40 virtualEnterFrames, not
-   the real enter: 780 -> 800 the panel fades in empty, then the
-   background pins at 800 and the copy writes on across a virtual
-   800 -> 840 span (virtualEnterProgressAtScrollPx maps the pinned
-   scroll distance onto that range). Exit is the real 800 -> 820
-   window, reversed. Same technique as GovernanceLayer.tsx. */
+   The word-by-word reveal runs during virtualEnterFrames, not the real
+   enter: the panel fades in empty, then the background pins at
+   settledFrame and the copy writes on across the virtual span
+   (virtualEnterProgressAtScrollPx maps the pinned scroll distance onto
+   that range). Exit is the real exit window, reversed. Same technique
+   as GovernanceLayer.tsx. */
 const VIRTUAL_ENTER_FRAMES = RIVER.virtualEnterFrames ?? 0;
 const ENTER_WINDOW: [number, number] = [
   RIVER.settledFrame,
@@ -57,14 +55,15 @@ const WORD_COUNT = WORD_GROUPS.reduce(
 export default function RiverBannerLayer() {
   const ref = useSectionLayer(RIVER);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  // Phones: skip the per-word opacity/translate stagger; the paragraph
-  // just rides the section's own fade (see GlanceLayer's mobileSolid).
+  // Compact viewports skip the per-word opacity/translate stagger; the
+  // paragraph just rides the section's own fade.
   const mobileSolidRef = useRef(false);
   useEffect(() => {
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 1100px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {
+    mobileSolidRef.current = mode === "compact";
     if (mobileSolidRef.current) {
       for (let index = 0; index < WORD_COUNT; index += 1) {
         const word = wordRefs.current[index];
@@ -82,11 +81,10 @@ export default function RiverBannerLayer() {
       readPxPerFrame(),
       mode,
     );
-    // While the 40 virtual frames are under the scroll head, drive the
-    // stagger off that 0..1 progress mapped onto 800 -> 840. Before
-    // then (real enter, frame < 800) the words stay hidden — the panel
-    // arrives empty. After (frame past 800, no virtual span) it is the
-    // reverse-stagger exit.
+    // While the virtual enter span is under the scroll head, drive the
+    // stagger off its 0..1 progress. Before it (real enter) the words stay
+    // hidden — the panel arrives empty. After it, the stagger runs in
+    // reverse as the exit.
     const entering = virtualEnter !== null || frame < RIVER.settledFrame;
     const animFrame =
       virtualEnter !== null

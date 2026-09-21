@@ -1,43 +1,28 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — section 5, "Haycarb at a Glance"
+   Section — "Haycarb at a Glance"
    =========================================================
 
-   Markup ported from html-templates/final/06-glance.html (class
-   root .s-glance2, replacing the old simpler .s-glance layout this
-   file used to carry — see git history for that version). Kept the
-   source's own documented inconsistency of setting the title in
-   --font-ui rather than the project serif; reproduced as drawn, not
-   "corrected" to match the other sections (see lab.css).
+   The title uses --font-ui rather than the display serif, as in the
+   design.
 
-   No <img> background — the scrubbed <canvas> is the background
-   here, same swap as every other section.
+   No background <img>: the scrubbed <canvas> is the background (the
+   shared scrim fades out here, see LabScrubber.tsx).
 
-   Reveal: the section's own opacity/offset comes from
-   useSectionLayer (standard pattern). Internal content gets focused
-   frame-driven group reveals, all windows kept
-   strictly inside this section's own enter (240-270) / exit
-   (273-292) frames — same lesson as the Governance bug: a child
-   stagger that resolves before the parent is visible, or crosses
-   the settle frame, reads as broken even though the math is right.
-   GLANCE's own enter window was widened from a tight 2-frame slot to
-   30 frames specifically to give this richer content room (see the
-   comment on this section's entry in timeline.ts). Counters are
-   frame-driven (Math.floor(target * t)), not the source's
-   requestAnimationFrame wall-clock version, same conversion as
-   GovernanceLayer.tsx's stat cards. Exit mirrors the entrance in
-   reverse, block by block (standing rule), while the pill row stays as
-   one group under the section-level reveal so the complete navigation set
-   appears together.
+   Reveal: the section's own opacity/offset comes from useSectionLayer.
+   Internal content gets frame-driven group reveals kept strictly inside
+   the section's enter/exit windows — a child stagger that finishes
+   before the parent is visible, or crosses the settle frame, reads as
+   broken. Counters are frame-driven (Math.floor(target * t)). Exit
+   mirrors the entrance in reverse, block by block, while the pill row
+   stays as one group under the section-level reveal.
 
-   The ambient ring pulse behind the play button is the one thing
-   NOT converted to frame-driven — it's a continuous decorative loop
-   (2.8s infinite), not a scroll reveal, same precedent as every
-   other section's purely-decorative always-on motion. Video dialog
-   is ported the same way HeroLayer.tsx's own popup works: a
-   dialogRef and showModal(), loading a YouTube embed
-   (SUMMARY_VIDEO_SRC below) — same as HeroLayer's popup now does. */
+   The ambient ring pulse behind the play button is a continuous
+   decorative loop, not a scroll reveal, so it stays CSS-driven.
+
+   Video dialog: dialogRef + showModal(), loading a YouTube embed
+   (SUMMARY_VIDEO_SRC), same as HeroLayer.tsx. */
 
 import { useEffect, useRef } from "react";
 import { SECTIONS, progressBetween, easeOut } from "./timeline";
@@ -48,12 +33,9 @@ const GLANCE = SECTIONS[5];
 const EXIT_START = GLANCE.exit!.frames[0];
 const POPUP_CLOSE_AFTER_FRAMES = 5;
 
-// All windows below stay strictly inside the section's own enter
-// (261-270) / exit (273-292) frames — see the file header for why.
-// The parent's own visibility only starts at 261 (matching the
-// camera hold), so these overlap heavily rather than running in
-// sequence — same technique as Governance's 5 stat cards packing
-// into a tight parent window.
+// All windows below stay strictly inside the section's own enter/exit
+// frames (see the file header). The parent only becomes visible with the
+// camera hold, so these overlap heavily rather than running in sequence.
 const TITLE_WINDOW: [number, number] = [263, 266];
 const QUOTE_WINDOW: [number, number] = [265, 268];
 const BODY_WINDOW: [number, number] = [267, 271];
@@ -89,9 +71,8 @@ function fadeRiseAt(
     : 1 - easeOut(progressBetween(frame, exitWindow[0], exitWindow[1]));
 }
 
-// "Annual report summary" video from the client's resource list (AR
-// Crossword Puzzle PDF, Resources appendix). Loaded into the iframe
-// only while the dialog is open; cleared on close so it stops playing.
+// "Annual report summary" video. Loaded into the iframe only while the
+// dialog is open; cleared on close so it stops playing.
 const SUMMARY_VIDEO_SRC =
   "https://www.youtube.com/embed/-eC8tVsda08?autoplay=1&rel=0";
 
@@ -111,7 +92,7 @@ export default function GlanceLayer() {
   const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 1100px)").matches;
   }, []);
 
   // The stage scrolls internally on <=1100px. `data-lenis-prevent` stops

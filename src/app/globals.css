@@ -94,8 +94,8 @@
   }
 }
 
-/* ---- Mobile sticky glass header ----
-   Phones only (<= 700px, the project's own phone breakpoint). A
+/* ---- Compact sticky glass header ----
+   Tablet and phone widths (<= 1100px). A
    full-width frosted bar behind the fixed hamburger (GlobalHeader) and
    the music toggle (BackgroundMusic), so page content scrolling under
    them is visually separated instead of colliding with the bare icons.
@@ -112,7 +112,7 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 1100px) {
   .mobile-topbar-scrim {
     display: block;
     position: fixed;
@@ -127,6 +127,12 @@
     backdrop-filter: blur(14px) saturate(1.4);
     border-bottom: 1px solid rgba(255, 255, 255, 0.14);
     transition: opacity 0.4s ease;
+  }
+
+  /* During the hero, frame 50 reveals only the bare hamburger. The glass
+     header arrives with the mute control at frame 70, when the hero exits. */
+  html.lab-music-hidden .mobile-topbar-scrim {
+    opacity: 0;
   }
 
   /* Light-themed sections (IntroNavGate adds lab-nav-teal on `/`): a
@@ -151,13 +157,12 @@ html.intro-seen .lab-intro {
 }
 
 /* ---- AnimationLab mobile: section scrolling + sticky-bar clearance ----
-   Kept in globals.css (not lab.css) so it doesn't collide with the lab.css
-   worktree another editor holds. Scoped to the phone breakpoint. Only the
-   flow-layout sections that can grow past the viewport are listed — the
-   abs-positioned card sections (digital2, fincap) and the JS-scroll-gated
-   ones (leadership5, nonfinancial9, govcards' frame gate) are left to
-   their own layout. `padding-top` needs !important to beat each section's
-   own <=620px padding shorthand in lab.css; nothing else does. */
+   Scoped to the phone breakpoint. Only the flow-layout sections that can
+   grow past the viewport are listed — the abs-positioned card sections
+   (digital2, fincap) and the JS-scroll-gated ones (leadership5,
+   nonfinancial9, govcards' frame gate) are left to their own layout.
+   `padding-top` needs !important to beat each section's own <=620px
+   padding shorthand in the section stylesheets; nothing else does. */
 :root {
   --mobile-topbar-clear: calc(60px + env(safe-area-inset-top, 0px) + 30px);
 }
@@ -243,9 +248,9 @@ html.intro-seen .lab-intro {
 
   /* Sections whose top heading is positioned (not in the flow the rule
      above pads): drop each below the sticky bar directly. `.lab` prefix
-     out-specifies lab.css's own values without !important.
+     out-specifies the section stylesheets without !important.
      - digital2: absolute glass panel near the top
-     - leadership5: __head has a fixed 52px top pad on <=700 in lab.css
+     - leadership5: __head has a fixed 52px top pad on <=700
      - fincap: __intro is absolutely pinned at ~29px */
   .lab .s-digital2__panel {
     top: calc(60px + env(safe-area-inset-top, 0px) + 12px);
@@ -288,10 +293,10 @@ html.intro-seen .lab-intro {
   .lab .s-nonfinancial9__intro {
     padding-top: var(--mobile-topbar-clear);
   }
-  /* Strategy heading is clamp(40px, 6svh, 70px) in lab.css — far too big
-     on a phone (4 lines, ~40% of the screen) with a 100px top margin.
-     !important because lab.css's rule has the same specificity and loads
-     after this file. */
+  /* Strategy heading is clamp(40px, 6svh, 70px) — far too big on a phone
+     (4 lines, ~40% of the screen) with a 100px top margin. !important
+     because the section rule has the same specificity and loads after
+     this file. */
   .lab .s-strategy__title {
     margin-top: var(--mobile-topbar-clear) !important;
     font-size: clamp(25px, 7.6vw, 33px) !important;
@@ -360,8 +365,8 @@ html.intro-seen .lab-intro {
 
   /* Flatten only frame-driven foreground reveals. The layer root remains
      frame-driven, so each section still appears and disappears at its
-     existing timeline window; its internal words/cards no longer pop in
-     separately or get left behind by a touch flick. */
+     timeline window; its internal words/cards do not pop in separately
+     or get left behind by a touch flick. */
   .s-approach2__word,
   .s-approach2__kicker,
   .s-approach2__lead,

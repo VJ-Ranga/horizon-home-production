@@ -1,33 +1,15 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — governance cards, "Driving sustainable value
-   creation through effective governance"
+   Section — "Driving sustainable value creation through effective
+   governance"
    =========================================================
 
-   Markup ported from html-templates/final/07-governance-cards.html.
-   All five cards carry the SAME placeholder copy in the source
-   ("Inclusive Business Practices") — the designer copy-pasted card
-   one, same pattern as the Approach section's own placeholder cards
-   before those were finalized. Ported verbatim, not a mistake
-   introduced here.
+   No <img> background: the scrubbed <canvas> is the background.
 
-   Slotted into SECTIONS — VJ asked for it "as a new 8" so it shows
-   in the debug HUD like every other section, after an earlier
-   version kept it standalone specifically to avoid the array-index
-   shift this caused. Moved again, SECTIONS[8] -> SECTIONS[10], on
-   2026-08-25 when 05-intro-statement was promoted into the array
-   ahead of it — this file's own id/index just rides along with
-   whatever the current SECTIONS position is; no meaning is attached
-   to the number itself. Currently SECTIONS[10] ("10-governance-cards").
-
-   No <img> background — the scrubbed <canvas> is the background here,
-   same swap as every other section.
-
-   Reveal: the section's own opacity/offset now controls the title and
-   all five cards as one compact group. Icon draw-in is kept as the
-   template's own on-mount CSS animation plus hover-redraw — same
-   precedent as every other section's card badges. */
+   Reveal: the section's own opacity/offset controls the title and all
+   five cards as one group. Icon draw-in is a CSS on-mount animation
+   plus hover-redraw, like the other sections' card badges. */
 
 import { useEffect, useRef } from "react";
 import { SECTIONS, progressBetween, easeOut } from "./timeline";
@@ -116,7 +98,7 @@ export default function GovernanceCardsLayer() {
       data-initial-hidden="true"
       aria-hidden="true"
     >
-      <div className="s-govcards__content" data-lenis-prevent>
+      <div className="s-govcards__content">
         <h1 className="s-govcards__title" ref={titleRef}>
           Driving Sustainable Value Creation Through Effective Governance
         </h1>

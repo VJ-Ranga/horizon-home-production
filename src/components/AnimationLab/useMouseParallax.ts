@@ -1,11 +1,10 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — mouse parallax
+   Mouse parallax
    =========================================================
 
-   Ports "loop test/assets/interactions.js" onto the lab's fixed
-   background box (.lab-media). Same numbers, same behaviour:
+   Subtle parallax on the fixed background box (.lab-media):
 
      horizontal maximum: 3px
      vertical maximum:   2px

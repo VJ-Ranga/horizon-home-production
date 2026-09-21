@@ -1,50 +1,27 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — section 7, "Corporate Governance"
+   Section — "Corporate Governance"
    =========================================================
 
-   Markup ported from html-templates/final/07-governance.html,
-   replacing the earlier 07-governance.html (card-list layout with a
-   separate eyebrow/CTA) port wholesale. The new template is much
-   simpler: one combined heading ("Corporate Governance - Key
-   highlights", no separate eyebrow) and 5 stat cards with counting
-   numbers, no CTA at all. Class names below are new (this app's own
-   naming, not the template's terse `.stat`/`.page` — those would
-   collide too easily with other sections' generic-sounding classes)
-   but the layout/values are byte-for-byte the source's.
+   One combined heading and 5 stat cards with counting numbers, no CTA.
+   Class names are this app's own (the design's generic .stat/.page
+   names would collide with other sections).
 
-   No <img> background — the scrubbed <canvas> is the background here,
-   same swap as every other section. The template's own dark gradient
-   overlay (`.page:before`) was ported once as its own scrim div, then
-   dropped per VJ (2026-08-23) — the shared canvas/scrim underneath is
-   enough on its own here.
+   No <img> background: the scrubbed <canvas> and the shared scrim are
+   the background.
 
-   Reveal is fully frame-driven (standing rule this session — "all
-   animation... need to work with scrolling"), not the template's
-   fixed-duration CSS/JS animations:
-   - Title splits PER WORD (not per character — character-splitting
-     broke font kerning earlier this session, see MainStartLayer.tsx),
-     staggered via staggerProgressAt.
-   - Each stat card rises in staggered, same helper.
-   - Each stat's NUMBER counts up as a direct function of frame
-     (Math.floor(target * progress)), not the template's
-     requestAnimationFrame-over-500ms-wall-clock counter — so the
-     count is exactly in sync with scroll position, reversible if
-     scrolled backward, same as everything else. (Briefly removed
-     2026-09-03 on the "numbers don't fully appear" note, then
-     restored per VJ — the fix for that is the longer hold, holdFrames
-     30 in timeline.ts, not dropping the count.)
+   Reveal is fully frame-driven, so it tracks scroll position:
+     - Title splits per word (not per character, to keep kerning),
+       staggered via staggerProgressAt.
+     - Each stat card rises in on the same helper.
+     - Each number counts up as a direct function of frame
+       (Math.floor(target * progress)), so it reverses when scrolled back.
+       holdFrames in timeline.ts gives the numbers time to be read.
 
-   Exit is its own reverse stagger for words/stats/counters (standing
-   rule), not just riding the parent's own opacity fade from
-   useSectionLayer — the first version only had the entrance windows,
-   so past frame 408 every word/stat sat at "fully in" (t=1) forever
-   while only the parent faded, which meant no per-item motion or
-   counter reversal on the way out at all. Now EXIT_WINDOW drives a
-   genuine reverse: words leave in reverse order, cards sink back
-   down, counters count back down to 0 — same shape as the entrance,
-   played backward, layered on top of the parent's fade. */
+   Exit is its own reverse stagger, layered on top of the parent's fade
+   from useSectionLayer: words leave in reverse order, cards sink back
+   down, counters count back down to 0. */
 
 import { useEffect, useRef } from "react";
 import {
@@ -65,17 +42,10 @@ const TITLE_WORD_INDEX_BY_TOKEN = TITLE_TOKENS.map((token, tokenIndex) =>
     ? -1
     : TITLE_TOKENS.slice(0, tokenIndex).filter((item) => item.trim() !== "").length
 );
-// MUST stay inside the parent's own enter window, both ends — see
-// the original reasoning below, numbers re-measured 2026-08-25 when
-// this section was squeezed onto the new cut's much shorter
-// lighthouse shot (enter 390-394, only 4 frames, see timeline.ts).
-// Starting earlier has the stagger resolve while the parent is still
-// at opacity 0 (its own enter hasn't started), so by the time the
-// section is actually visible the words have already finished
-// internally — no perceptible stagger, just a pop. Ending later than
-// the parent's own settle crosses the frame this file's own
-// entering/exiting switch happens on, causing a snap right at the
-// settle frame instead of a clean finish.
+// Must stay inside the parent's own enter window, both ends. Starting
+// earlier has the stagger resolve while the parent is still at opacity
+// 0, so it just pops in. Ending later than the parent's settle crosses
+// the entering/exiting switch and snaps at the settle frame.
 const SETTLE_FRAME = GOVERNANCE.settledFrame;
 const ENTER_START = GOVERNANCE.enter?.frames[0] ?? SETTLE_FRAME;
 const ENTER_END = SETTLE_FRAME + (GOVERNANCE.virtualEnterFrames ?? 0);
@@ -98,15 +68,15 @@ export default function GovernanceLayer() {
   const statRefs = useRef<Array<HTMLElement | null>>([]);
   const counterRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const reducedMotionRef = useRef(false);
-  // Phones: no title/stat stagger and no counter count-up — every word
-  // and card solid, every number at its final value, once.
+  // Compact viewports use stable title/stat content and final counters —
+  // no stagger or count-up while the section is being read.
   const mobileSolidRef = useRef(false);
 
   useEffect(() => {
     reducedMotionRef.current = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 1100px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {

@@ -28,14 +28,15 @@ export default function EndScreenLayer() {
   const ref = useSectionLayer(END_SCREEN);
   const overlayRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  // Phones: skip the per-word opacity stagger; the closing line just
-  // rides the section's own fade (see GlanceLayer's mobileSolid).
+  // Compact viewports skip the per-word opacity stagger; the closing line
+  // just rides the section's own fade.
   const mobileSolidRef = useRef(false);
   useEffect(() => {
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 1100px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {
+    mobileSolidRef.current = mode === "compact";
     const overlay = overlayRef.current;
     if (overlay) {
       const timedEndScreen = sectionTimingForMode(END_SCREEN, mode);

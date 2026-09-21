@@ -15,8 +15,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   height: 0;
 }
 
-/* ---------- fonts + tokens, from html-templates/assets/tokens.css
-     (fonts copied to /public/fonts, so the urls are absolute) ---------- */
+/* ---------- fonts + tokens
+     (fonts live in /public/fonts, so the urls are absolute) ---------- */
 
 @font-face { font-family: "Avenir Lab"; src: url("/fonts/avenir-light.woff2")   format("woff2"); font-weight: 300; font-display: swap; }
 @font-face { font-family: "Avenir Lab"; src: url("/fonts/avenir-regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
@@ -53,7 +53,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 }
 
 /* =========================================================
-   PART A — the lab harness
+   Shared page shell
    ========================================================= */
 
 /* The teal ground. Sits behind the carved media, so the band the
@@ -85,8 +85,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
    15.63% horizontally and 18.80% vertically — an ELLIPTICAL radius,
    since a circular one does not match the PSD curve.
 
-   That the carve FORMS on entry and OPENS on exit are both animation
-   assumptions (2026-08-19), not PSD measurements. */
+   How the carve forms on entry and opens on exit is a design choice,
+   not a PSD measurement. */
 .lab-media {
   position: fixed;
   inset: 0 0 auto 0;
@@ -99,11 +99,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   pointer-events: auto;
 }
 
-/* Scrim — html-templates/final/02-main.html's own
-   .s-main-start__media::after (--horizon-scrim), applied here across
-   the WHOLE scrubbed video rather than just that one bridge section,
-   so every section's text sits on the same darkened backdrop instead
-   of only the bridge card getting it — EXCEPT Haycarb at a Glance,
+/* Scrim (--horizon-scrim) across the WHOLE scrubbed video, so every
+   section's text sits on the same darkened backdrop — EXCEPT Haycarb at a Glance,
    which is light-themed on purpose and fades this out while it's on
    screen (see --scrim-opacity, written by LabScrubber.tsx). Sits
    above the canvas/poster (z-index higher than their stacking
@@ -154,8 +151,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 }
 
 /* Always the full viewport, whatever the carve is doing — the frame
-   is a full-screen background that the box above crops, exactly as
-   the template's <img> was sized to the whole hero and cropped.
+   is a full-screen background that the box above crops.
 
    The poster and the canvas share these rules so their geometry is
    identical: object-fit cover on the same box matches the canvas's
@@ -289,11 +285,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   width: min(100%, 1000px);
   margin: 0;
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
-  /* Flat 48px on desktop, as specified. This was briefly a
-     clamp(19px, 5.33svh, 48px), which only actually reached 48px on
-     viewports 900px+ tall — a 1440x800 window rendered 42.6px, so the
-     spec was not being met on ordinary desktops. Tab/mobile scale down
-     from it in the media query below. Minion Pro ships one weight only,
+  /* Flat 48px on desktop, as specified (a height-based clamp fell short
+     of 48px on ordinary laptop screens). Tab/mobile scale down from it
+     in the media query below. Minion Pro ships one weight only,
      so this stays 400 — anything else renders as faux bold. */
   font-size: 48px;
   font-weight: 400;
@@ -374,7 +368,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 .s-hero__wordmark { opacity: 0; visibility: hidden; }
 
 /* Settled/reduced-motion fallback: the live hook normally adds the emerge
-   class, but the fully loaded template state must still paint the wordmark
+   class, but the settled hero must still paint the wordmark
    if that class is delayed by image decode. Frame-driven inline exit styles
    continue to win once the hero scrolls away. */
 .lab[data-phase="scroll"] .s-hero__wordmark {
@@ -384,8 +378,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 
 /* ---------- wordmark emerge ----------
    Triggered once, by HeroLayer, when frame reaches
-   WORDMARK_EMERGE_FRAME — a few frames before the hero settles at 50,
-   not after. Guarded by a ref there so it cannot fire twice: the
+   WORDMARK_EMERGE_FRAME, during the entry reveal. Guarded by a ref there so it cannot fire twice: the
    trigger only checks frame during the ENTRY phase, which happens
    exactly once and never recurs, so scrolling back through the hero
    later or the infinite-loop wrap (which only touches scrollY/frame,
@@ -393,10 +386,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
    section's own fade. No other rule touches this element's opacity
    or transform, so there is nothing else to duplicate it.
 
-   Slow and deliberate — 2.6s, well past when the frame clock itself
-   stops advancing at 50, so this keeps animating through the settle
-   on its own clock rather than snapping into place with everything
-   else. Plain scale + blur + fade, no colour tint. translateX(-50%)
+   Runs on its own clock rather than the frame clock. Plain scale + blur + fade, no colour tint. translateX(-50%)
    is kept in every frame of the keyframe — dropping it would un-centre
    the element, since this animates the same `transform` property the
    static centring rule above uses. */
@@ -422,8 +412,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
   .s-hero__wordmark--emerge { animation: none; opacity: 1; visibility: visible; }
 }
 
-/* .s-hero__scroll carries `transition: opacity` from the template,
-   for its hover state. A transition applies to inline changes too,
+/* .s-hero__scroll carries `transition: opacity` for its hover state.
+   A transition applies to inline changes too,
    so during the entry it would smear the per-frame opacity writes by
    0.28s and the scroll cue would lag visibly behind the rest of the
    cascade. Off while the entry drives it; hover gets it back in the
@@ -504,11 +494,8 @@ html.lab-menu-open body {
 }
 
 /* ---------- menu hamburger reveal ----------
-   Dead since the lab's own menu was replaced by the app-wide
-   GlobalHeader (copied from Production); IntroNavGate now does the
-   reveal, keyed to the same LOGO_EXIT_FRAMES[1] (70). Kept only so
-   the selectors below still document what the frame gate used to
-   drive. */
+   Not used by the current markup: the app-wide GlobalHeader provides
+   the hamburger and IntroNavGate reveals it at HERO_SETTLED_FRAME. */
 .lab-menu__hamburger {
   opacity: 0;
   transform: scale(0.7);
@@ -730,11 +717,9 @@ html.lab-menu-open body {
   transform: scale(1.3); /* +30%, requested size */
 }
 
-/* Ported verbatim from Horizon (Backend)'s src/app/globals.css — same
-   keyframes, same class names, same 4s/6s/5s/3s durations as the
-   HaycarbChat orb they're borrowed from. Only AiAssistantFab.tsx's
-   own inline geometry (insets, dot/core sizes) was scaled down for a
-   56px button; the motion itself is untouched. */
+/* Same keyframes, class names and 4s/6s/5s/3s durations as the Horizon
+   chat orb. Only AiAssistantFab.tsx's inline geometry (insets,
+   dot/core sizes) is scaled down for a 56px button. */
 @keyframes orb-spin {
   to { transform: rotate(360deg); }
 }
@@ -773,8 +758,7 @@ html.lab-menu-open body {
 }
 
 /* ---------- mouse parallax ----------
-   Same values as loop test/assets/interaction-math.js: 3px/2px/0.2deg
-   maxima, applied to .lab-media (the fixed background box) via
+   3px/2px/0.2deg maxima, applied to .lab-media (the fixed background box) via
    translate3d + rotate, never touched by the section layers' own
    transform usage. See useMouseParallax.ts. */
 .lab-cursor {
@@ -953,9 +937,8 @@ html.lab-menu-open body {
 
 /* ---------- shine sweep (shared utility) ----------
    Diagonal highlight band that sweeps across an element on hover,
-   lifted from css-animation-inspiration-demo.html's .shine/.shine::before.
-   First used on .s-govcards__card, per VJ 2026-08-28; drop the class on
-   anything else that wants the same effect.
+   used on .s-govcards__card; drop the class on anything else that
+   wants the same effect.
 
    USAGE: add class="lab-shine" alongside the element's own classes.
    The element does NOT need position/overflow set itself — this

@@ -1,26 +1,18 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — floating "AI Assistant" button
+   Floating "AI Assistant" button
    =========================================================
 
-   Sticky, bottom-right. Revealed once the hero is fully gone — same
-   LOGO_EXIT_FRAMES[1] (70) reveal point IntroNavGate uses for the
-   app-wide hamburger, so the two pieces of persistent chrome arrive
-   together rather than one popping in ahead of the other. Links out
-   to Horizon's own AI Assistant page via the shared HORIZON_ROUTES
-   map, same as every other cross-app link in the lab.
+   Fixed bottom-right. Revealed once the hero is fully gone
+   (LOGO_EXIT_FRAMES[1]), the same point the music toggle appears. Links
+   to Horizon's AI Assistant page via the shared HORIZON_ROUTES map.
 
-   The orb is Horizon (Backend)'s own HaycarbChat/index.jsx loading
-   animation (src/app/globals.css's .animate-orb-* rules), ported
-   verbatim — same classes, same keyframes, same colour tokens (this
-   design system already defines --color-brand-main / --color-teal-2
-   identically, see src/styles/tokens/colors.css) — just at FAB size
-   instead of the chat page's full 144px. Only the fixed pixel insets
-   (glow spread, dot size, core size) were scaled down for a 56px
-   button; the animation itself, the layering, and the class names
-   are unchanged from the source so it reads as the same assistant
-   across both apps. */
+   The orb is the Horizon chat's loading animation (.animate-orb-* in
+   styles/01-shared-shell.css) — same classes, keyframes and colour
+   tokens (see src/styles/tokens/colors.css), so it reads as the same
+   assistant across both apps. Only the fixed pixel insets (glow spread,
+   dot size, core size) are scaled down for a 56px button. */
 
 import { useRef } from "react";
 import { LOGO_EXIT_FRAMES } from "./timeline";

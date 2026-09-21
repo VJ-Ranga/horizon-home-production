@@ -1,17 +1,15 @@
 "use client";
 
-/* Foreground port of final/15 Horizon of Progress.html. The template image is omitted;
-   the shared video canvas supplies the boat background. The
-   .s-strategy__scrim radial dark vignette was removed 2026-08-25 per VJ.
+/* Strategy section foreground. The shared video canvas supplies the
+   boat background.
 
-   ONE CONTINUOUS PAGE (VJ, 2026-08-31): the content — title, five
-   Strategic Pillars, three Risks & Opportunities — is taller than one
-   viewport. It used to be two viewport "pages" that snapped A -> B;
-   now the whole .s-strategy__panel simply glides up by exactly its
-   overflow (scrollHeight - viewport) as the reader scrolls through the
-   section's virtual pinned budget. The background advances to the pin
-   frame first, then stays fixed while the panel completes its movement
-   and the layer exits.
+   The content — title, five Strategic Pillars, three Risks &
+   Opportunities — is taller than one viewport. The whole
+   .s-strategy__panel glides up by exactly its overflow
+   (scrollHeight - viewport) as the reader scrolls through the section's
+   virtual pinned budget. The background advances to the pin frame
+   first, then stays fixed while the panel completes its movement and
+   the layer exits.
 
    The glide consumes the shared frame driver's scrollPx value and is
    eased toward the target with EASE 0.12. */
@@ -120,7 +118,7 @@ export default function StrategyLayer() {
   useFrameEffect((_frame, _phase, scrollPx, mode) => {
     const panel = panelRef.current;
     if (!panel) return;
-    if (mode === "compact" || window.matchMedia("(max-width: 700px)").matches) {
+    if (mode === "compact" || window.matchMedia("(max-width: 1100px)").matches) {
       panel.style.transform = "";
       currentRef.current = 0;
       return;
@@ -133,7 +131,7 @@ export default function StrategyLayer() {
       (STRATEGY.scrollThrough!.virtualExitFrames ?? 0) * pxPerFrame;
     const mobile =
       typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 700px)").matches;
+      window.matchMedia("(max-width: 1100px)").matches;
     const startPx = scrollPxForFrame(
       mobile ? STRATEGY.settledFrame : pinFrame,
       pxPerFrame,

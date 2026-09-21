@@ -21,11 +21,11 @@ const WORD_COUNT = WORD_GROUPS.reduce((total, words) => total + words.length, 0)
 export default function CityBannerLayer() {
   const ref = useSectionLayer(CITY);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  // Phones: skip the per-word opacity stagger; the caption just rides
-  // the section's own fade (see GlanceLayer's mobileSolid).
+  // Compact viewports skip the per-word opacity stagger; the caption just
+  // rides the section's own fade (see GlanceLayer's mobileSolid).
   const mobileSolidRef = useRef(false);
   useEffect(() => {
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 1100px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {

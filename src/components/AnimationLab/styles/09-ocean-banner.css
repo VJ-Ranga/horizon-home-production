@@ -1,12 +1,7 @@
 /* =========================================================
-   PART A (cont.) — SECTION 10, "Banner — ocean navigation"
-   Ported from html-templates/final/Artboard 6.html. Settles at 485,
-   between Leadership and Capitals — see the comment on this
-   section's entry in timeline.ts.
+   Banner — ocean navigation
+   Sits between Leadership and Capitals (see timeline.ts).
    ========================================================= */
-
-/* The .s-ocean__scrim radial dark vignette was removed 2026-08-25
-   per VJ. */
 
 .s-ocean__stage {
   position: relative;

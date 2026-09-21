@@ -1,17 +1,11 @@
 /* =========================================================
-   PART A (cont.) — GOVERNANCE CARDS, "Driving sustainable value
-   creation through effective governance"
-   Ported from html-templates/final/07-governance-cards.html.
-   SECTIONS[9] ("10-governance-cards") — see GovernanceCardsLayer.tsx.
+   Governance cards — "Driving sustainable value creation through
+   effective governance"
    No root rule here on purpose: .lab-layer already provides
-   position:absolute + inset:0. An earlier version set position:
-   relative here, which — same specificity, later in the cascade —
-   overrode .lab-layer's own position:absolute and knocked the whole
-   section out of the fixed viewport's stacking context. Nothing
-   rendered visibly as a result, even though the section's own
-   opacity (from useSectionLayer) was correctly climbing. Every other
-   ported section's root class (.s-approach2, etc.) leaves position
-   alone for exactly this reason — don't add it back here. */
+   position:absolute + inset:0. Setting position on .s-govcards (same
+   specificity, later in the cascade) overrides it and knocks the
+   whole section out of the fixed viewport's stacking context, so
+   nothing renders even though its opacity climbs. Don't add it. */
 
 .s-govcards__content {
   position: relative;
@@ -34,8 +28,8 @@
   overflow: hidden;
 }
 
-/* Kept for compatibility with older markup; the current title is a single
-   element controlled by the section-level reveal. */
+/* Per-word title spans. The current title is a single element
+   controlled by the section-level reveal. */
 .s-govcards__word {
   display: inline-block;
   opacity: 0;
@@ -48,7 +42,7 @@
 }
 
 /* Background matches .s-digital2__panel — same vertical gradient
-   (alphas .79/.85/.93), per VJ 2026-08-28. */
+   (alphas .79/.85/.93). */
 .s-govcards__card {
   min-height: 210px;
   display: flex;

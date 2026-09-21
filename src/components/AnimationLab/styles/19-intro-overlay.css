@@ -1,7 +1,6 @@
 /* ---------------------------------------------------------
    LOAD SCREEN + INTRO — LabIntro.tsx
-   Only rendered on /animation-lab-full, -intro and -loading.
-   Absent from every other route.
+   Shown once per session on the home page.
    --------------------------------------------------------- */
 .lab-intro {
   position: fixed;
@@ -30,8 +29,7 @@
   width: 100%;
   height: 100%;
   z-index: 1; /* under the load overlay while it crossfades out */
-  /* A <video> now (was a manually cover-fit <canvas>); object-fit
-     reproduces the same fill behaviour with no JS. */
+  /* object-fit covers the viewport with no JS. */
   object-fit: cover;
   background: #095473; /* matches the load screen's base, no flash */
 }
@@ -51,11 +49,9 @@
   pointer-events: none;
 }
 
-/* Load-screen background — ported 1:1 from the live /ai-assistant page:
-   Horizon project/src/components/AuroraBackground.tsx
-   + @keyframes fluid-1..4 in Horizon project/src/app/globals.css
-   (base #081F2B, brand-main #147385 blobs, noise overlay). Pure CSS
-   keyframe drift — no JS, no pointer interaction. */
+/* Load-screen background — matches the /ai-assistant page's aurora
+   background (base #081F2B, brand-main #147385 blobs, noise overlay).
+   Pure CSS keyframe drift — no JS, no pointer interaction. */
 .lab-intro__aurora {
   position: absolute;
   inset: 0;
@@ -160,8 +156,7 @@
   stroke-width: 2;
 }
 .lab-intro__ring-fill {
-  /* White, matching the comet trail's own colour — was a warm
-     orange-to-green gradient (labIntroDialGrad, now removed). */
+  /* White, matching the comet trail's own colour. */
   stroke: #ffffff;
   stroke-width: 3;
   stroke-linecap: round;
@@ -280,7 +275,7 @@ html.lab-nav-hidden [data-global-nav]:first-of-type {
 
 /* GlobalHeader positions the hamburger `absolute` on every page that is
    not in its own fixedPages list, which is right for the normal scrolling
-   feature pages. This page is not one: the lab paints into a fixed
+   feature pages. This page is not one: it paints into a fixed
    viewport and gets its scroll length from .lab-spacer, so an absolute
    button sits at document top and is 20,000px above the viewport by the
    time you are a few sections in. Pin it so that once IntroNavGate
@@ -306,9 +301,9 @@ html.lab-nav-teal button[data-global-nav][aria-label="Open menu"] > span > span 
 /* Background-music toggle (BackgroundMusic.tsx) gets the exact same
    colour treatment as the hamburger on `/`: white icon over the dark
    scrubbed canvas, teal on the light-themed sections that add
-   `lab-nav-teal`. Its VISIBILITY is not shared with the nav — it appears
-   earlier, at frame 50, and is governed by `lab-music-hidden` in the
-   block at the end of this file. Scoped to this file, `/` only. */
+   `lab-nav-teal`. Its VISIBILITY is not shared with the nav — it
+   appears once the hero has exited, governed by `lab-music-hidden` in
+   styles/20-lab-chrome.css. Scoped to this file, `/` only. */
 [data-bg-music] {
   color: #fff !important;
 }

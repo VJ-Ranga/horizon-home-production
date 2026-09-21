@@ -1,7 +1,7 @@
 /* =========================================================
-   SECTION 5 — Banner | City Skyline
+   Banner — City Skyline
    Foreground caption only. The shared scrubbed canvas supplies the
-   template's frame-0320 city background, so no image or scrim is added.
+   city background, so no image or scrim is added.
    ========================================================= */
 
 .s-city {
@@ -47,7 +47,7 @@
 }
 
 /* =========================================================
-   SECTION 9 — Governance intro breaker (transition to Lighthouse)
+   Governance intro — text bridge (over the lighthouse shot)
    Text-only bridge, same structure as the city banner. Shared
    scrubbed canvas supplies the lighthouse frame; no image or scrim.
    ========================================================= */
@@ -92,17 +92,5 @@
   .s-govintro__caption { font-size: clamp(17px, 4.7vw, 24px); line-height: 1.35; }
 }
 
-/* =========================================================
-   ANIMATION LAB — styles
-
-   Two parts, kept apart on purpose:
-
-   PART A  lab harness + the ported section 2 panel.
-   PART B  the hero — copied from html-templates/01-hero.html, which
-           is FINAL and verified at mean diff 2.36/255 against the
-           PSD export. Every percentage in part B is a PSD layer
-           bounding box read off the 3840x2160 canvas. Do not
-           "tidy" those numbers.
-
-   The template's own comments are kept with the rules they explain.
-   ========================================================= */
+/* Hero percentages (styles/07-hero.css) are PSD layer bounding boxes
+   on the 3840x2160 canvas. Do not "tidy" those numbers. */

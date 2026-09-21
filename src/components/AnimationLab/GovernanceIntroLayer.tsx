@@ -1,20 +1,16 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — governance intro breaker (audit gap G2)
+   Governance intro — text bridge
    =========================================================
 
-   New section, inserted 2026-08-27 as SECTIONS[8]
-   ("09-governance-intro"). A text-only bridge between Financial
-   Highlights and Corporate Governance, over the shared scrubbed
-   lighthouse frame — no <img> background, same as every other
-   section. Structure follows CityBannerLayer: two stacked captions
-   (the horizon metaphor, then the "Similarly, Haycarb…" tie-in),
-   with word-by-word frame-driven enter and reverse exit layered over
-   the section fade from useSectionLayer.
+   A text-only bridge between Financial Highlights and Corporate
+   Governance, over the shared lighthouse frame.
 
-   Inserting this shifted every downstream layer's SECTIONS[n] index
-   and every section id by one. */
+   Same structure as CityBannerLayer: two stacked captions (the horizon
+   metaphor, then the "Similarly, Haycarb…" tie-in), with a word-by-word
+   frame-driven enter and reverse exit layered over the section fade
+   from useSectionLayer. */
 
 import { useEffect, useRef } from "react";
 import {
@@ -37,11 +33,11 @@ const WORD_COUNT = WORD_GROUPS.reduce((total, words) => total + words.length, 0)
 export default function GovernanceIntroLayer() {
   const ref = useSectionLayer(GOV_INTRO);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  // Phones: skip the per-word opacity stagger; the caption just rides
-  // the section's own fade (see GlanceLayer's mobileSolid).
+  // Compact viewports skip the per-word opacity stagger; the caption just
+  // rides the section's own fade (see GlanceLayer's mobileSolid).
   const mobileSolidRef = useRef(false);
   useEffect(() => {
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 1100px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {

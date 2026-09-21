@@ -1,32 +1,17 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — the logo, end to end
+   Hero logo
    =========================================================
 
-   ONE element for the logo's whole lifecycle: fades/slides in during
-   the entry (same window HERO_PARTS gave it before), sits fully
-   settled through the rest of the entry and the start of scroll, then
-   fades back out over HERO's own exit window — same as the rest of
-   the hero — rather than shrinking to a sticky dock.
+   One element for the logo's whole lifecycle: fades/slides in during
+   the entry (LOGO_ENTER_FRAMES), stays through the settled hero, then
+   fades out over LOGO_EXIT_FRAMES with the rest of the hero.
 
-   Deliberately NOT a child of HeroLayer's own root. That root's
-   opacity is written by useSectionLayer for HERO's exit (frames
-   50-70), and a CSS ancestor's opacity holds down every descendant
-   regardless of the descendant's own position value — nothing this
-   element could do while living inside that subtree would let it
-   outlive that fade. Rendered as a sibling of HeroLayer in
-   AnimationLab.tsx instead, position: fixed for its entire life
-   (which costs nothing: HeroLayer's own stage already fills the full
-   viewport, so a fixed element using the same top/left percentages
-   lands in exactly the same visual spot the in-flow version would).
-
-   This replaces an earlier version that used TWO elements — this one
-   sticky-only, plus HeroLayer's own in-flow logo still fading with
-   the rest of the hero — crossfading between them over the exit
-   window. That worked, but two elements for one logo was more than
-   the effect needed; one element covering the whole lifecycle reads
-   the same and is simpler. */
+   Rendered as a position: fixed sibling of HeroLayer (in
+   AnimationLab.tsx), not a child, so its opacity is driven only by
+   its own windows. HeroLayer's stage fills the viewport, so the same
+   top/left percentages land in the same spot. */
 
 import { useRef } from "react";
 import {
@@ -78,8 +63,7 @@ export default function HeroLogo() {
     // translate's y keeps the entrance's own `translate` convention
     // (see HeroLayer.tsx's own note on why translate, not transform,
     // for PSD-centred elements). translateX(-50%) for horizontal
-    // centring lives in lab.css as a static rule on .lab-hero-logo,
-    // untouched by this.
+    // centring is a static rule on .lab-hero-logo, untouched by this.
     element.style.translate = `0 ${y}vh`;
     element.style.visibility = opacity > 0.001 ? "visible" : "hidden";
     element.style.pointerEvents = opacity > 0.98 ? "auto" : "none";

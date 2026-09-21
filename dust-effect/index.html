@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A quiet atmospheric dust animation demo.">
+  <link rel="icon" href="data:,">
+  <title>Dust in the Light</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #fff4dd;
+      --muted: #c5ad8b;
+      --amber: #ffc878;
+      --line: rgba(255, 209, 137, 0.24);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #17100d;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .scene {
+      position: relative;
+      min-height: 100svh;
+      isolation: isolate;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 70% 28%, rgba(162, 91, 31, 0.3), transparent 28rem),
+        radial-gradient(circle at 14% 90%, rgba(93, 44, 18, 0.3), transparent 30rem),
+        linear-gradient(135deg, #201411 0%, #110d0c 52%, #26170e 100%);
+    }
+
+    .scene::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.16;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    .dust-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    .particle {
+      position: absolute;
+      bottom: -10px;
+      left: var(--x);
+      width: var(--size);
+      height: var(--size);
+      background-color: rgba(255, 200, 120, 0.6);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(255, 170, 50, 0.8);
+      opacity: 0;
+      animation: floatUp var(--duration) var(--delay) infinite linear;
+    }
+
+    .particle:nth-child(3n) { filter: blur(0.6px); }
+    .particle:nth-child(3n) {
+      top: -10px;
+      bottom: auto;
+      animation-name: driftDown;
+    }
+
+    .particle:nth-child(3n + 1) {
+      left: -10px;
+      top: 18vh;
+      bottom: auto;
+      animation-name: driftFromLeft;
+    }
+
+    .particle:nth-child(3n + 2) {
+      left: auto;
+      right: -10px;
+      top: 62vh;
+      bottom: auto;
+      animation-name: driftFromRight;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      20% { transform: translateY(-20vh) translateX(calc(var(--drift, 40px) * -1)); opacity: 0.7; }
+      40% { transform: translateY(-40vh) translateX(var(--drift, 40px)); opacity: 0.6; }
+      60% { transform: translateY(-60vh) translateX(calc(var(--drift, 40px) * -1)); opacity: 0.5; }
+      80% { transform: translateY(-80vh) translateX(var(--drift, 40px)); opacity: 0.4; }
+      100% { transform: translateY(-100vh) translateX(0); opacity: 0; }
+    }
+
+    @keyframes driftDown {
+      0% { transform: translateY(0) translateX(0); opacity: 0; }
+      20% { transform: translateY(20vh) translateX(var(--drift, 40px)); opacity: 0.7; }
+      40% { transform: translateY(40vh) translateX(calc(var(--drift, 40px) * -1)); opacity: 0.6; }
+      60% { transform: translateY(60vh) translateX(var(--drift, 40px)); opacity: 0.5; }
+      80% { transform: translateY(80vh) translateX(calc(var(--drift, 40px) * -1)); opacity: 0.4; }
+      100% { transform: translateY(100vh) translateX(0); opacity: 0; }
+    }
+
+    @keyframes driftFromLeft {
+      0% { transform: translateX(0) translateY(0); opacity: 0; }
+      20% { transform: translateX(25vw) translateY(var(--drift, 40px)); opacity: 0.7; }
+      40% { transform: translateX(50vw) translateY(calc(var(--drift, 40px) * -1)); opacity: 0.6; }
+      60% { transform: translateX(75vw) translateY(var(--drift, 40px)); opacity: 0.5; }
+      100% { transform: translateX(110vw) translateY(0); opacity: 0; }
+    }
+
+    @keyframes driftFromRight {
+      0% { transform: translateX(0) translateY(0); opacity: 0; }
+      20% { transform: translateX(-25vw) translateY(calc(var(--drift, 40px) * -1)); opacity: 0.7; }
+      40% { transform: translateX(-50vw) translateY(var(--drift, 40px)); opacity: 0.6; }
+      60% { transform: translateX(-75vw) translateY(calc(var(--drift, 40px) * -1)); opacity: 0.5; }
+      100% { transform: translateX(-110vw) translateY(0); opacity: 0; }
+    }
+
+    .content {
+      position: relative;
+      z-index: 3;
+      width: min(100%, 48rem);
+      text-align: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      color: var(--amber);
+      font: 0.68rem/1.2 Arial, sans-serif;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before,
+    .eyebrow::after {
+      content: "";
+      width: 2.5rem;
+      height: 1px;
+      background: var(--line);
+    }
+
+    h1 {
+      max-width: 11ch;
+      margin: 1.5rem auto 1.25rem;
+      font-size: clamp(3.8rem, 13vw, 8.5rem);
+      font-weight: 400;
+      line-height: 0.82;
+      letter-spacing: -0.08em;
+      text-wrap: balance;
+    }
+
+    .intro {
+      max-width: 30rem;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      line-height: 1.7;
+    }
+
+    .rule {
+      width: min(12rem, 35vw);
+      height: 1px;
+      margin: 2rem auto;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+    }
+
+    .caption {
+      color: rgba(255, 244, 221, 0.52);
+      font: 0.7rem/1.5 Arial, sans-serif;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .particle { animation: none; opacity: 0.35; }
+    }
+
+    @media (max-width: 480px) {
+      .scene { padding: 1.25rem; }
+      h1 { font-size: clamp(3.6rem, 20vw, 6rem); }
+      .eyebrow::before, .eyebrow::after { width: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="scene">
+    <div class="dust-container" aria-hidden="true">
+      <span class="particle" style="--x: 3vw; --delay: 0s; --duration: 14s; --size: 2px; --drift: 45px;"></span>
+      <span class="particle" style="--x: 9vw; --delay: 3s; --duration: 18s; --size: 3px; --drift: -35px;"></span>
+      <span class="particle" style="--x: 15vw; --delay: 7s; --duration: 12s; --size: 2px; --drift: 60px;"></span>
+      <span class="particle" style="--x: 21vw; --delay: 1s; --duration: 20s; --size: 4px; --drift: -25px;"></span>
+      <span class="particle" style="--x: 27vw; --delay: 10s; --duration: 15s; --size: 2px; --drift: 30px;"></span>
+      <span class="particle" style="--x: 33vw; --delay: 5s; --duration: 17s; --size: 3px; --drift: -55px;"></span>
+      <span class="particle" style="--x: 39vw; --delay: 2s; --duration: 13s; --size: 2px; --drift: 40px;"></span>
+      <span class="particle" style="--x: 45vw; --delay: 8s; --duration: 19s; --size: 3px; --drift: -30px;"></span>
+      <span class="particle" style="--x: 51vw; --delay: 4s; --duration: 11s; --size: 2px; --drift: 65px;"></span>
+      <span class="particle" style="--x: 57vw; --delay: 12s; --duration: 16s; --size: 4px; --drift: -45px;"></span>
+      <span class="particle" style="--x: 63vw; --delay: 6s; --duration: 14s; --size: 2px; --drift: 25px;"></span>
+      <span class="particle" style="--x: 69vw; --delay: 0s; --duration: 18s; --size: 3px; --drift: -60px;"></span>
+      <span class="particle" style="--x: 75vw; --delay: 9s; --duration: 13s; --size: 2px; --drift: 50px;"></span>
+      <span class="particle" style="--x: 81vw; --delay: 3s; --duration: 21s; --size: 3px; --drift: -35px;"></span>
+      <span class="particle" style="--x: 87vw; --delay: 11s; --duration: 15s; --size: 2px; --drift: 55px;"></span>
+      <span class="particle" style="--x: 93vw; --delay: 5s; --duration: 17s; --size: 4px; --drift: -20px;"></span>
+      <span class="particle" style="--x: 6vw; --delay: 13s; --duration: 16s; --size: 2px; --drift: 70px;"></span>
+      <span class="particle" style="--x: 24vw; --delay: 6s; --duration: 12s; --size: 3px; --drift: -40px;"></span>
+      <span class="particle" style="--x: 42vw; --delay: 9s; --duration: 20s; --size: 2px; --drift: 35px;"></span>
+      <span class="particle" style="--x: 60vw; --delay: 1s; --duration: 15s; --size: 3px; --drift: -50px;"></span>
+      <span class="particle" style="--x: 78vw; --delay: 8s; --duration: 11s; --size: 2px; --drift: 45px;"></span>
+      <span class="particle" style="--x: 96vw; --delay: 4s; --duration: 19s; --size: 3px; --drift: -30px;"></span>
+    </div>
+
+    <section class="content" aria-labelledby="page-title">
+      <div class="eyebrow">A study in stillness</div>
+      <h1 id="page-title">Dust in the light</h1>
+      <p class="intro">Small things become visible when everything else grows quiet.</p>
+      <div class="rule" aria-hidden="true"></div>
+      <div class="caption">Ambient motion / 01</div>
+    </section>
+  </main>
+</body>
+</html>

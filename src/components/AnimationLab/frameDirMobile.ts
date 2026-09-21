@@ -67,7 +67,7 @@ export function getIntroAssetPlan(
   };
 }
 
-/** The project's own phone breakpoint (max-width: 700px in lab.css). */
+/** The phone breakpoint (max-width: 700px), shared with the styles. */
 export function isPhoneViewport(): boolean {
   if (typeof window === "undefined") return false;
   try {

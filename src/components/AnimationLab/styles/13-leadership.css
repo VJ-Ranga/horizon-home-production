@@ -1,7 +1,7 @@
 /* =========================================================
-   PART A (cont.) — SECTION 8, "Leadership at Haycarb"
-   Ported from html-templates/08-leadership.html. The scrim lives on
-   the root's own ::after (no media div left to hang it off).
+   Leadership at Haycarb
+   The scrim lives on the root's own ::after (no media div to hang it
+   off).
    ========================================================= */
 
 .s-leadership { color: #ffffff; }

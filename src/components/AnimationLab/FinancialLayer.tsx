@@ -1,29 +1,15 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — section 6, "Financial Highlights"
+   Section — "Financial Highlights"
    =========================================================
 
-   Replaced 2026-08-24 with html-templates/final/Artboard 3.html —
-   Artboard 3 is the source of truth for this section now. VJ:
-   "it have funtion so check and add need to fully working" — the
-   metric-pill click → chart-swap interaction (the artboard's own
-   registry: every pill carries data-chart/data-chart-label, click
-   swaps the centre chart with a fade-out/pop-in) is ported below as
-   React state instead of the source's own vanilla-JS probe/timer,
-   same interaction, same 160ms swap delay and 480ms pop-in.
+   Metric-pill click → chart swap: every pill carries a chart and label;
+   a click fades the centre chart out, swaps it, and pops it back in
+   (160ms swap delay, 480ms pop-in), held as React state. Every metric
+   has its own chart file, so there is no fallback chart.
 
-   The probe/fallback half of the source's script (an Image() preload
-   that falls back to the default chart if a metric's own file 404s)
-   is NOT ported. Every metric has a dedicated chart file. The swap
-   choreography (fade out -> swap alt text -> pop in) runs on every
-   metric click.
-
-   No background image here — the source's own placeholder
-   ("boardroom over city at dusk", TODO'd pending real footage) is
-   dropped in favour of the shared scrubbed canvas, same convention
-   as every other section (VJ, 2026-08-24: "u fogot to drop backgrnd
-   and overlay color"). */
+   No background image: the shared scrubbed canvas is the background. */
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import {
@@ -251,9 +237,9 @@ export default function FinancialLayer() {
     if (!parked) hoverAudio.stop();
 
     // One flip, not a per-frame ramp. The CSS @property transition on
-    // .s-financial2 (lab.css) plays the staggered fade in / out over
-    // ~0.45s — a normal quick animation, not scroll-scrubbed — the
-    // moment we park, and reverses it the moment we leave.
+    // .s-financial2 (styles/16-financial.css) plays the staggered fade in /
+    // out over ~0.45s the moment the section parks, and reverses it the
+    // moment it leaves.
     element.style.setProperty("--financial-reveal", parked ? "1" : "0");
 
     if (stageRef.current) {
@@ -262,14 +248,11 @@ export default function FinancialLayer() {
     }
   });
 
-  // Mirrors the source's probe.onload -> setTimeout(160) -> swap ->
-  // requestAnimationFrame -> is-entering choreography, minus the
-  // preload probe itself (see file header for why that half isn't
-  // needed yet). Timers cleared on unmount and on rapid re-clicks so
-  // a fast double-click can't leave two overlapping animations.
-  // The click also plays that metric's narration (click-to-play, was
-  // hover-to-play) — including a re-click on the already-active metric,
-  // which just replays the audio without re-running the chart swap.
+  // Swap choreography: wait 160ms -> swap -> requestAnimationFrame ->
+  // is-entering. Timers are cleared on unmount and on rapid re-clicks so a
+  // fast double-click can't leave two overlapping animations. The click
+  // also plays that metric's narration — a re-click on the active metric
+  // just replays the audio without re-running the chart swap.
   function selectMetric(item: Metric) {
     hoverAudio.play(item[4]);
     if (item[0] === active[0]) return;

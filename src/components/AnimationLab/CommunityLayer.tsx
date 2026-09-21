@@ -1,12 +1,12 @@
 "use client";
 
-/* Foreground port of final/16-Community Impact.html. The shared video canvas
-   supplies the source frame; this layer keeps the source tint, wash, cards,
-   and the scroll-locked story rail.
+/* Community Impact foreground. The shared video canvas supplies the
+   background; this layer adds the tint, wash, cards and the
+   scroll-locked story rail.
 
-   Content is the 7 spec stories (PDF p.18-19). Four have a YouTube video —
-   their play button is a real <a target="_blank">; "Supporting University
-   Students" has no video ("No link" in the spec) so it has no play button. */
+   Seven stories. Four have a YouTube video with a play button;
+   "Supporting University Students" has no video, so it has no play
+   button. */
 
 import { useEffect, useRef, useState } from "react";
 import { SECTIONS, readPxPerFrame, scrollPxForFrame } from "./timeline";
@@ -120,7 +120,9 @@ export default function CommunityLayer() {
 
     const measure = () => {
       const styles = window.getComputedStyle(rail);
-      const mobile = window.matchMedia("(max-width: 700px)").matches;
+      // Tablet CSS uses same vertical story rail as phone; measure it as
+      // vertical too or frame-driven transforms use horizontal geometry.
+      const mobile = window.matchMedia("(max-width: 1100px)").matches;
       const padStart = parseFloat(mobile ? styles.paddingTop : styles.paddingLeft) || 0;
       const padEnd = parseFloat(mobile ? styles.paddingBottom : styles.paddingRight) || 0;
 

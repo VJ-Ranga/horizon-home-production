@@ -1,13 +1,7 @@
-/* Section 16 — exact visual treatment from final/16-Community Impact.html.
-   The standalone template image is replaced by the shared video canvas. */
-
 /* =========================================================
-   SECTION 14 — Community Impact              SCROLL-DRIVEN
-
-   Still source: Set C, horizon-home/public/frames/frame_0715.webp
-   Local preview asset: assets/img/community-frame-0715.webp
-   Frame choice: frame 715 provides the quiet lake-and-mountain atmosphere;
-                 a soft wash keeps the three story cards and heading legible.
+   Community Impact — foreground only
+   The shared video canvas is the background; a soft wash keeps the
+   story cards and heading legible.
    ========================================================= */
 
 .s-community {
@@ -106,8 +100,8 @@
 
 @media (max-width: 1100px) {
   .lab .s-community__stage {
-    height: 100svh;
-    min-height: 100svh;
+    height: 100dvh;
+    min-height: 100dvh;
     justify-content: flex-start;
     overflow: auto;
     overscroll-behavior: contain;
@@ -182,7 +176,7 @@
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 50%;
   color: #ffffff;
-  /* Green -> blue gradient, VJ 2026-09-03 (was a flat dark wash). */
+  /* Green -> blue gradient. */
   background: linear-gradient(135deg, #4caf78 0%, #16869a 100%);
 }
 
@@ -263,8 +257,7 @@
 .s-community__card-body,
 .s-community__card-stat { margin: 0; }
 
-/* Card text bumped ~+4px with a 16px floor, VJ 2026-09-03 — the old
-   clamps bottomed out at 10-13px, too small over the photos. */
+/* Card text has a 16px floor so it stays readable over the photos. */
 .s-community__card-eyebrow {
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
   font-size: clamp(16px, 1.7svh, 18px);
@@ -311,7 +304,7 @@
 }
 
 @media (min-width: 701px) and (max-width: 1100px) {
-  .s-community__stage { padding: clamp(20px, 3svh, 32px) clamp(20px, 4vw, 44px); }
+  .s-community__stage { padding: clamp(72px, 10svh, 104px) clamp(20px, 4vw, 44px) clamp(20px, 3svh, 32px); }
   .s-community__head { max-width: 760px; margin-bottom: clamp(16px, 2.5svh, 24px); }
   .s-community__heading { font-size: clamp(34px, 4.6vw, 44px); }
   .s-community__intro { margin-top: 14px; font-size: clamp(14px, 1.8vw, 16px); }
@@ -329,8 +322,8 @@
   .s-community__card { aspect-ratio: 1.35 / 1; }
 }
 
-/* Animation Lab viewport override: the standalone template is in normal
-   document flow, while this layer must stay fixed over the shared video. */
+/* Viewport override: this layer must stay fixed over the shared
+   video rather than sit in normal document flow. */
 .lab .s-community {
   position: absolute;
   inset: 0;

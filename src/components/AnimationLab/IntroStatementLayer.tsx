@@ -1,36 +1,21 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — intro statement, "Beyond the Beyond"
+   Section — intro statement, "Beyond the Beyond"
    =========================================================
 
-   Markup ported from html-templates/final/05-blue-city.html
-   (titled "Intro Statement, Combined" in the source — not a city
-   banner despite the filename, see the note this caused earlier in
-   the session). No <img> background — the scrubbed <canvas> is the
-   background here, same swap as every other section, referencing the
-   same moment the template's own still (frame 253) was pulled from.
+   No <img> background: the scrubbed <canvas> is the background.
+   Opacity/position fade comes from useSectionLayer; the enter/exit
+   windows are read from this section's SECTIONS entry.
 
-   Promoted into the shared SECTIONS array as SECTIONS[4]
-   ("05-intro-statement"), 2026-08-25, per VJ — it used to be kept
-   standalone specifically to dodge the index shift that inserting it
-   would cause in every other layer file, but that shift has now been
-   done (see timeline.ts for the full re-index). Its own opacity/
-   position fade comes from useSectionLayer now, same as every other
-   section; the enter/exit windows below are read directly off its
-   SECTIONS entry instead of the two local frame constants this file
-   used to carry.
-
-   The pale wash (.s-intro__media::after in the template) is its own
-   element here, not a reuse of .lab-media's shared dark scrim — this
-   one goes to ~97% white, which visually dominates over whatever the
-   dark scrim underneath is doing while it's active, so there's no
-   need to touch that shared scrim's own logic for this.
+   The pale wash is its own element, not the shared dark scrim on
+   .lab-media: it goes to ~97% white, which dominates the dark scrim
+   underneath while active.
 
    Each word reveals in its own opacity stagger on top of the section's
-   own overall fade. The virtual enter finish completes the word reveal
-   while the background stays pinned. Exit reverses the word order,
-   layered on top of, not replacing, the parent's own opacity fade. */
+   overall fade. The virtual enter finishes the word reveal while the
+   background stays pinned. Exit reverses the word order, layered on
+   top of the parent's own opacity fade. */
 
 import { useEffect, useRef } from "react";
 import {
@@ -62,12 +47,11 @@ const WORD_COUNT = WORD_GROUPS.reduce((total, words) => total + words.length, 0)
 export default function IntroStatementLayer() {
   const ref = useSectionLayer(INTRO);
   const wordRefs = useRef<Array<HTMLSpanElement | null>>([]);
-  // Phones: skip the per-word opacity stagger entirely — the whole
-  // paragraph just rides the section's own fade. Same idea as
-  // GlanceLayer's mobileSolid.
+  // Compact viewports skip the per-word opacity stagger entirely — the
+  // paragraph stays readable while the section itself fades and moves.
   const mobileSolidRef = useRef(false);
   useEffect(() => {
-    mobileSolidRef.current = window.matchMedia("(max-width: 700px)").matches;
+    mobileSolidRef.current = window.matchMedia("(max-width: 1100px)").matches;
   }, []);
 
   useFrameEffect((frame, _phase, scrollPx, mode) => {

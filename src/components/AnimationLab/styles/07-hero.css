@@ -1,18 +1,14 @@
 /* =========================================================
-   PART B — SECTION 1, THE HERO
-   Copied from html-templates/01-hero.html (FINAL, diff 2.36/255).
+   Section 1 — the hero
    Every percentage is a PSD layer bounding box on the 3840x2160
    canvas, so left/top map 1:1 onto the stage, which is inset:0.
 
-   Type weights are the PSD's, confirmed by measuring stem widths:
-   brand name Black 900 - report label + tagline + caption Regular
-   400 - scroll cue + pill labels Medium 500. No text-shadow
-   anywhere; the PSD has none, and removing the shadows an earlier
-   build carried measurably improved every text region.
+   Type weights are the PSD's: brand name Black 900 - report label +
+   tagline + caption Regular 400 - scroll cue + pill labels Medium 500.
+   No text-shadow anywhere; the PSD has none.
 
-   The template's .s-hero__media rule is NOT here — that box is
-   .lab-media above, because the background is now the scrubbed
-   canvas. The template always anticipated that swap.
+   There is no .s-hero__media rule: the background box is .lab-media,
+   the scrubbed canvas.
    ========================================================= */
 
 .s-hero__stage { position: absolute; inset: 0; }
@@ -79,8 +75,7 @@
   text-shadow: none;
 }
 
-/* Summary video popup — ported from html-templates/final/01-hero.html,
-   class names byte-identical so the two can be diffed. */
+/* Summary video popup. */
 .s-hero__video-dialog {
   position: absolute;
   top: 2%;
@@ -336,7 +331,7 @@
   .lab-media__canvas { object-position: 50% 38%; }
 
   .lab-hero-logo {
-    /* Centred on phones (VJ's call). */
+    /* Centred on phones. */
     top: calc(4% + 20px);
     left: 50%;
     width: min(54%, 24svh);
@@ -355,8 +350,8 @@
     right: auto;
   }
 
-  /* Video card is dropped entirely on phones (VJ's call) — the theme
-     video is still reachable from the nav / other sections. */
+  /* No video card on phones; the theme video is still reachable from
+     the nav / other sections. */
   .s-hero__video { display: none; }
   .s-hero__brand {
     order: 2;

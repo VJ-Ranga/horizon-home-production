@@ -1,9 +1,7 @@
 /* =========================================================
-   PART A (cont.) — SECTION 1_2 BRIDGE, "A Journey of Possibilities"
-   Ported from html-templates/01-main-02.html. Positioning/sizing
-   that page did with position:absolute + min-height:100vh is dropped
-   — .lab-layer already gives this section inset:0 in the shared
-   viewport.
+   Bridge — "A Journey of Possibilities"
+   .lab-layer already gives this section inset:0 in the shared
+   viewport, so there is no root positioning/sizing here.
    ========================================================= */
 
 .s-main-start__stage {
@@ -24,15 +22,12 @@
   max-width: none;
   margin: 0;
   transform: translateX(-50%);
-  /* Text/colour only, ported from 02-main.html's own rule — that
-     template's background/media is NOT brought over, this section
-     still has none of its own, same as before. */
+  /* Text/colour only; this section has no background of its own. */
   color: var(--on-dark);
   font-family: "Minion Pro", Georgia, "Times New Roman", serif;
-  /* VJ 2026-09-03: pinned to a tight 32-34px band. Still height-driven
-     so it nudges up on taller screens, but the 34px ceiling keeps the
-     51-character nowrap line inside the container at the narrow end of
-     the desktop width range. (Earlier steps: 20-32 -> 26-40 -> here.) */
+  /* Tight 32-34px band. Still height-driven so it nudges up on taller
+     screens, but the 34px ceiling keeps the 51-character nowrap line
+     inside the container at the narrow end of the desktop range. */
   font-size: clamp(32px, 3.6svh, 34px);
   font-weight: 400;
   letter-spacing: 0.005em;
@@ -54,11 +49,9 @@
    inside the fixed lab stage at tablet and phone widths; it must not inherit
    a desktop nowrap that can push the phrase off-screen. */
 @media (min-width: 781px) and (max-width: 1100px) {
-  /* NO height/radius clamp here. It used to cap .lab-media at ~90%,
-     which meant that even after the carve OPENS on scroll
-     (--carve-h: 100%) a teal band stayed pinned to the bottom on
-     tablet and never cleared — desktop and phone both let the carve
-     vars drive the box directly, so tablet now does too. The wide-
+  /* NO height/radius clamp here: a clamp would leave a teal band pinned
+     to the bottom on tablet after the carve opens on scroll. Like
+     desktop and phone, tablet lets the carve vars drive the box. The wide-
      sweep concern the clamp addressed is already handled by the
      CARVE_SETTLED_MOBILE shape (timeline.ts), which this range now
      uses via CARVE_MOBILE_MAX_WIDTH = 1100. */
@@ -83,7 +76,7 @@
 /* Per-word reveal — frame-driven (MainStartLayer.tsx writes
    opacity/transform per word, per frame, from staggerProgressAt in
    timeline.ts) rather than a CSS animation, so it stays tied to
-   scroll position. Per-WORD, not per-character (2026-08-23): splitting
+   scroll position. Per-WORD, not per-character: splitting
    every letter into its own inline-block box broke the font's kerning
    between adjacent letters, which read as broken letter-spacing.
    Whitespace between words is plain text, not wrapped, so native word

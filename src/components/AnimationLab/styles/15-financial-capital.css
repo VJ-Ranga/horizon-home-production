@@ -1,26 +1,17 @@
 /* =========================================================
-   PART A (cont.) — SECTION 11, "Our Approach to Reporting —
-   Financial Capital"
-   Ported from html-templates/final/Artboard 7.html. No background
-   image here — unlike the source (which paints its own static
-   ocean-frame-0503.webp behind the sticky carousel), the shared
-   scrubbed canvas IS the background, frozen at frame 515 by the
-   timeline's carousel scroll-lock (see FinancialCapitalLayer.tsx and
-   the `carousel` field in timeline.ts) rather than swapped for a
-   separate image.
+   Capitals Management — scroll-lock card carousel
+   No background image: the shared scrubbed canvas is the background,
+   frozen at this section's settledFrame by the carousel scroll-lock
+   (see FinancialCapitalLayer.tsx and the `carousel` field in
+   timeline.ts).
 
-   The template's own .track/position:sticky scroll-jack scaffolding
-   isn't needed either — that trick exists to keep a section pinned
-   on screen for its own private scroll budget on an ordinary page.
-   This lab already has an equivalent, more general mechanism (every
-   section is a stacked .lab-layer, and the shared frame driver
-   already knows how to freeze the timeline over a scroll budget), so
-   .s-fincap is a completely ordinary lab-layer and the cards read
-   scroll position directly rather than through a sticky/pinned
-   wrapper. */
+   No sticky/pinned wrapper either: the shared frame driver already
+   freezes the timeline over the carousel's scroll budget, so .s-fincap
+   is an ordinary .lab-layer and the cards read scroll position
+   directly. */
 
-/* The whole viewport is the carousel's clipping stage (see the ported
-   reference model in FinancialCapitalLayer.tsx). The heading is lifted
+/* The whole viewport is the carousel's clipping stage (see the stack
+   model in FinancialCapitalLayer.tsx). The heading is lifted
    out of flow and parked just above the active card so it reads as part
    of the card group, not a separate band up top. */
 .s-fincap {
@@ -105,11 +96,11 @@
 }
 
 /* Per-card "Explore More" — anchored bottom-right over the card's
-   image half (see the spec mockup for section 14). */
+   image half. */
 .s-fincap__cta {
   position: absolute;
   right: clamp(18px, 2.6vw, 30px);
-  /* sits lower over the card image (VJ) — was clamp(14px, 2svh, 20px) */
+  /* sits low over the card image */
   bottom: clamp(6px, 1svh, 10px);
   z-index: 2;
 }
@@ -343,8 +334,7 @@
     line-height: 1.4;
   }
   /* "Explore More" drops into normal flow under the description and
-     sits at the right edge (was floated over the image band, where it
-     clashed with the heading). */
+     sits at the right edge, clear of the heading. */
   .s-fincap__cta {
     position: static;
     right: auto;

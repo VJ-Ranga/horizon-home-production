@@ -58,6 +58,7 @@ export const metadata: Metadata = {
 const INTRO_SEEN_SCRIPT =
   "try{if(sessionStorage.getItem('horizon:intro-seen')==='1')" +
   "document.documentElement.classList.add('intro-seen');" +
+  "if(location.pathname==='/' )document.documentElement.classList.add('lab-nav-hidden','lab-music-hidden');" +
   "if(location.pathname==='/'&&sessionStorage.getItem('horizon:home-frames-ready')==='1')" +
   "document.documentElement.classList.add('home-frames-ready')}catch(e){}";
 
@@ -69,7 +70,7 @@ export default function RootLayout({
   return (
     // suppressHydrationWarning: the script above adds a class to <html>
     // before React hydrates, so the client attribute legitimately differs
-    // from the server's. Same reason theme scripts need it.
+      // from the server's. Same reason theme scripts need it.
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <body suppressHydrationWarning className="min-h-full flex flex-col font-sans">
         <noscript>

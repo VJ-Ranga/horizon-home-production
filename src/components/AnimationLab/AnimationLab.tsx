@@ -1,24 +1,19 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — the harness
+   The scroll experience — page shell
    =========================================================
 
-   The flow it proves, end to end:
+   Flow:
 
-     1. (intro plays — NOT BUILT YET, see note below)
-     2. entry autoplay, frames 1 -> 50, scroll LOCKED, hero
+     1. load screen + intro video (LabIntro), once per session
+     2. entry autoplay, frames 1 -> 50, scroll locked, hero
         elements revealing as the camera pushes forward
-     3. frame 50: loaded and idle, like a normal site
-     4. scroll unlocks: 50 -> 70 hero exits, 109 -> 118 section 2
-        arrives
+     3. frame 50: loaded and idle
+     4. scroll drives the frame; sections enter and exit on the
+        windows set in timeline.ts
 
-   NOTE ON STEP 1: the intro itself is not built — PROJECT-LOG has it
-   last, because it plays once on load and is a different mechanism
-   from everything here. The lab therefore opens at the moment the
-   intro would hand over: set-C frame 1, the measured handoff.
-
-   Shape of it:
+   Layout:
 
      LabScrubber        fixed, z1   the carved <canvas>
      .lab-viewport      fixed, z2   section layers, stacked inset:0
@@ -26,10 +21,8 @@
 
    Layers stack rather than flow because they share one screen: the
    hero is leaving while section 2 is arriving, over the same video.
-   Adding sections 3-15 is adding entries to SECTIONS in timeline.ts
-   and one <Layer/> here.
-
-   This is a lab. It does not touch Home/HomePage.tsx.
+   A new section is one entry in SECTIONS (timeline.ts) plus one
+   <Layer/> here.
    ========================================================= */
 
 import {
@@ -123,12 +116,8 @@ import {
 } from "./frameDirMobile";
 
 /** Which frame folder a given density/quality combination reads.
-    densify 1 is the plain 840 sets and is byte-for-byte the original
-    behaviour; every other value is a 1080p-only dense set except 2x,
-    which also has an HQ variant. Phones read a 720px re-encode of the
-    plain set so the entry-frame preload below (frames 1-50) doesn't
-    spike memory before the page is even scrollable — see
-    frameDirMobile.ts. */
+    Phones and tablets read smaller re-encodes of the plain set so the
+    entry-frame preload doesn't spike memory — see frameDirMobile.ts. */
 function resolveFrameDir(
   densify: number,
   hq: boolean,
@@ -145,9 +134,7 @@ function resolveFrameDir(
   return FRAME_DIR_DEV;
 }
 
-/** HeroLogo.tsx no longer docks to a sticky spot — it fades out with
-    the rest of the hero over LOGO_EXIT_FRAMES, same as every other
-    hero element, so it's back on by default. */
+/** Render the hero logo (HeroLogo.tsx). */
 const SHOW_HERO_LOGO = true;
 
 /* sessionStorage key marking that this browsing session has already seen
@@ -245,8 +232,8 @@ function scrollYForFrame(
 }
 
 /* ---------------------------------------------------------
-   Lab chrome. Not part of the design — a readout so the flow can
-   be checked at a stated frame rather than by eye. Hidden from
+   Debug HUD (?debug=1). Not part of the design — a frame/phase
+   readout for checking timing. Hidden from
    assistive tech and from print.
    --------------------------------------------------------- */
 function FrameReadout() {
@@ -267,10 +254,8 @@ function FrameReadout() {
         phase === "entry" ? "entry · autoplay · scroll locked" : "scroll";
     }
 
-    // Refresh the hold readout on the SAME rAF tick as the frame
-    // counter. It used to update on native `scroll` events only, which
-    // Lenis suppresses — so it would freeze showing a stale hold long
-    // after the scroll head had left it.
+    // Refresh the hold readout on the same rAF tick as the frame
+    // counter. Native `scroll` events are suppressed by Lenis.
     if (holdRef.current) {
       const hold = virtualHoldAtScrollPx(scrollPx, pxPerFrameRef.current, mode);
       holdRef.current.textContent = hold
@@ -381,30 +366,22 @@ export default function AnimationLab({
   minimalLoader = false,
 }: {
   hq?: boolean;
-  /** New-video 4K set, /animation-lab-4k only. Optional and false by
-      default, so /animation-lab and ?quality=hq are unaffected. */
+  /** Read the 4K frame set. */
   fourK?: boolean;
   /** Frame-density multiplier: 1 (default), 2 or 4. Same timing
       numbers, k times the files drawn — see FRAME_DIR_2X/4X. */
   densify?: number;
   debug?: boolean;
-  /** /animation-lab-full, -intro, -loading only: show the load screen
-      + intro shot (LabIntro.tsx) before the hero entry. False on every
-      other route, and this file behaves exactly as before when it is —
-      the only effect is one extra gate on the entry autoplay and one
-      extra overlay node. */
+  /** Show the load screen + intro (LabIntro.tsx) before the hero entry.
+      Adds one gate on the entry autoplay and one overlay node. */
   intro?: boolean;
-  /** -loading route: hold on the finished load screen, never play the
-      intro or release the lab. For tuning the screen in isolation. */
+  /** Hold on the finished load screen and never release the page. */
   loaderOnly?: boolean;
-  /** -intro route: a small spinner instead of the full 0-100 screen
-      while the intro frames decode. */
+  /** Show a small spinner instead of the full 0-100 load screen. */
   minimalLoader?: boolean;
 }) {
-  /* HQ client-preview mode. Off by default, so a normal load of
-     /animation-lab behaves exactly as it did before this existed.
-     It changes two things and nothing else: which frame folder is
-     read, and the canvas dpr cap. No timing, no layout, no copy. */
+  /* HQ mode (?quality=hq) changes only the frame folder and the canvas
+     dpr cap. No timing, layout or copy changes. */
   const mounted = useSyncExternalStore(
     subscribeToNothing,
     getMountedSnapshot,
@@ -445,9 +422,8 @@ export default function AnimationLab({
   const [entryReady, setEntryReady] = useState(false);
   const [mobileLoadProgress, setMobileLoadProgress] = useState(0);
 
-  /* Load screen + intro (LabIntro). Only on the -full / -intro /
-     -loading routes, and never under reduced motion. While it is up
-     the lab holds on the handoff frame — introDone is fed into the
+  /* Load screen + intro (LabIntro), never under reduced motion. While it
+     is up the page holds on the handoff frame — introDone is fed into the
      same entry gate as entryReady, so this reuses the existing hold
      rather than adding a new phase. */
   const runIntro = intro && !skipEntry;
@@ -464,8 +440,7 @@ export default function AnimationLab({
 
      This CANNOT be read while rendering. The server has no sessionStorage,
      so a render-time read makes the server emit the overlay and the client
-     skip it, which is a hydration mismatch (it threw exactly that before
-     being moved here). Instead the overlay is rendered on both sides and
+     skip it, which is a hydration mismatch. Instead the overlay is rendered on both sides and
      dropped on mount, and the blocking script in layout.tsx has already
      put `intro-seen` on <html> so globals.css hides it before the first
      paint — no flash of a load screen that is about to disappear. */
@@ -478,7 +453,7 @@ export default function AnimationLab({
   const [introDone, setIntroDone] = useState(!runIntro);
   const showIntro = runIntro && !introSeen;
   /* A suppressed intro never mounts, so onDone never fires — the entry gate
-     below has to be released here instead, or the lab would hold on the
+     below has to be released here instead, or the page would hold on the
      handoff frame forever on every return visit. */
   const introComplete = introDone || introSeen;
   const homeFramesReady = useSyncExternalStore(
@@ -626,6 +601,8 @@ export default function AnimationLab({
      is disabled on tablet/phone (see the loop effect below); instead a
      forward gesture while the end screen is showing restarts the page. */
   const compactEndReloadRef = useRef(false);
+  const tabletEndDwellUntilRef = useRef(0);
+  const TABLET_END_READ_DWELL_MS = 1800;
   useEffect(() => {
     // skipEntry is the normal compact path after the intro has been seen;
     // navigation interception must still be installed in that case.
@@ -689,8 +666,14 @@ export default function AnimationLab({
           );
           const endScreen = SECTIONS[SECTIONS.length - 1];
           const endShownFrame =
-            (endScreen.enter?.frames[0] ?? endScreen.settledFrame) - 0.5;
+           (endScreen.enter?.frames[0] ?? endScreen.settledFrame) - 0.5;
           if (frameNow >= endShownFrame) {
+            if (
+              !isPhoneViewport() &&
+              performance.now() < tabletEndDwellUntilRef.current
+            ) {
+              return false;
+            }
             compactEndReloadRef.current = true;
             setEndReload(true);
             return false;
@@ -797,6 +780,9 @@ export default function AnimationLab({
     const unsubscribe = driver.subscribe((frame, nextPhase) => {
       const targetFrame = compactNavigationTargetRef.current;
       if (nextPhase === "scroll" && targetFrame !== null && Math.abs(frame - targetFrame) <= 1) {
+        if (targetFrame === SECTIONS[SECTIONS.length - 1].settledFrame && !isPhoneViewport()) {
+          tabletEndDwellUntilRef.current = performance.now() + TABLET_END_READ_DWELL_MS;
+        }
         clearNavigationLock();
       }
     });
@@ -947,21 +933,14 @@ export default function AnimationLab({
   }, [compact, driver, phase]);
 
   /* ---- infinite loop, phase 2 only ----
-     "loop test/assets/main.js"'s boundary reset, ported here: scroll
-     past either end and it wraps to the other, so the section pass
-     (hero -> ... -> community) repeats instead of dead-ending at the
-     last frame. No sequence math needed here the way the loop test
-     page needed it — frame is already a straight function of
-     scrollY / scrollable via frameForScrollPx, so resetting scrollY
-     to 0 or to `scrollable` alone is enough to land back on
-     SCROLL_FIRST_FRAME / SCROLL_LAST_FRAME.
+     Scrolling down past the end wraps back to the hero behind a white
+     shade, so the page repeats instead of dead-ending. Frame is a
+     straight function of scrollY via frameForScrollPx, so resetting
+     scrollY is enough to land on SCROLL_FIRST_FRAME.
 
-     Direction-tracked like the loop test page: only wraps when the
-     boundary is reached while still moving toward it, so a scroll
-     that merely rubber-bands at the edge does not loop early.
-     Skipped under reduced motion, matching loop test's own guard —
-     a forced jump is exactly the kind of motion that setting exists
-     to suppress. */
+     Only wraps when the boundary is reached while still moving toward
+     it, so a rubber-band at the edge does not loop early. Skipped
+     under reduced motion. */
   useEffect(() => {
     if (phase !== "scroll") return;
     // The infinite loop is desktop-only. On tablet and phone the end
@@ -1371,8 +1350,7 @@ export default function AnimationLab({
           </div>
         )}
 
-        {/* Load screen + intro shot. Only mounted on the -full /
-            -intro / -loading routes; onDone releases the entry gate. */}
+        {/* Load screen + intro shot. onDone releases the entry gate. */}
         {showIntro && (
           <LabIntro
             loaderOnly={loaderOnly}

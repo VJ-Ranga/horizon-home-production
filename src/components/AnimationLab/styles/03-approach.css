@@ -1,14 +1,10 @@
 /* =========================================================
-   PART A (cont.) — SECTION 2, "Our Approach to Reporting"
-   Ported from html-templates/final/03-approach-c2.html — variant C2,
-   centred composition, Horizon-teal glass cards. Replaces the earlier
-   02-approach.html port; class names are byte-identical to the
-   template so the two can be diffed. Section-root rules (position,
-   min-height, its own teal background) are NOT carried over — those
-   belong to .lab-layer / .lab here, see ApproachLayer.tsx.
+   Section 2 — "Our Approach to Reporting"
+   Centred composition with Horizon-teal glass cards. Section-root
+   rules (position, min-height, background) belong to .lab-layer /
+   .lab, see ApproachLayer.tsx.
 
-   Token mapping from the template's own tokens.css, since this app
-   doesn't import that file: --font-display -> the Georgia stack every
+   Token mapping: --font-display -> the Georgia stack every
    other section here already uses for display type; --font-ui ->
    inherited (.lab already sets "Avenir Lab" as the base family);
    --ink-deep/--ink-body -> literal hex, matching the dark-teal ink
@@ -19,26 +15,21 @@
 
 .s-approach2 {
   /* ---- GLASS: Horizon metric card ----
-     Hue and border are the Horizon app's own, read off
-     horizon/src/styles/tokens/colors.css:
+     Hue and border match the Horizon app's tokens:
        --color-glass-faint   rgba(20, 115, 133, 0.34)
        --color-border-subtle rgba(255, 255, 255, 0.16)
 
-     The FRONT FACE deliberately runs more opaque than 0.34 — 0.74,
-     VJ's call 2026-08-27. Horizon's own cards sit on flat UI; ours sit
-     on video with a blown-out sun behind the upper row, which reads
-     straight through a 0.34 tint. Same hue, more cover.
+     The FRONT FACE runs more opaque (0.74): these cards sit on video
+     with a bright sun behind the upper row, which reads straight
+     through a 0.34 tint. Same hue, more cover.
 
      The back face is a different hue at 0.88 — it carries body copy,
      so it has to be a surface rather than a tint, and it takes NO
      blur: it lives inside the card's preserve-3d flip context, where
-     backdrop-filter renders unreliably and previously made its text
+     backdrop-filter renders unreliably and can make its text
      disappear.
 
-     Front-face glass is written literally rather than through
-     --glass-bg/--glass-blur, which are gone: those two were read by
-     these two rules only, and keeping a token that no longer matches
-     what ships is how the 18px-vs-actual confusion started. */
+     Front-face glass is written literally, not through tokens. */
   --glass-back-bg: rgba(17, 97, 112, 0.88);
   --glass-border: rgba(255, 255, 255, 0.16);
   --glass-radius: 16px;
@@ -47,10 +38,8 @@
   --glass-badge-bg: rgba(255, 255, 255, 0.95);
   --glass-badge-ink: #0a5568;
   --glass-badge-shadow: 0 6px 18px rgba(3, 32, 41, 0.28);
-  /* White now (source template changed 2026-08-23, was dark ink
-     #1c4f6b/#2b6178 in the version first ported) — kept as named vars
-     rather than hardcoding #fff directly on each rule so a future
-     re-check has one place to compare against the source again. */
+  /* Kept as named vars rather than hardcoding #fff on each rule, so the
+     ink colour is set in one place. */
   --glass-heading: #ffffff;
   --glass-lead: #ffffff;
   /* CTA — white pill. The teal card glass would otherwise leave the
@@ -76,8 +65,7 @@
   --a2-fs-title: clamp(38px, 5.93svh, 64px);
   --a2-fs-kicker: clamp(19px, 2.41svh, 26px);
   --a2-fs-lead: clamp(16px, 1.85svh, 20px);
-  /* VJ 2026-09-03: was clamp(15px, 1.67svh, 18px) — 15px on a 900px-tall
-     desktop. Nudged so the same viewport lands on 16px. */
+  /* 16px on a 900px-tall desktop. */
   --a2-fs-label: clamp(16px, 1.78svh, 19px);
   --a2-fs-body: clamp(13px, 1.48svh, 16px);
   --a2-fs-cta: clamp(15px, 1.67svh, 18px);
@@ -211,8 +199,7 @@
 }
 
 /* Flips on hover, on keyboard focus, and on .is-flipped — the class
-   exists so a future scroll timeline could drive the flip without a
-   cursor, same as the template documents. */
+   lets the flip be driven without a cursor. */
 .s-approach2__card:hover .s-approach2__card-inner,
 .s-approach2__card:focus-within .s-approach2__card-inner,
 .s-approach2__card.is-flipped .s-approach2__card-inner {
@@ -243,16 +230,11 @@
 /* NEVER hand-write -webkit-backdrop-filter in this file. Next's CSS
    minifier treats the prefixed and unprefixed properties as duplicates
    and keeps only the LAST one; with the pair written unprefixed-first,
-   what shipped was `-webkit-backdrop-filter` alone. Current Chrome
-   ignores that form completely (CSS.supports returns false for it, and
-   setting it alone computes to `none`), so every blur in the app was
-   silently dead while the same CSS looked correct in
-   public/html-sections/*.html — those are served raw from public/ and
-   never minified. That mismatch cost a long debugging session.
+   what ships is `-webkit-backdrop-filter` alone, which current Chrome
+   ignores, so the blur silently disappears.
 
    The build auto-prefixes: write `backdrop-filter` alone and the
-   emitted CSS carries both, correctly ordered. Verified against
-   .s-financial2__chartcard, which never had a hand-written prefix. */
+   emitted CSS carries both, correctly ordered. */
 .s-approach2__face--front {
   background: rgba(20, 115, 133, 0.74);
   backdrop-filter: blur(16.4px);
@@ -312,10 +294,9 @@
 }
 
 /* The label is an <h3>, so globals.css's `h1..h6 { font-family:
-   var(--font-heading) }` was giving it Minion Pro — the only serif in
-   the card, and at weight 600 (no such face; Minion Pro ships 400
-   only) the browser was synthesizing a fake bold. Stated outright as
-   Avenir Lab per VJ 2026-09-03, matching the card body underneath. */
+   var(--font-heading) }` would give it Minion Pro, which ships 400 only
+   (weight 600 would be a faux bold). Set to Avenir Lab to match the
+   card body. */
 .s-approach2__card-label {
   margin: 0;
   color: var(--glass-ink);
@@ -355,16 +336,8 @@
   flex: none;
 }
 
-/* CTA — re-checked against the template 2026-08-23: it now uses the
-   shared .btn--download component (tokens.css) rather than .btn--light,
-   and the page's own elaborate amber conic-gradient ring (kept in the
-   template's markup for history) is fully disabled there by a later
-   `.s-approach2__cta::before { display: none; }` override — same
-   specificity, later in the cascade, wins. What actually ships is
-   .btn--download's own, much simpler hover: a plain 1px white ring on
-   ::after, fading in on hover/focus, no colour, no rotation. Ported
-   directly rather than through a second .btn--download class, since
-   nothing else in this app reuses it yet. */
+/* CTA — the .btn--download treatment: a plain 1px white ring on ::after
+   that fades in on hover/focus. */
 .s-approach2__cta {
   position: relative;
   isolation: isolate;
@@ -469,9 +442,7 @@
   font: 400 28px/1 Arial, sans-serif;
 }
 
-/* Hidden in the template as of 2026-08-23 (display: none added to its
-   own rule there) — kept in the markup, just not shown, same as the
-   source. */
+/* Kept in the markup but not shown. */
 .s-approach2__scrollbar {
   display: none;
   position: absolute;
@@ -574,7 +545,7 @@
 
   .s-approach2__stage { align-items: flex-start; }
   .s-approach2__col { margin-inline: auto; }
-  /* +30px below the last card before the CTA row (VJ's call). */
+  /* Extra space below the last card before the CTA row. */
   .s-approach2__cta-row { gap: 10px; margin-top: 50px; }
   .s-approach2__cta { width: auto; min-width: 0; min-height: 44px; padding-inline: 18px; }
 }
@@ -618,7 +589,7 @@
   .s-approach2__badge { max-width: 42px; margin-bottom: 6px; }
   .s-approach2__card-label { line-height: 1.15; }
   .s-approach2__card-body { line-height: 1.25; }
-  /* +20px below the last card before the CTA row (VJ's call). */
+  /* Extra space below the last card before the CTA row. */
   .s-approach2__cta-row { gap: 8px; margin-top: 34px; }
   .s-approach2__cta { width: auto; min-width: 0; min-height: 40px; padding-inline: 14px; }
 }

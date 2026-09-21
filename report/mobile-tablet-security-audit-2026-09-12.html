@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mobile vs Tablet and Security Audit</title>
+  <style>
+    :root { color-scheme: dark; --bg: #071b21; --panel: #0e2a31; --ink: #e8f5f6; --muted: #9db8bc; --line: #28525a; --red: #ff8c83; --amber: #ffd27d; --green: #8de0b1; --cyan: #74d7e6; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(circle at 85% 0, #164b55, transparent 32rem), var(--bg); color: var(--ink); font: 16px/1.6 system-ui, sans-serif; }
+    main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 80px; }
+    h1, h2, h3 { line-height: 1.15; }
+    h1 { max-width: 850px; font-size: clamp(2.2rem, 6vw, 4.8rem); letter-spacing: -0.05em; margin: 0 0 16px; }
+    h2 { margin: 48px 0 16px; font-size: 1.7rem; }
+    h3 { margin: 28px 0 8px; font-size: 1.1rem; }
+    p { max-width: 78ch; }
+    .lede, .note { color: var(--muted); }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+    .tag { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--cyan); font-size: .82rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    .card { background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+    .card h3 { margin-top: 0; }
+    .severity { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .high { color: var(--red); }
+    .medium { color: var(--amber); }
+    .low { color: var(--green); }
+    table { width: 100%; border-collapse: collapse; display: block; overflow-x: auto; }
+    th, td { min-width: 150px; padding: 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--cyan); font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+    code { color: #c9f2f5; font: .92em ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .callout { border-left: 4px solid var(--amber); background: #2a2517; padding: 14px 18px; margin: 18px 0; }
+    .ok { border-left-color: var(--green); background: #11291f; }
+    ol { padding-left: 22px; }
+    li { margin: 8px 0; }
+    footer { border-top: 1px solid var(--line); margin-top: 56px; padding-top: 18px; color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+<main>
+  <p class="tag">READ-ONLY AUDIT | 2026-09-12</p>
+  <h1>Mobile vs tablet parity and security audit</h1>
+  <p class="lede">Scope: compact AnimationLab behavior at phone and tablet widths, section sizing, frame loading, scroll handoff, loading state, dependency versions, external scripts, and security configuration. No application files were changed for this audit. This report is the only new file.</p>
+  <div class="meta">
+    <span class="tag">Phone: <= 700px</span>
+    <span class="tag">Tablet: 701-1100px</span>
+    <span class="tag">Desktop: > 1100px</span>
+    <span class="tag">Next: 16.2.10</span>
+  </div>
+
+  <h2>Executive Summary</h2>
+  <div class="callout"><strong>Highest risk:</strong> phone behavior is not defined consistently. JavaScript uses 700px while several CSS and asset decisions use 780px. Widths 701-780px can receive phone CSS with tablet JavaScript and tablet frames.</div>
+  <div class="grid">
+    <article class="card"><span class="severity high">High</span><h3>Breakpoint split</h3><p>701-780px is a mixed phone/tablet mode. This can explain incorrect heights, section stops, and composition on narrow tablets.</p></article>
+    <article class="card"><span class="severity medium">Medium</span><h3>Compact loading gate bypass</h3><p>Compact scroll can outrun decoded frames. Fast tablet scroll may show stale or blank frames.</p></article>
+    <article class="card"><span class="severity medium">Medium</span><h3>Tablet CSS coverage</h3><p>Several sections have no tablet-specific rules and fall back to desktop or broad compact rules.</p></article>
+    <article class="card"><span class="severity high">High</span><h3>Next dependency advisories</h3><p>Next 16.2.10 pulls vulnerable transitive versions. Current app does not use several affected features, but upgrade remains recommended.</p></article>
+  </div>
+
+  <h2>Mobile vs Tablet Difference</h2>
+  <table>
+    <thead><tr><th>Area</th><th>Mobile</th><th>Tablet</th><th>Observed risk</th></tr></thead>
+    <tbody>
+      <tr><td>JS phone mode</td><td><code>isPhoneViewport()</code>, max 700px</td><td>Compact but not phone above 700px</td><td>701-780px gets mixed mode</td></tr>
+      <tr><td>CSS phone rules</td><td>Many rules at max 700px; some at max 780px</td><td>Some 780px rules still apply</td><td>CSS and JS disagree on layout</td></tr>
+      <tr><td>Frame assets</td><td>Phone frame window and phone asset selection</td><td>Tablet frame assets, larger decode cost</td><td>Mixed mode may render wrong frame composition</td></tr>
+      <tr><td>Scroll engine</td><td>Native compact section navigation</td><td>Same compact navigation; Lenis disabled</td><td>Trackpad/tablet wheel feels abrupt</td></tr>
+      <tr><td>Frame loading gate</td><td>Gate mostly bypassed outside settled frames</td><td>Same, but tablet frames cost more to decode</td><td>Tablet is more likely to outrun loader</td></tr>
+      <tr><td>Strategy</td><td>Native inner scroll, no glide</td><td>Same compact native inner scroll</td><td>Parity is intentional here</td></tr>
+      <tr><td>Financial charts</td><td>Inline charts; phone removes staggered reveal</td><td>Inline charts; staggered reveal remains</td><td>Expected visual difference</td></tr>
+      <tr><td>Community stage</td><td><code>100svh</code> stage</td><td><code>100svh</code> stage</td><td>Can be shorter than compact <code>100dvh</code> canvas on iOS</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Confirmed Findings</h2>
+  <div class="grid">
+    <article class="card"><span class="severity high">HIGH | F-01</span><h3>700px vs 780px breakpoint mismatch</h3><p><strong>Evidence:</strong> <code>src/components/AnimationLab/frameDirMobile.ts:74</code> uses 700px; <code>timeline.ts:2006</code> uses 780px; phone CSS appears in <code>07-hero.css:325</code>, <code>04-digital.css:329</code>, <code>05-intro-statement.css:60</code>, and <code>02-main-start.css:43</code>.</p><p><strong>Effect:</strong> 701-780px can receive phone CSS, tablet frame assets, tablet loading policy, and phone carve values.</p><p><strong>Fix:</strong> Select one canonical boundary. 780px is likely intended because carve logic already uses it. Update JS and tests together, then validate at 700, 701, 780, and 781px.</p></article>
+    <article class="card"><span class="severity medium">MEDIUM | F-02</span><h3>Compact loading gate bypass</h3><p><strong>Evidence:</strong> <code>src/components/AnimationLab/AnimationLab.tsx:1208-1212</code> clears the gate for compact frames that are not exact settled frames.</p><p><strong>Effect:</strong> Fast touch or wheel movement can request frames before decode completes. Tablet has larger frame payloads and is more exposed.</p><p><strong>Fix:</strong> Add a narrow readiness gate or nearest-decoded-frame fallback. Test fast touch, wheel, and section transitions at phone and tablet widths.</p></article>
+    <article class="card"><span class="severity medium">MEDIUM | F-03</span><h3>Uneven tablet CSS coverage</h3><p><strong>Evidence:</strong> no tablet-specific rules in digital, glance, bridges, ocean banner, nonfinancial carousel, and financial sections; see <code>src/components/AnimationLab/styles/</code>.</p><p><strong>Effect:</strong> Tablet often falls through to desktop sizing or broad compact rules. This can produce incorrect typography, section heights, and stop points.</p><p><strong>Fix:</strong> Test every section at 768x1024 and 1024x768. Add only targeted tablet rules where measured layout fails; do not copy phone rules wholesale.</p></article>
+    <article class="card"><span class="severity medium">MEDIUM | F-04</span><h3>Touch handoff is abrupt</h3><p><strong>Evidence:</strong> compact navigation intercepts touch movement in <code>AnimationLab.tsx:629-912</code>; reader matching is defined in <code>compactNavigation.ts:4-5</code>.</p><p><strong>Effect:</strong> At inner reader edges, the next swipe can jump sections without momentum carry-over. This is more noticeable on tablet.</p><p><strong>Fix:</strong> Model reader edge state explicitly and transfer gesture ownership only after boundary direction is confirmed.</p></article>
+    <article class="card"><span class="severity low">LOW | F-05</span><h3>Community viewport unit mismatch</h3><p><strong>Evidence:</strong> <code>18-community.css:109</code> uses <code>100svh</code>, while compact media uses <code>100dvh</code> in <code>01-shared-shell.css:199-204</code>.</p><p><strong>Effect:</strong> iOS toolbar changes can leave the community stage shorter than the canvas.</p><p><strong>Fix:</strong> Validate on iOS Safari; use the same viewport strategy as the compact canvas if a gap is reproduced.</p></article>
+    <article class="card"><span class="severity low">LOW | F-06</span><h3>Mobile progress indicator visibility</h3><p><strong>Evidence:</strong> <code>01-shared-shell.css:624-637</code> keeps a 3px indicator at 1.1% from the right on every viewport.</p><p><strong>Effect:</strong> It is difficult to see on narrow phones and may compete with the edge gesture area.</p><p><strong>Fix:</strong> Set a fixed compact inset or hide it on phones after confirming product intent.</p></article>
+  </div>
+
+  <h2>Intentional Differences</h2>
+  <ul>
+    <li>Lenis is disabled for all compact widths in <code>AnimationLab.tsx:603</code>; this avoids touch inertia conflicts.</li>
+    <li>Strategy uses native inner scrolling for compact widths in <code>StrategyLayer.tsx:123-127</code>.</li>
+    <li>Financial tablet keeps staggered reveal while phone removes it; this is a deliberate performance/readability tradeoff.</li>
+    <li><code>CommunityLayer.tsx:202</code> always includes <code>data-lenis-prevent</code>; harmless while Lenis is disabled on compact.</li>
+    <li>Dead branches exist in <code>timeline.ts:411-419</code> and <code>LeadershipLayer.tsx:148-158</code>; cleanup only, not current behavior defects.</li>
+  </ul>
+
+  <h2>Security and Version Audit</h2>
+  <div class="callout"><strong>Important:</strong> security audit used repository inspection and package audit output. No dependencies were upgraded and no lockfiles were changed.</div>
+  <table>
+    <thead><tr><th>Severity</th><th>Finding</th><th>Evidence</th><th>Recommended action</th></tr></thead>
+    <tbody>
+      <tr><td class="high">Critical / High</td><td>Next 16.2.10 advisories</td><td><code>package.json:15</code>, <code>pnpm-lock.yaml</code>; advisories affect transitive Next dependencies.</td><td>Upgrade Next to the latest compatible patched release, re-lock, build, and regression-test. Confirm release version against current advisory database first.</td></tr>
+      <tr><td class="high">High</td><td>Third-party Accessibly script has no SRI</td><td><code>src/app/layout.tsx:88</code> loads <code>dash.accessibly.app</code>.</td><td>Self-host if possible, or pin and monitor a verified SRI hash with <code>crossOrigin="anonymous"</code>.</td></tr>
+      <tr><td class="high">High</td><td>PostCSS 8.4.31 transitive dependency</td><td><code>pnpm-lock.yaml:1712</code>; build-time file-read advisories.</td><td>Resolve through Next upgrade; verify effective PostCSS version. Use an override only if necessary and test build tooling.</td></tr>
+      <tr><td class="medium">High upstream / low current exposure</td><td>Sharp 0.34.5</td><td><code>pnpm-lock.yaml:1809</code>; app does not use <code>next/image</code>.</td><td>Resolve through framework upgrade. Reassess if image optimization is introduced.</td></tr>
+      <tr><td class="low">Informational</td><td>Dev dependency updates available</td><td>React, types, ESLint, TypeScript, and Node types are behind latest versions.</td><td>Upgrade in a separate dependency task with full build and lint checks.</td></tr>
+      <tr><td class="low">Informational</td><td>Inline CSP and broad dev origins</td><td><code>next.config.ts:10</code> uses <code>unsafe-inline</code>; <code>:59</code> allows two LAN wildcard ranges.</td><td>Keep static inline script only if required; consider nonce later. Limit dev origins before production-like use.</td></tr>
+    </tbody>
+  </table>
+  <div class="callout ok"><strong>Clean checks:</strong> no committed secrets found; no <code>.env</code> files found; no Server Actions, middleware, rewrites, or <code>next/image</code> usage found; storage is limited to UI state.</div>
+
+  <h2>Recommended Fix Order</h2>
+  <ol>
+    <li>Unify the phone breakpoint. This is highest priority because it affects CSS, frame assets, carve values, loader policy, and section geometry.</li>
+    <li>Run a section-by-section tablet pass at 768x1024 and 1024x768. Record exact section entry, settled, and exit positions.</li>
+    <li>Fix compact frame readiness. Verify rapid touch and wheel movement cannot display stale or blank frames.</li>
+    <li>Fix tablet touch handoff at inner-reader boundaries.</li>
+    <li>Normalize viewport units in Community and check iOS Safari toolbar behavior.</li>
+    <li>Upgrade Next and transitive dependencies in an isolated security change. Rebuild and rerun all responsive checks.</li>
+    <li>Harden or remove the third-party script dependency with SRI/self-hosting.</li>
+  </ol>
+
+  <h2>Verification Matrix</h2>
+  <table>
+    <thead><tr><th>Viewport</th><th>Checks</th></tr></thead>
+    <tbody>
+      <tr><td>390x844</td><td>First load, return load, frame 50 hamburger-only, frame 70 scrim + mute, every inner reader, bottom handoff.</td></tr>
+      <tr><td>700x844</td><td>Phone boundary behavior and assets.</td></tr>
+      <tr><td>701x1024</td><td>Breakpoint transition; ensure no mixed phone/tablet mode.</td></tr>
+      <tr><td>768x1024</td><td>Tablet portrait section heights, scroll stops, and loading decode.</td></tr>
+      <tr><td>1024x768</td><td>Tablet landscape section widths, text wrapping, and touch/trackpad behavior.</td></tr>
+      <tr><td>1100x800</td><td>Compact-to-desktop boundary and sticky controls.</td></tr>
+      <tr><td>1280x800</td><td>Desktop regression: no compact scrim, unchanged frame and scroll behavior.</td></tr>
+    </tbody>
+  </table>
+
+  <footer>Generated from read-only repository inspection and parallel code/security audits. Findings should be revalidated on physical iOS/Android tablet hardware before implementation.</footer>
+</main>
+</body>
+</html>

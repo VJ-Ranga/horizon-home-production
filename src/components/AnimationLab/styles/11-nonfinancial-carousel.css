@@ -81,7 +81,7 @@
 }
 
 /* Click to expand, not hover — NonFinancialLayer toggles .is-open on
-   the clicked card (one open at a time). VJ 2026-09-03. */
+   the clicked card (one open at a time). */
 .s-nonfinancial9__card.is-open {
   min-height: min(430px, 48svh);
   z-index: 2;
@@ -200,6 +200,23 @@
   }
 }
 
+/* Tablet keeps section copy visible while the parent layer is parked at
+   frame 845. The parent opacity can remain at 1 during virtual exit while
+   data-revealed has already reset, so do not leave tablet children at their
+   initial CSS opacity: 0. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .s-nonfinancial9__intro,
+  .s-nonfinancial9__card,
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(1),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(2),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(3),
+  .s-nonfinancial9[data-revealed="true"] .s-nonfinancial9__card:nth-child(4) {
+    opacity: 1 !important;
+    transform: none !important;
+    transition-delay: 0s !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .s-nonfinancial9__intro,
   .s-nonfinancial9__card {
@@ -272,13 +289,11 @@
   .s-nonfinancial9__content p, .s-nonfinancial9__card:hover .s-nonfinancial9__content p { max-height: 220px; margin-top: 12px; opacity: 1; }
 }
 
-/* final/15 Horizon of Progress.html foreground treatment. The supplied template image
-   and overlay are intentionally omitted because the video canvas is shared. */
+/* Strategy section foreground. No background image or overlay: the
+   video canvas is shared. */
 .s-strategy::after {
   display: none;
 }
-
-/* .s-strategy__scrim radial dark vignette removed 2026-08-25 per VJ. */
 
 .s-strategy__panel {
   width: min(calc(100% - 48px), 1536px);
@@ -299,9 +314,8 @@
   margin-top: 10px;
 }
 
-/* 1:1 foreground geometry from html-templates/final/15 Horizon of Progress.html.
-   This block deliberately comes last so earlier lab-era card/panel rules
-   cannot change the final template composition. */
+/* Strategy section foreground geometry. This block deliberately comes
+   last so earlier card/panel rules cannot change the composition. */
 .s-strategy {
   position: relative;
   min-height: 100vh;
@@ -421,9 +435,8 @@ section[aria-labelledby="risks-title"] { margin-top: 20px; }
   .s-strategy__cta { width: 100%; }
 }
 
-/* Animation Lab layers must remain fixed over the shared canvas. The
-   standalone template uses position: relative, but that would remove this
-   section from the lab viewport. */
+/* Layers must remain fixed over the shared canvas; position: relative
+   would take this section out of the fixed viewport. */
 .lab .s-strategy {
   position: absolute;
   inset: 0;

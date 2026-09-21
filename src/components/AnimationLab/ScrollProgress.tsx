@@ -1,22 +1,17 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — custom scroll progress
+   Custom scroll progress
    =========================================================
 
-   Stands in for the native scrollbar, hidden globally in lab.css so
-   the page doesn't show both. Track is fixed CSS; only the fill's
-   height is written here, per frame, as a direct fraction of
-   HERO_EXIT_END..SCROLL_LAST_FRAME — reading the same frame value
-   everything else in the lab already reads, not a second, independent
-   measurement of window.scrollY that could drift out of sync with it.
+   Stands in for the native scrollbar, which is hidden globally (see
+   styles/01-shared-shell.css). Only the fill's height is written here,
+   per frame, as a fraction of HERO_EXIT_END..SCROLL_LAST_FRAME — the
+   same frame value everything else reads, so it cannot drift from it.
 
-   A top-anchored FILL, not a moving thumb — grows 0% to 100% as the
-   user scrolls, rather than a fixed-size segment travelling down the
-   track. Hidden until the hero has fully exited (frame >=
-   WORDMARK_EXIT_FRAMES[1], 70) — it has nothing meaningful to show
-   before then, since the hero itself isn't part of the ranked
-   progress this bar represents. */
+   A top-anchored fill, not a moving thumb. Hidden until the hero has
+   fully exited (WORDMARK_EXIT_FRAMES[1]), since the hero is not part of
+   the progress this bar represents. */
 
 import { useRef } from "react";
 import { SCROLL_LAST_FRAME, WORDMARK_EXIT_FRAMES } from "./timeline";

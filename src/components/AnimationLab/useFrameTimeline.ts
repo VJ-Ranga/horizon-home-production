@@ -1,7 +1,7 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — the frame driver
+   Frame driver
    =========================================================
 
    One requestAnimationFrame loop produces the current frame and
@@ -268,9 +268,6 @@ export function useFrameEffect(fn: Listener, mode?: TimelineMode): void {
  * The one hook a section layer needs. Attach the returned ref to the
  * layer's root; its opacity and offset are then driven by the
  * section's own windows in timeline.ts.
- *
- * Adding sections 3-15 later means adding config, not calling this
- * hook differently.
  */
 export function useSectionLayer(
   section: SectionTimeline,
@@ -293,7 +290,7 @@ export function useSectionLayer(
 
     element.style.opacity = String(state.opacity);
     element.style.transform = `translate3d(${state.x}vw, ${state.y}vh, 0)`;
-    // "auto"/"visible", NOT "". lab.css hides layers marked
+    // "auto"/"visible", NOT "". styles/01-shared-shell.css hides layers marked
     // data-initial-hidden for the first paint, and that rule sets
     // BOTH visibility and pointer-events. Writing "" removes the
     // inline declaration and lets the stylesheet apply again — the
@@ -339,7 +336,7 @@ export function useRevealPart<T extends HTMLElement>(
     // `translate` is a separate property that composes with it.
     element.style.translate = `${state.x}vw ${state.y}vh`;
     element.style.pointerEvents = state.interactive ? "" : "none";
-    // "visible", NOT "". lab.css hides these elements for the first
+    // "visible", NOT "". styles/01-shared-shell.css hides these elements for the first
     // paint (see the entry first-paint block there), and writing ""
     // removes the inline declaration, letting that rule apply again —
     // the element would fade up and then vanish. The inline value has

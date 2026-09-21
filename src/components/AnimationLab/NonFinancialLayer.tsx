@@ -1,10 +1,9 @@
 "use client";
 
-/* Artboard 9 foreground only. Its river image and overlay are omitted because
-   the shared video canvas supplies the background for this frame.
+/* Non-Financial Highlights foreground only. The shared video canvas
+   supplies the background.
 
-   Copy is from the spec (PDF p.15, "Non-Financial Highlights"): the intro
-   paragraph verbatim and one static reporting card per bullet. */
+   The intro paragraph and one reporting card per highlight. */
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -42,8 +41,7 @@ const CARDS = [
 export default function NonFinancialLayer() {
   const ref = useSectionLayer(NONFINANCIAL);
   // Which card is expanded. Click a card to open it (closing any other);
-  // click it again to close. Replaces the old :hover expand — VJ
-  // 2026-09-03: "make it click and action".
+  // click it again to close.
   const [openCard, setOpenCard] = useState<number | null>(null);
   const wasRevealedRef = useRef(false);
 
@@ -69,14 +67,13 @@ export default function NonFinancialLayer() {
       if (!scrollUnlocked) element.scrollTop = 0;
     }
 
-    // Park model (same as 08-financial): the intro + cards reveal with
-    // a plain time-based CSS transition — see lab.css's
-    // .s-nonfinancial9[data-revealed] block — fired only while the
-    // section sits on its virtual hold at settledFrame, and reversed
-    // the moment it starts leaving. `frame` is pinned at settledFrame
-    // through the whole 40 hold + 20 virtual-exit span, and
-    // virtualExitProgressAtScrollPx goes non-null once the pinned exit
-    // begins, so this flips true exactly for the readable stretch.
+    // Park model (same as 08-financial): the intro + cards reveal with a
+    // time-based CSS transition (the .s-nonfinancial9[data-revealed] block in
+    // styles/11-nonfinancial-carousel.css), fired only while the section sits
+    // on its virtual hold at settledFrame and reversed the moment it starts
+    // leaving. `frame` is pinned at settledFrame through the hold and the
+    // virtual exit, and virtualExitProgressAtScrollPx goes non-null once the
+    // pinned exit begins, so this flips true exactly for the readable stretch.
     const virtualExit = virtualExitProgressAtScrollPx(
       NONFINANCIAL,
       scrollPx,

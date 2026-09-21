@@ -1,37 +1,19 @@
 "use client";
 
 /* =========================================================
-   ANIMATION LAB — section 3, "AI-Enabled Digital Report"
+   Section — "AI-Enabled Digital Report"
    =========================================================
 
-   Markup ported from html-templates/final/04-digital.html, replacing
-   the earlier 03-glance.html port wholesale. Class names are kept
-   byte-identical (s-digital2__*) so the two can be diffed against
-   each other, and the CSS in lab.css is that file's CSS copied
-   across.
+   No background <img>: the scrubbed <canvas> (LabScrubber) is the
+   background, darkened by the shared scrim on .lab-media. No <section> wrapper: .lab-layer already provides inset:0.
 
-   Differences from the template, all structural, none visual:
+   The five-circle profile row is labelled "User Profiles" in the
+   source copy; that is intentional, not a typo.
 
-   1. No .s-digital2__media / background <img>. The template's own
-      background is the scrubbed <canvas> here, same swap as every
-      other section — see LabScrubber. The global scrim already
-      applied to .lab-media covers what .s-digital2__media::after's
-      --horizon-scrim did in the template, so it isn't repeated here.
-   2. No <section> wrapper, position/min-height/overflow or its own
-      teal background — .lab-layer already provides inset:0 inside
-      the shared fixed viewport.
-
-   Content is unchanged from the previous 03-glance.html port where
-   it overlapped (same 8 AI features, same icons) — the interactive
-   features list is replaced by the template's own 5-circle profile
-   row (all labelled "User Profiles" in the source, verbatim — not a
-   typo introduced here).
-
-   Reveal: one simple section-level animation. The shared
-   useSectionLayer controller moves and fades the complete panel, so the
-   title, lead, and eight features arrive together. This intentionally
-   avoids per-word/per-feature frame work: the content is static and needs
-   to become readable immediately after the section is ready. */
+   Reveal: one section-level animation. useSectionLayer moves and fades
+   the whole panel, so the title, lead and eight features arrive
+   together. No per-word/per-feature frame work: the content is static
+   and must be readable as soon as the section is ready. */
 
  import { useRef } from "react";
  import {
@@ -144,9 +126,9 @@ const FEATURES = [
   },
 ];
 
-// The "Explore the Digital Experience" quicklinks (PDF p.3). These five
-// Keep Section 4 quicklinks aligned with report menu destinations. `variant`
-// preserves existing CTA treatment for Adaptive Reports & Charts.
+// The "Explore the Digital Experience" quicklinks, aligned with the report
+// menu destinations. `variant` keeps the CTA treatment for Adaptive
+// Reports & Charts.
 const PROFILES = [
   {
     label: "AI Guided Exploration",
